@@ -12,6 +12,7 @@ import { encode, decode } from '@msgpack/msgpack';
 import { getApiConfig, getDatabaseConfig } from '@resto-rate/config';
 import { userRoutes } from './routes/users';
 import { authRoutes } from './routes/auth';
+import { restaurantRoutes } from './routes/restaurants';
 
 const server = Fastify({
   logger: true,
@@ -59,6 +60,7 @@ async function startServer() {
 
     await server.register(authRoutes, { prefix: '/api/auth' });
     await server.register(userRoutes, { prefix: '/api/users' });
+    await server.register(restaurantRoutes, { prefix: '/api/restaurants' });
 
     await server.listen({ 
       port: apiConfig.port, 

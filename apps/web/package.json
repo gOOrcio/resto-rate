@@ -51,6 +51,7 @@
     "@resto-rate/config": "workspace:*",
     "dotenv": "^16.5.0",
     "drizzle-orm": "^0.40.0",
-    "postgres": "^3.4.5"
+    "postgres": "^3.4.5",
+    "ulid": "^3.0.1"
   }
 }

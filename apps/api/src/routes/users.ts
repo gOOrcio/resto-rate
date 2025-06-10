@@ -4,7 +4,7 @@ import { user, type UserResponse, type CreateUserRequest } from '../db/schema';
 import { eq } from 'drizzle-orm';
 import { requireAuth, optionalAuth } from '../middleware/auth';
 import { hash } from '@node-rs/argon2';
-import { randomBytes } from 'crypto';
+import { generateUserId } from '../lib/ulid';
 
 export const userRoutes: FastifyPluginAsync = async (fastify) => {
   // Get all users (public endpoint with optional auth)
@@ -14,6 +14,8 @@ export const userRoutes: FastifyPluginAsync = async (fastify) => {
         id: user.id,
         username: user.username,
         age: user.age,
+        createdAt: user.createdAt,
+        updatedAt: user.updatedAt,
       })
       .from(user);
 
@@ -30,6 +32,8 @@ export const userRoutes: FastifyPluginAsync = async (fastify) => {
         id: user.id,
         username: user.username,
         age: user.age,
+        createdAt: user.createdAt,
+        updatedAt: user.updatedAt,
       })
       .from(user)
       .where(eq(user.id, id))
@@ -52,7 +56,7 @@ export const userRoutes: FastifyPluginAsync = async (fastify) => {
     }
 
     try {
-      const userId = randomBytes(15).toString('hex');
+      const userId = generateUserId();
       const passwordHash = await hash(password);
 
       const [newUser] = await db()
@@ -67,6 +71,8 @@ export const userRoutes: FastifyPluginAsync = async (fastify) => {
           id: user.id,
           username: user.username,
           age: user.age,
+          createdAt: user.createdAt,
+          updatedAt: user.updatedAt,
         });
 
       reply.header('content-type', 'application/msgpack');
@@ -113,6 +119,8 @@ export const userRoutes: FastifyPluginAsync = async (fastify) => {
             id: user.id,
             username: user.username,
             age: user.age,
+            createdAt: user.createdAt,
+            updatedAt: user.updatedAt,
           });
 
         reply.header('content-type', 'application/msgpack');
@@ -155,6 +163,8 @@ export const userRoutes: FastifyPluginAsync = async (fastify) => {
       id: request.user.id,
       username: request.user.username,
       age: request.user.age,
+      createdAt: request.user.createdAt,
+      updatedAt: request.user.updatedAt,
     };
 
     reply.header('content-type', 'application/msgpack');

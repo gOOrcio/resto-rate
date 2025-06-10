@@ -16,6 +16,8 @@ export const authRoutes: FastifyPluginAsync = async (fastify) => {
         id: request.user.id,
         username: request.user.username,
         age: request.user.age,
+        createdAt: request.user.createdAt,
+        updatedAt: request.user.updatedAt,
       },
       sessionId: request.sessionId,
     };
@@ -35,6 +37,8 @@ export const authRoutes: FastifyPluginAsync = async (fastify) => {
           id: user.id,
           username: user.username,
           age: user.age,
+          createdAt: user.createdAt,
+          updatedAt: user.updatedAt,
         },
       })
       .from(session)

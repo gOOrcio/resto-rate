@@ -110,6 +110,33 @@ export class ApiClient {
     return this.request('/api/users/me/profile', { method: 'GET' }, sessionId);
   }
 
+  // Restaurant endpoints
+  async getRestaurants(sessionId?: string) {
+    return this.request('/api/restaurants', { method: 'GET' }, sessionId);
+  }
+
+  async getRestaurant(id: string, sessionId?: string) {
+    return this.request(`/api/restaurants/${id}`, { method: 'GET' }, sessionId);
+  }
+
+  async createRestaurant(restaurantData: {
+    name: string;
+    description?: string;
+    cuisineType?: string;
+    address?: string;
+    latitude?: number;
+    longitude?: number;
+    phone?: string;
+    website?: string;
+    priceRange?: number;
+    categoryIds?: string[];
+  }, sessionId: string) {
+    return this.request('/api/restaurants', {
+      method: 'POST',
+      body: restaurantData,
+    }, sessionId);
+  }
+
   // Health check
   async healthCheck() {
     return this.request('/health', { method: 'GET' });

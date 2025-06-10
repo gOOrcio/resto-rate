@@ -27,6 +27,8 @@ export async function requireAuth(request: FastifyRequest, reply: FastifyReply) 
           id: user.id,
           username: user.username,
           age: user.age,
+          createdAt: user.createdAt,
+          updatedAt: user.updatedAt,
         },
       })
       .from(session)
@@ -70,6 +72,8 @@ export async function optionalAuth(request: FastifyRequest, reply: FastifyReply)
           id: user.id,
           username: user.username,
           age: user.age,
+          createdAt: user.createdAt,
+          updatedAt: user.updatedAt,
         },
       })
       .from(session)
