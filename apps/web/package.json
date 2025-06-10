@@ -31,7 +31,7 @@
 		"@sveltejs/vite-plugin-svelte": "^5.0.0",
 		"@tailwindcss/vite": "^4.0.0",
 		"@types/node": "^20",
-		"drizzle-kit": "^0.30.2",
+		"drizzle-kit": "^0.31.0",
 		"eslint": "^9.18.0",
 		"eslint-config-prettier": "^10.0.1",
 		"eslint-plugin-svelte": "^3.0.0",
@@ -57,7 +57,7 @@
 		"@resto-rate/ulid": "workspace:*",
 		"@resto-rate/validation": "workspace:*",
 		"dotenv": "^16.5.0",
-		"drizzle-orm": "^0.40.0",
+		"drizzle-orm": "^0.44.2",
 		"postgres": "^3.4.5",
 		"ulid": "^3.0.1"
 	}

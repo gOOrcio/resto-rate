@@ -6,6 +6,7 @@ import { generateSessionId } from '@resto-rate/ulid';
 import { db } from '$lib/server/db';
 import * as table from '@resto-rate/database';
 
+
 const DAY_IN_MS = 1000 * 60 * 60 * 24;
 
 export const sessionCookieName = 'auth-session';
