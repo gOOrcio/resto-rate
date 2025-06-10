@@ -1,0 +1,14 @@
+{
+  "name": "@resto-rate/config",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "main": "./env.ts",
+  "types": "./env.ts",
+  "exports": {
+    ".": "./env.ts"
+  },
+  "devDependencies": {
+    "typescript": "^5.0.0"
+  }
+}

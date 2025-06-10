@@ -1,0 +1,127 @@
+<script lang="ts">
+  import { onMount } from 'svelte';
+  import { apiClient } from '$lib/api';
+
+  let healthStatus: any = null;
+  let users: any = null;
+  let error: string | null = null;
+  let loading = false;
+
+  async function testHealthCheck() {
+    loading = true;
+    error = null;
+    try {
+      healthStatus = await apiClient.healthCheck();
+    } catch (err) {
+      error = `Health check failed: ${err}`;
+    } finally {
+      loading = false;
+    }
+  }
+
+  async function testGetUsers() {
+    loading = true;
+    error = null;
+    try {
+      users = await apiClient.getUsers();
+    } catch (err) {
+      error = `Get users failed: ${err}`;
+    } finally {
+      loading = false;
+    }
+  }
+
+  async function testCreateUser() {
+    loading = true;
+    error = null;
+    try {
+      const userData = {
+        username: `testuser_${Date.now()}`,
+        password: 'testpassword123',
+        age: 25
+      };
+      const result = await apiClient.createUser(userData);
+      console.log('User created:', result);
+      // Refresh users list
+      await testGetUsers();
+    } catch (err) {
+      error = `Create user failed: ${err}`;
+    } finally {
+      loading = false;
+    }
+  }
+
+  onMount(() => {
+    testHealthCheck();
+  });
+</script>
+
+<div class="container mx-auto p-6 max-w-4xl">
+  <h1 class="text-3xl font-bold mb-6">API Communication Test</h1>
+  
+  <p class="mb-6 text-gray-600">
+    This page demonstrates MessagePack communication between the SvelteKit frontend and Fastify API.
+  </p>
+
+  {#if error}
+    <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+      {error}
+    </div>
+  {/if}
+
+  <div class="space-y-6">
+    <!-- Health Check -->
+    <div class="bg-white p-6 rounded-lg shadow">
+      <h2 class="text-xl font-semibold mb-4">Health Check</h2>
+      <button 
+        on:click={testHealthCheck}
+        disabled={loading}
+        class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded disabled:opacity-50"
+      >
+        {loading ? 'Loading...' : 'Test Health Check'}
+      </button>
+      
+      {#if healthStatus}
+        <pre class="mt-4 bg-gray-100 p-4 rounded overflow-auto">{JSON.stringify(healthStatus, null, 2)}</pre>
+      {/if}
+    </div>
+
+    <!-- Users -->
+    <div class="bg-white p-6 rounded-lg shadow">
+      <h2 class="text-xl font-semibold mb-4">Users API</h2>
+      <div class="space-x-2 mb-4">
+        <button 
+          on:click={testGetUsers}
+          disabled={loading}
+          class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded disabled:opacity-50"
+        >
+          {loading ? 'Loading...' : 'Get Users'}
+        </button>
+        
+        <button 
+          on:click={testCreateUser}
+          disabled={loading}
+          class="bg-purple-500 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded disabled:opacity-50"
+        >
+          {loading ? 'Loading...' : 'Create Test User'}
+        </button>
+      </div>
+      
+      {#if users}
+        <pre class="bg-gray-100 p-4 rounded overflow-auto">{JSON.stringify(users, null, 2)}</pre>
+      {/if}
+    </div>
+
+    <!-- Instructions -->
+    <div class="bg-blue-50 p-6 rounded-lg">
+      <h3 class="text-lg font-semibold mb-2">Setup Instructions</h3>
+      <ol class="list-decimal list-inside space-y-2 text-sm">
+        <li>Make sure PostgreSQL is running and configured in your .env file</li>
+        <li>Start the API server: <code class="bg-gray-200 px-2 py-1 rounded">cd apps/api && bun run dev</code></li>
+        <li>The API will run on <code class="bg-gray-200 px-2 py-1 rounded">http://localhost:3001</code></li>
+        <li>All communication uses MessagePack for efficient binary serialization</li>
+        <li>Authentication shares the same session system as the web app</li>
+      </ol>
+    </div>
+  </div>
+</div> 
