@@ -1,9 +1,7 @@
 import type { FastifyPluginAsync } from 'fastify';
-import { db } from '../db';
-import { session, user, type AuthResponse } from '@resto-rate/database';
-import { eq, and, gt } from 'drizzle-orm';
+import { type AuthResponse } from '@resto-rate/database';
 import { requireAuth } from '../middleware/auth';
-import { requireQueryResult } from '@resto-rate/validation';
+import { authService } from '../services/auth.service';
 
 export const authRoutes: FastifyPluginAsync = async (fastify) => {
 	fastify.get('/verify', { preHandler: [requireAuth] }, async (request, reply) => {
@@ -27,43 +25,33 @@ export const authRoutes: FastifyPluginAsync = async (fastify) => {
 	});
 
 	fastify.get('/session/:sessionId', async (request, reply) => {
-		const { sessionId } = request.params as { sessionId: string };
+		try {
+			const { sessionId } = request.params as { sessionId: string };
 
-		const result = await db()
-			.select({
-				session: session,
-				user: {
-					id: user.id,
-					username: user.username,
-					age: user.age,
-					createdAt: user.createdAt,
-					updatedAt: user.updatedAt,
-				},
-			})
-			.from(session)
-			.innerJoin(user, eq(session.userId, user.id))
-			.where(and(eq(session.id, sessionId), gt(session.expiresAt, new Date())))
-			.limit(1);
+			const response = await authService.getSession(sessionId);
 
-		const sessionResult = requireQueryResult(result, 'Session not found or expired');
-
-		const response: AuthResponse = {
-			user: sessionResult.user,
-			sessionId: sessionId,
-		};
-
-		reply.header('content-type', 'application/msgpack');
-		return response;
+			reply.header('content-type', 'application/msgpack');
+			return response;
+		} catch (error) {
+			if ((error as Error).message === 'Session not found or expired') {
+				return reply.status(404).send({ error: 'Session not found or expired' });
+			}
+			return reply.status(500).send({ error: (error as Error).message });
+		}
 	});
 
 	fastify.delete('/logout', { preHandler: [requireAuth] }, async (request, reply) => {
-		if (!request.sessionId) {
-			return reply.status(400).send({ error: 'No session to logout' });
+		try {
+			if (!request.sessionId) {
+				return reply.status(400).send({ error: 'No session to logout' });
+			}
+
+			await authService.invalidateSession(request.sessionId);
+
+			reply.header('content-type', 'application/msgpack');
+			return { message: 'Logged out successfully' };
+		} catch (error) {
+			return reply.status(500).send({ error: (error as Error).message });
 		}
-
-		await db().delete(session).where(eq(session.id, request.sessionId));
-
-		reply.header('content-type', 'application/msgpack');
-		return { message: 'Logged out successfully' };
 	});
 };
