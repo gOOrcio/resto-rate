@@ -8,8 +8,9 @@ dotenv.config({ path: envPath });
 // Verify critical environment variables are loaded
 if (!process.env.DATABASE_URL) {
 	console.error('Environment variables loaded from:', envPath);
-	console.error('Available DATABASE_* variables:', 
-		Object.keys(process.env).filter(key => key.startsWith('DATABASE_'))
+	console.error(
+		'Available DATABASE_* variables:',
+		Object.keys(process.env).filter((key) => key.startsWith('DATABASE_'))
 	);
 	throw new Error('DATABASE_URL is not set. Please check your .env file in the project root.');
 }
@@ -19,4 +20,4 @@ export const env = {
 	DATABASE_MAX_CONNECTIONS: process.env.DATABASE_MAX_CONNECTIONS,
 	DATABASE_SSL: process.env.DATABASE_SSL,
 	NODE_ENV: process.env.NODE_ENV,
-}; 
+};

@@ -7,9 +7,9 @@ export function createSessionValidationResult(
 	return { session, user };
 }
 
-export function isValidSession(result: SessionValidationResult): result is { 
-	session: Session; 
-	user: Pick<User, 'id' | 'username'> 
+export function isValidSession(result: SessionValidationResult): result is {
+	session: Session;
+	user: Pick<User, 'id' | 'username'>;
 } {
 	return result.session !== null && result.user !== null;
-} 
+}

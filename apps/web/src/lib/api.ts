@@ -20,7 +20,7 @@ export class ApiClient {
 		const url = `${this.baseUrl}${endpoint}`;
 
 		const headers: Record<string, string> = {
-			'Content-Type': 'application/msgpack'
+			'Content-Type': 'application/msgpack',
 		};
 
 		// Merge existing headers
@@ -54,7 +54,7 @@ export class ApiClient {
 			...options,
 			headers,
 			body,
-			credentials: 'include'
+			credentials: 'include',
 		});
 
 		if (!response.ok) {
@@ -96,7 +96,7 @@ export class ApiClient {
 	async createUser(userData: { username: string; password: string; age?: number }) {
 		return this.request('/api/users', {
 			method: 'POST',
-			body: userData
+			body: userData,
 		});
 	}
 
@@ -105,7 +105,7 @@ export class ApiClient {
 			`/api/users/${id}`,
 			{
 				method: 'PUT',
-				body: userData
+				body: userData,
 			},
 			sessionId
 		);
@@ -147,7 +147,7 @@ export class ApiClient {
 			'/api/restaurants',
 			{
 				method: 'POST',
-				body: restaurantData
+				body: restaurantData,
 			},
 			sessionId
 		);

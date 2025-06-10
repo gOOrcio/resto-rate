@@ -1,7 +1,8 @@
 /**
- * Shared validation utilities for user input
+ * Essential validation utilities
  */
 
+// Basic input validation functions
 export function validateUsername(username: unknown): username is string {
 	return (
 		typeof username === 'string' &&
@@ -29,7 +30,12 @@ export function validateRating(rating: unknown): rating is number {
 }
 
 export function validatePriceRange(priceRange: unknown): priceRange is number {
-	return typeof priceRange === 'number' && priceRange >= 1 && priceRange <= 4 && Number.isInteger(priceRange);
+	return (
+		typeof priceRange === 'number' &&
+		priceRange >= 1 &&
+		priceRange <= 4 &&
+		Number.isInteger(priceRange)
+	);
 }
 
 export function validateUrl(url: unknown): url is string {
@@ -108,12 +114,11 @@ export function toQueryResult<T>(array: T[]): QueryResult<T> {
 }
 
 export function requireQueryResult<T>(
-	array: T[], 
+	array: T[],
 	notFoundMessage: string = 'Resource not found'
 ): T {
-	const result = toQueryResult(array);
-	if (!result.found || !result.item) {
+	if (array.length === 0) {
 		throw new Error(notFoundMessage);
 	}
-	return result.item;
-} 
+	return array[0]!;
+}

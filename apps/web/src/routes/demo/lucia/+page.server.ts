@@ -17,7 +17,7 @@ export const actions: Actions = {
 		auth.deleteSessionTokenCookie(event);
 
 		return redirect(302, '/demo/lucia/login');
-	}
+	},
 };
 
 function requireLogin() {

@@ -150,4 +150,4 @@ export const SESSION_CONSTANTS = {
 	COOKIE_NAME: 'auth-session',
 	HEADER_NAME: 'X-Session-Id',
 	BCRYPT_ROUNDS: 12,
-} as const; 
+} as const;

@@ -1,8 +1,6 @@
 import type { FastifyRequest, FastifyReply } from 'fastify';
-import { db } from '../db';
-import { session, user, type User } from '@resto-rate/database';
-import { eq, and, gt } from 'drizzle-orm';
-import { getFirstItem } from '@resto-rate/validation';
+import { type User } from '@resto-rate/database';
+import * as authService from '../services/auth.service';
 
 declare module 'fastify' {
 	interface FastifyRequest {
@@ -11,78 +9,41 @@ declare module 'fastify' {
 	}
 }
 
-export async function requireAuth(request: FastifyRequest, reply: FastifyReply) {
+function extractSessionId(request: FastifyRequest): string | null {
+	return (
+		request.headers.authorization?.replace('Bearer ', '') ||
+		(request.headers['x-session-id'] as string) ||
+		null
+	);
+}
+
+async function setUserFromSession(request: FastifyRequest, sessionId: string): Promise<boolean> {
 	try {
-		const sessionId =
-			request.headers.authorization?.replace('Bearer ', '') ||
-			(request.headers['x-session-id'] as string);
-
-		if (!sessionId) {
-			return reply.status(401).send({ error: 'Authentication required' });
-		}
-
-		const result = await db()
-			.select({
-				session: session,
-				user: {
-					id: user.id,
-					username: user.username,
-					age: user.age,
-					createdAt: user.createdAt,
-					updatedAt: user.updatedAt,
-				},
-			})
-			.from(session)
-			.innerJoin(user, eq(session.userId, user.id))
-			.where(and(eq(session.id, sessionId), gt(session.expiresAt, new Date())))
-			.limit(1);
-
-		const authResult = getFirstItem(result);
-		if (!authResult) {
-			return reply.status(401).send({ error: 'Invalid or expired session' });
-		}
-
+		const authResult = await authService.verifySession(sessionId);
 		request.user = authResult.user as User;
 		request.sessionId = sessionId;
-	} catch (error) {
-		request.log.error(error);
-		return reply.status(500).send({ error: 'Authentication error' });
+		return true;
+	} catch {
+		return false;
+	}
+}
+
+export async function requireAuth(request: FastifyRequest, reply: FastifyReply) {
+	const sessionId = extractSessionId(request);
+
+	if (!sessionId) {
+		return reply.status(401).send({ error: 'Authentication required' });
+	}
+
+	const success = await setUserFromSession(request, sessionId);
+	if (!success) {
+		return reply.status(401).send({ error: 'Invalid or expired session' });
 	}
 }
 
 export async function optionalAuth(request: FastifyRequest, _reply: FastifyReply) {
-	try {
-		const sessionId =
-			request.headers.authorization?.replace('Bearer ', '') ||
-			(request.headers['x-session-id'] as string);
-
-		if (!sessionId) {
-			return; // No auth required, continue
-		}
-
-		// Try to verify session
-		const result = await db()
-			.select({
-				session: session,
-				user: {
-					id: user.id,
-					username: user.username,
-					age: user.age,
-					createdAt: user.createdAt,
-					updatedAt: user.updatedAt,
-				},
-			})
-			.from(session)
-			.innerJoin(user, eq(session.userId, user.id))
-			.where(and(eq(session.id, sessionId), gt(session.expiresAt, new Date())))
-			.limit(1);
-
-		const authResult = getFirstItem(result);
-		if (authResult) {
-			request.user = authResult.user as User;
-			request.sessionId = sessionId;
-		}
-	} catch (error) {
-		request.log.error(error);
+	const sessionId = extractSessionId(request);
+	if (sessionId) {
+		await setUserFromSession(request, sessionId);
 	}
 }

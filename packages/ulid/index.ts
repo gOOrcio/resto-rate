@@ -47,4 +47,4 @@ export const generateUserId = (): string => generateId();
 export const generateSessionId = (): string => generateId();
 export const generateRestaurantId = (): string => generateId();
 export const generateReviewId = (): string => generateId();
-export const generateCategoryId = (): string => generateId(); 
+export const generateCategoryId = (): string => generateId();

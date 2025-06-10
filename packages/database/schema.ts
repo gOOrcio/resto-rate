@@ -121,4 +121,4 @@ export const reviewHelpful = pgTable(
 	(table) => ({
 		uniqueUserReview: unique().on(table.reviewId, table.userId),
 	})
-); 
+);

@@ -98,4 +98,4 @@ export type ApiError = {
 export type SessionValidationResult = {
 	session: Session | null;
 	user: Pick<User, 'id' | 'username'> | null;
-}; 
+};

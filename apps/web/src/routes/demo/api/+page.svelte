@@ -38,7 +38,7 @@
 			const userData = {
 				username: `testuser_${Date.now()}`,
 				password: 'testpassword123',
-				age: 25
+				age: 25,
 			};
 			const result = await apiClient.createUser(userData);
 			// User created successfully, refresh users list

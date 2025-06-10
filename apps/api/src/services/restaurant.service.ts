@@ -15,8 +15,7 @@ import { requireQueryResult } from '@resto-rate/validation';
 export interface RestaurantListOptions {
 	limit?: number;
 	offset?: number;
-	category?: string;
-	userId?: string; // for filtering by user's restaurants
+	userId?: string;
 }
 
 export interface RestaurantWithDetails extends Restaurant {
@@ -46,62 +45,39 @@ export interface RestaurantWithDetails extends Restaurant {
 	};
 }
 
-export class RestaurantService {
-	async getRestaurants(options: RestaurantListOptions = {}): Promise<{
-		restaurants: Restaurant[];
-		pagination: { limit: number; offset: number };
-	}> {
-		const { limit = 20, offset = 0, userId } = options;
+export async function getRestaurants(options: RestaurantListOptions = {}) {
+	const { limit = 20, offset = 0, userId } = options;
 
-		// Build where conditions
-		const conditions = [eq(restaurant.isActive, 1)];
-		if (userId) {
-			conditions.push(eq(restaurant.createdBy, userId));
-		}
-
-		const restaurants = await db()
-			.select({
-				id: restaurant.id,
-				name: restaurant.name,
-				description: restaurant.description,
-				cuisineType: restaurant.cuisineType,
-				address: restaurant.address,
-				latitude: restaurant.latitude,
-				longitude: restaurant.longitude,
-				phone: restaurant.phone,
-				website: restaurant.website,
-				priceRange: restaurant.priceRange,
-				averageRating: restaurant.averageRating,
-				totalReviews: restaurant.totalReviews,
-				isActive: restaurant.isActive,
-				createdBy: restaurant.createdBy,
-				createdAt: restaurant.createdAt,
-				updatedAt: restaurant.updatedAt,
-			})
-			.from(restaurant)
-			.where(and(...conditions))
-			.orderBy(desc(restaurant.createdAt))
-			.limit(Number(limit))
-			.offset(Number(offset));
-
-		return {
-			restaurants,
-			pagination: { limit: Number(limit), offset: Number(offset) },
-		};
+	const conditions = [eq(restaurant.isActive, 1)];
+	if (userId) {
+		conditions.push(eq(restaurant.createdBy, userId));
 	}
 
-	async getRestaurantById(id: string): Promise<RestaurantWithDetails> {
-		// Get restaurant details
-		const restaurantResult = await db()
-			.select()
-			.from(restaurant)
-			.where(eq(restaurant.id, id))
-			.limit(1);
+	const restaurants = await db()
+		.select()
+		.from(restaurant)
+		.where(and(...conditions))
+		.orderBy(desc(restaurant.createdAt))
+		.limit(Number(limit))
+		.offset(Number(offset));
 
-		const foundRestaurant = requireQueryResult(restaurantResult, 'Restaurant not found');
+	return {
+		restaurants,
+		pagination: { limit: Number(limit), offset: Number(offset) },
+	};
+}
 
-		// Get restaurant categories
-		const categories = await db()
+export async function getRestaurantById(id: string): Promise<RestaurantWithDetails> {
+	const restaurantResult = await db()
+		.select()
+		.from(restaurant)
+		.where(eq(restaurant.id, id))
+		.limit(1);
+
+	const foundRestaurant = requireQueryResult(restaurantResult, 'Restaurant not found');
+
+	const [categories, reviews] = await Promise.all([
+		db()
 			.select({
 				id: category.id,
 				name: category.name,
@@ -112,10 +88,9 @@ export class RestaurantService {
 			})
 			.from(category)
 			.innerJoin(restaurantCategory, eq(category.id, restaurantCategory.categoryId))
-			.where(eq(restaurantCategory.restaurantId, id));
+			.where(eq(restaurantCategory.restaurantId, id)),
 
-		// Get restaurant reviews
-		const reviews = await db()
+		db()
 			.select({
 				id: review.id,
 				rating: review.rating,
@@ -132,145 +107,108 @@ export class RestaurantService {
 			.innerJoin(user, eq(review.userId, user.id))
 			.where(eq(review.restaurantId, id))
 			.orderBy(desc(review.createdAt))
-			.limit(10);
+			.limit(10),
+	]);
 
-		return {
-			...foundRestaurant,
-			categories,
-			reviews,
-			reviewStats: {
-				averageRating: Number(foundRestaurant.averageRating) || 0,
-				totalReviews: foundRestaurant.totalReviews || 0,
-			},
-		};
+	return {
+		...foundRestaurant,
+		categories,
+		reviews,
+		reviewStats: {
+			averageRating: Number(foundRestaurant.averageRating) || 0,
+			totalReviews: foundRestaurant.totalReviews || 0,
+		},
+	};
+}
+
+export async function createRestaurant(
+	data: CreateRestaurantRequest,
+	createdBy: string
+): Promise<Restaurant> {
+	const { name, categoryIds = [], ...rest } = data;
+
+	if (!name) {
+		throw new Error('Restaurant name is required');
 	}
 
-	async createRestaurant(
-		data: CreateRestaurantRequest,
-		createdBy: string
-	): Promise<Restaurant> {
-		const {
-			name,
-			description,
-			cuisineType,
-			address,
-			latitude,
-			longitude,
-			phone,
-			website,
-			priceRange,
-			categoryIds = [],
-		} = data;
+	try {
+		const restaurantId = generateRestaurantId();
 
-		if (!name) {
-			throw new Error('Restaurant name is required');
-		}
-
-		try {
-			const restaurantId = generateRestaurantId();
-
-			// Create restaurant
-			const [newRestaurant] = await db()
-				.insert(restaurant)
-				.values({
-					id: restaurantId,
-					name,
-					description,
-					cuisineType,
-					address,
-					latitude: latitude?.toString(),
-					longitude: longitude?.toString(),
-					phone,
-					website,
-					priceRange,
-					createdBy,
-				})
-				.returning();
-
-			// Link categories if provided
-			if (categoryIds.length > 0) {
-				const categoryLinks = categoryIds.map((categoryId) => ({
-					id: generateId(),
-					restaurantId,
-					categoryId,
-				}));
-
-				await db().insert(restaurantCategory).values(categoryLinks);
-			}
-
-			return newRestaurant!;
-		} catch (error) {
-			if ((error as Error).message.includes('unique')) {
-				throw new Error('Restaurant with this name already exists');
-			}
-			throw error;
-		}
-	}
-
-	async updateRestaurant(
-		id: string,
-		data: Partial<CreateRestaurantRequest>,
-		userId: string
-	): Promise<Restaurant> {
-		// Check if restaurant exists and user owns it
-		const existingRestaurant = await db()
-			.select({ createdBy: restaurant.createdBy })
-			.from(restaurant)
-			.where(eq(restaurant.id, id))
-			.limit(1);
-
-		const foundRestaurant = requireQueryResult(existingRestaurant, 'Restaurant not found');
-
-		if (foundRestaurant.createdBy !== userId) {
-			throw new Error('You can only update restaurants you created');
-		}
-
-		// Update restaurant
-		const [updatedRestaurant] = await db()
-			.update(restaurant)
-			.set({
-				...data,
-				latitude: data.latitude?.toString(),
-				longitude: data.longitude?.toString(),
-				updatedAt: new Date(),
+		const [newRestaurant] = await db()
+			.insert(restaurant)
+			.values({
+				id: restaurantId,
+				name,
+				...rest,
+				latitude: rest.latitude?.toString(),
+				longitude: rest.longitude?.toString(),
+				createdBy,
 			})
-			.where(eq(restaurant.id, id))
 			.returning();
 
-		return updatedRestaurant!;
-	}
-
-	async deleteRestaurant(id: string, userId: string): Promise<void> {
-		// Check if restaurant exists and user owns it
-		const existingRestaurant = await db()
-			.select({ createdBy: restaurant.createdBy })
-			.from(restaurant)
-			.where(eq(restaurant.id, id))
-			.limit(1);
-
-		const foundRestaurant = requireQueryResult(existingRestaurant, 'Restaurant not found');
-
-		if (foundRestaurant.createdBy !== userId) {
-			throw new Error('You can only delete restaurants you created');
+		// Link categories if provided
+		if (categoryIds.length > 0) {
+			const categoryLinks = categoryIds.map((categoryId) => ({
+				id: generateId(),
+				restaurantId,
+				categoryId,
+			}));
+			await db().insert(restaurantCategory).values(categoryLinks);
 		}
 
-		// Soft delete (set isActive to false)
-		await db()
-			.update(restaurant)
-			.set({ isActive: 0, updatedAt: new Date() })
-			.where(eq(restaurant.id, id));
-	}
-
-	async checkOwnership(restaurantId: string, userId: string): Promise<boolean> {
-		const existingRestaurant = await db()
-			.select({ createdBy: restaurant.createdBy })
-			.from(restaurant)
-			.where(eq(restaurant.id, restaurantId))
-			.limit(1);
-
-		const foundRestaurant = requireQueryResult(existingRestaurant, 'Restaurant not found');
-		return foundRestaurant.createdBy === userId;
+		return newRestaurant!;
+	} catch (error) {
+		if ((error as Error).message.includes('unique')) {
+			throw new Error('Restaurant with this name already exists');
+		}
+		throw error;
 	}
 }
 
-export const restaurantService = new RestaurantService(); 
+export async function updateRestaurant(
+	id: string,
+	data: Partial<CreateRestaurantRequest>,
+	userId: string
+): Promise<Restaurant> {
+	await checkOwnership(id, userId);
+
+	const [updatedRestaurant] = await db()
+		.update(restaurant)
+		.set({
+			...data,
+			latitude: data.latitude?.toString(),
+			longitude: data.longitude?.toString(),
+			updatedAt: new Date(),
+		})
+		.where(eq(restaurant.id, id))
+		.returning();
+
+	if (!updatedRestaurant) {
+		throw new Error('Restaurant not found');
+	}
+
+	return updatedRestaurant;
+}
+
+export async function deleteRestaurant(id: string, userId: string): Promise<void> {
+	await checkOwnership(id, userId);
+
+	await db()
+		.update(restaurant)
+		.set({ isActive: 0, updatedAt: new Date() })
+		.where(eq(restaurant.id, id));
+}
+
+async function checkOwnership(restaurantId: string, userId: string): Promise<void> {
+	const result = await db()
+		.select({ createdBy: restaurant.createdBy })
+		.from(restaurant)
+		.where(eq(restaurant.id, restaurantId))
+		.limit(1);
+
+	const foundRestaurant = requireQueryResult(result, 'Restaurant not found');
+
+	if (foundRestaurant.createdBy !== userId) {
+		throw new Error('You can only modify restaurants you created');
+	}
+}
