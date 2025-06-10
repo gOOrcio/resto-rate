@@ -2,6 +2,7 @@ import type { FastifyRequest, FastifyReply } from 'fastify';
 import { db } from '../db';
 import { session, user, type User } from '@resto-rate/database';
 import { eq, and, gt } from 'drizzle-orm';
+import { getFirstItem } from '@resto-rate/validation';
 
 declare module 'fastify' {
 	interface FastifyRequest {
@@ -20,7 +21,6 @@ export async function requireAuth(request: FastifyRequest, reply: FastifyReply) 
 			return reply.status(401).send({ error: 'Authentication required' });
 		}
 
-		// Verify session and get user
 		const result = await db()
 			.select({
 				session: session,
@@ -37,12 +37,12 @@ export async function requireAuth(request: FastifyRequest, reply: FastifyReply) 
 			.where(and(eq(session.id, sessionId), gt(session.expiresAt, new Date())))
 			.limit(1);
 
-		if (result.length === 0) {
+		const authResult = getFirstItem(result);
+		if (!authResult) {
 			return reply.status(401).send({ error: 'Invalid or expired session' });
 		}
 
-		// Attach user to request
-		request.user = result[0].user as User;
+		request.user = authResult.user as User;
 		request.sessionId = sessionId;
 	} catch (error) {
 		request.log.error(error);
@@ -77,12 +77,12 @@ export async function optionalAuth(request: FastifyRequest, _reply: FastifyReply
 			.where(and(eq(session.id, sessionId), gt(session.expiresAt, new Date())))
 			.limit(1);
 
-		if (result.length > 0) {
-			request.user = result[0].user as User;
+		const authResult = getFirstItem(result);
+		if (authResult) {
+			request.user = authResult.user as User;
 			request.sessionId = sessionId;
 		}
 	} catch (error) {
 		request.log.error(error);
-		// Don't fail for optional auth, just continue without user
 	}
 }

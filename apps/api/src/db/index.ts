@@ -7,7 +7,6 @@ let db: ReturnType<typeof drizzle> | null = null;
 function getDb() {
 	if (db) return db;
 
-	// Import config after environment variables are loaded
 	const { getDatabaseConfig } = require('@resto-rate/config');
 	const dbConfig = getDatabaseConfig();
 
@@ -24,5 +23,4 @@ function getDb() {
 	return db;
 }
 
-// Export a proxy that lazy-loads the db
 export { getDb as db };

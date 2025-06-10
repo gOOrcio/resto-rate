@@ -12,9 +12,9 @@ import {
 import { eq, desc } from 'drizzle-orm';
 import { requireAuth, optionalAuth } from '../middleware/auth';
 import { generateRestaurantId, generateId } from '@resto-rate/ulid';
+import { requireQueryResult } from '@resto-rate/validation';
 
 export const restaurantRoutes: FastifyPluginAsync = async (fastify) => {
-	// Get all restaurants with optional filtering
 	fastify.get('/', { preHandler: [optionalAuth] }, async (request, reply) => {
 		const { limit = 20, offset = 0 } = request.query as {
 			limit?: number;
@@ -56,7 +56,6 @@ export const restaurantRoutes: FastifyPluginAsync = async (fastify) => {
 		};
 	});
 
-	// Get restaurant by ID with reviews
 	fastify.get('/:id', { preHandler: [optionalAuth] }, async (request, reply) => {
 		const { id } = request.params as { id: string };
 
@@ -67,9 +66,7 @@ export const restaurantRoutes: FastifyPluginAsync = async (fastify) => {
 			.where(eq(restaurant.id, id))
 			.limit(1);
 
-		if (restaurantResult.length === 0) {
-			return reply.status(404).send({ error: 'Restaurant not found' });
-		}
+		const foundRestaurant = requireQueryResult(restaurantResult, 'Restaurant not found');
 
 		// Get restaurant categories
 		const categories = await db()
@@ -85,7 +82,6 @@ export const restaurantRoutes: FastifyPluginAsync = async (fastify) => {
 			.innerJoin(restaurantCategory, eq(category.id, restaurantCategory.categoryId))
 			.where(eq(restaurantCategory.restaurantId, id));
 
-		// Get recent reviews
 		const reviews = await db()
 			.select({
 				id: review.id,
@@ -106,11 +102,11 @@ export const restaurantRoutes: FastifyPluginAsync = async (fastify) => {
 			.limit(10);
 
 		const response: RestaurantResponse = {
-			...restaurantResult[0],
+			...foundRestaurant,
 			categories,
 			reviewStats: {
-				averageRating: Number(restaurantResult[0].averageRating) || 0,
-				totalReviews: restaurantResult[0].totalReviews || 0,
+				averageRating: Number(foundRestaurant.averageRating) || 0,
+				totalReviews: foundRestaurant.totalReviews || 0,
 			},
 		};
 
@@ -206,11 +202,9 @@ export const restaurantRoutes: FastifyPluginAsync = async (fastify) => {
 				.where(eq(restaurant.id, id))
 				.limit(1);
 
-			if (existingRestaurant.length === 0) {
-				return reply.status(404).send({ error: 'Restaurant not found' });
-			}
+			const foundRestaurant = requireQueryResult(existingRestaurant, 'Restaurant not found');
 
-			if (existingRestaurant[0].createdBy !== request.user.id) {
+			if (foundRestaurant.createdBy !== request.user.id) {
 				return reply.status(403).send({ error: 'You can only update restaurants you created' });
 			}
 
@@ -246,11 +240,9 @@ export const restaurantRoutes: FastifyPluginAsync = async (fastify) => {
 			.where(eq(restaurant.id, id))
 			.limit(1);
 
-		if (existingRestaurant.length === 0) {
-			return reply.status(404).send({ error: 'Restaurant not found' });
-		}
+		const foundRestaurant = requireQueryResult(existingRestaurant, 'Restaurant not found');
 
-		if (existingRestaurant[0].createdBy !== request.user.id) {
+		if (foundRestaurant.createdBy !== request.user.id) {
 			return reply.status(403).send({ error: 'You can only delete restaurants you created' });
 		}
 

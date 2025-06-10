@@ -75,9 +75,45 @@ export function createValidationError(field: string, message: string): Validatio
  * Combine multiple validation results
  */
 export function combineValidationResults(...results: ValidationResult[]): ValidationResult {
-	const errors = results.flatMap(result => result.errors);
+	const errors = results.flatMap((result) => result.errors);
 	return {
 		valid: errors.length === 0,
-		errors
+		errors,
 	};
+}
+
+// Array utility functions for safe access
+export function getFirstItem<T>(array: T[]): T | null {
+	return array.length > 0 ? array[0]! : null;
+}
+
+export function requireFirstItem<T>(array: T[], errorMessage: string = 'Item not found'): T {
+	if (array.length === 0) {
+		throw new Error(errorMessage);
+	}
+	return array[0]!;
+}
+
+// Database query result utilities
+export type QueryResult<T> = {
+	found: boolean;
+	item: T | null;
+};
+
+export function toQueryResult<T>(array: T[]): QueryResult<T> {
+	return {
+		found: array.length > 0,
+		item: array.length > 0 ? array[0]! : null,
+	};
+}
+
+export function requireQueryResult<T>(
+	array: T[], 
+	notFoundMessage: string = 'Resource not found'
+): T {
+	const result = toQueryResult(array);
+	if (!result.found || !result.item) {
+		throw new Error(notFoundMessage);
+	}
+	return result.item;
 } 
