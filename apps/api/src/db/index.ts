@@ -1,13 +1,13 @@
 import { drizzle } from 'drizzle-orm/postgres-js';
 import postgres from 'postgres';
 import * as schema from '@resto-rate/database';
+import { getDatabaseConfig } from '@resto-rate/config';
 
 let db: ReturnType<typeof drizzle> | null = null;
 
 function getDb() {
 	if (db) return db;
 
-	const { getDatabaseConfig } = require('@resto-rate/config');
 	const dbConfig = getDatabaseConfig();
 
 	if (!dbConfig.url) {

@@ -33,25 +33,54 @@ async function startServer() {
 		await server.register(cors, {
 			origin: apiConfig.corsOrigin,
 			credentials: true,
+			methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+			allowedHeaders: ['Content-Type', 'Authorization', 'X-Session-Id'],
 		});
 
 		server.addContentTypeParser('application/msgpack', { parseAs: 'buffer' }, (req, body, done) => {
 			try {
+				// Handle empty bodies gracefully
+				if (!body || (body as Buffer).length === 0) {
+					done(null, null);
+					return;
+				}
+				
 				const parsed = decode(body as Uint8Array);
 				done(null, parsed);
 			} catch (err) {
+				console.error('❌ MessagePack parsing error:', err);
 				done(err as Error);
 			}
 		});
 
 		server.addHook('onSend', async (request, reply, payload) => {
+			// Always use MessagePack for API responses
 			if (reply.getHeader('content-type') === 'application/msgpack') {
-				return Buffer.from(encode(JSON.parse(payload as string)));
+				try {
+					let data;
+					if (typeof payload === 'string') {
+						data = JSON.parse(payload);
+					} else if (Buffer.isBuffer(payload)) {
+						data = JSON.parse(payload.toString());
+					} else {
+						data = payload;
+					}
+					
+					const encoded = encode(data);
+					return Buffer.from(encoded);
+				} catch (error) {
+					console.error('❌ Critical MessagePack encoding error:', error);
+					// If MessagePack encoding fails, this is a server error
+					reply.status(500);
+					reply.header('content-type', 'application/msgpack');
+					return Buffer.from(encode({ error: 'Internal server error during response encoding' }));
+				}
 			}
 			return payload;
 		});
 
-		server.get('/health', async () => {
+		server.get('/health', async (request, reply) => {
+			reply.header('content-type', 'application/json');
 			return {
 				status: 'ok',
 				timestamp: new Date().toISOString(),

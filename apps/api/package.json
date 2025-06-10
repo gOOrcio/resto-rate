@@ -11,14 +11,22 @@
 		"lint": "eslint src --fix",
 		"check-types": "tsc --noEmit",
 		"db:push": "drizzle-kit push",
+		"db:generate": "drizzle-kit generate",
 		"db:migrate": "drizzle-kit migrate",
-		"db:studio": "drizzle-kit studio"
+		"db:studio": "drizzle-kit studio",
+		"db:drop": "drizzle-kit drop",
+		"db:check": "drizzle-kit check",
+		"db:up": "drizzle-kit up",
+		"db:seed": "tsx src/scripts/seed.ts"
 	},
 	"dependencies": {
 		"@fastify/cors": "^11.0.1",
 		"@fastify/env": "^5.0.2",
 		"@fastify/helmet": "^13.0.1",
 		"@msgpack/msgpack": "^3.1.2",
+		"@node-rs/argon2": "^2.0.2",
+		"@oslojs/crypto": "^1.0.1",
+		"@oslojs/encoding": "^1.1.0",
 		"@resto-rate/config": "workspace:*",
 		"@resto-rate/constants": "workspace:*",
 		"@resto-rate/database": "workspace:*",

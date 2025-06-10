@@ -37,11 +37,18 @@ export async function handleRoute<T>(
 ): Promise<T | void> {
 	try {
 		const result = await operation();
+		
+		// Always use MessagePack for responses
 		reply.header('content-type', 'application/msgpack');
 		return result;
 	} catch (error) {
 		const message = (error as Error).message;
 		const status = getStatusFromError(message);
+		
+		console.error('🚨 Route error:', { message, status });
+		
+		// Use MessagePack for error responses too
+		reply.header('content-type', 'application/msgpack');
 		return reply.status(status).send({ error: message });
 	}
 }

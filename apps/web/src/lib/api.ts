@@ -1,9 +1,19 @@
 import { encode, decode } from '@msgpack/msgpack';
-import { browser } from '$app/environment';
-import { getWebConfig } from '@resto-rate/config';
 
-const webConfig = getWebConfig();
-const API_BASE_URL = browser ? webConfig.apiUrl : webConfig.apiUrl;
+// Client-side API URL - use environment variable or fallback to localhost in dev
+const API_BASE_URL =
+	typeof window !== 'undefined'
+		? window.location.hostname === 'localhost'
+			? 'http://localhost:3001/api'
+			: '/api'
+		: 'http://localhost:3001/api';
+
+type CreateRestaurantRequest = {
+	name: string;
+	address?: string;
+	rating?: number; // 1-5 scale
+	comment?: string;
+};
 
 export class ApiClient {
 	private baseUrl: string;
@@ -18,83 +28,88 @@ export class ApiClient {
 		sessionId?: string
 	): Promise<T> {
 		const url = `${this.baseUrl}${endpoint}`;
-
-		const headers: Record<string, string> = {
-			'Content-Type': 'application/msgpack',
+		const headers: HeadersInit = {
+			'Accept': 'application/msgpack', // Always request MessagePack responses
 		};
 
-		// Merge existing headers
-		if (options.headers) {
-			Object.entries(options.headers).forEach(([key, value]) => {
-				if (typeof value === 'string') {
-					headers[key] = value;
-				}
-			});
+		// Only set Content-Type for requests with a body
+		if (options.body !== undefined) {
+			headers['Content-Type'] = 'application/msgpack';
 		}
 
-		// Add session ID if provided
 		if (sessionId) {
-			headers['X-Session-Id'] = sessionId;
+			headers['x-session-id'] = sessionId;
 		}
 
-		// Encode body if it exists
-		let body: BodyInit | undefined;
-		if (
-			options.body &&
-			typeof options.body === 'object' &&
-			!(options.body instanceof FormData) &&
-			!(options.body instanceof URLSearchParams)
-		) {
+		let body: Uint8Array | undefined;
+		if (options.body !== undefined) {
 			body = encode(options.body);
-		} else {
-			body = options.body as BodyInit;
 		}
 
-		const response = await fetch(url, {
-			...options,
-			headers,
-			body,
-			credentials: 'include',
-		});
+		try {
+			console.log(`🌐 API Request: ${options.method || 'GET'} ${url}`);
+			
+			const response = await fetch(url, {
+				...options,
+				headers: {
+					...headers,
+					...options.headers,
+				},
+				body,
+			});
 
-		if (!response.ok) {
-			const errorText = await response.text();
-			throw new Error(`API Error: ${response.status} ${errorText}`);
+			console.log(`📡 Response: ${response.status} ${response.statusText}`);
+
+			if (!response.ok) {
+				// Even error responses should be MessagePack
+				try {
+					const arrayBuffer = await response.arrayBuffer();
+					const errorData = decode(new Uint8Array(arrayBuffer)) as { error: string };
+					throw new Error(errorData.error || `HTTP ${response.status}`);
+				} catch {
+					// Last resort fallback if error response isn't MessagePack
+					const text = await response.text();
+					console.warn('⚠️ Error response not in MessagePack format:', text);
+					throw new Error(`HTTP ${response.status}: ${text}`);
+				}
+			}
+
+			// Always expect MessagePack responses
+			const arrayBuffer = await response.arrayBuffer();
+			const data = decode(new Uint8Array(arrayBuffer)) as T;
+
+			console.log(`✅ API Success:`, data);
+			return data;
+		} catch (error) {
+			console.error('❌ API request failed:', { url, error });
+			throw error;
 		}
-
-		const contentType = response.headers.get('content-type');
-		if (contentType?.includes('application/msgpack')) {
-			const buffer = await response.arrayBuffer();
-			return decode(new Uint8Array(buffer)) as T;
-		}
-
-		return response.json();
 	}
 
-	// Auth endpoints
+	// Auth methods
 	async verifySession(sessionId: string) {
-		return this.request('/api/auth/verify', { method: 'GET' }, sessionId);
+		return this.request('/auth/verify', {}, sessionId);
 	}
 
 	async getSession(sessionId: string) {
-		return this.request(`/api/auth/session/${sessionId}`, { method: 'GET' });
+		return this.request(`/auth/session/${sessionId}`);
 	}
 
 	async logout(sessionId: string) {
-		return this.request('/api/auth/logout', { method: 'DELETE' }, sessionId);
+		return this.request('/auth/logout', { method: 'DELETE' }, sessionId);
 	}
 
-	// User endpoints
+	// User methods
 	async getUsers(sessionId?: string) {
-		return this.request('/api/users', { method: 'GET' }, sessionId);
+		return this.request('/users', {}, sessionId);
 	}
 
 	async getUser(id: string, sessionId?: string) {
-		return this.request(`/api/users/${id}`, { method: 'GET' }, sessionId);
+		return this.request(`/users/${id}`, {}, sessionId);
 	}
 
 	async createUser(userData: { username: string; password: string; age?: number }) {
-		return this.request('/api/users', {
+		return this.request('/users', {
 			method: 'POST',
 			body: userData,
 		});
@@ -102,7 +117,7 @@ export class ApiClient {
 
 	async updateUser(id: string, userData: { username?: string; age?: number }, sessionId: string) {
 		return this.request(
-			`/api/users/${id}`,
+			`/users/${id}`,
 			{
 				method: 'PUT',
 				body: userData,
@@ -112,51 +127,61 @@ export class ApiClient {
 	}
 
 	async deleteUser(id: string, sessionId: string) {
-		return this.request(`/api/users/${id}`, { method: 'DELETE' }, sessionId);
+		return this.request(`/users/${id}`, { method: 'DELETE' }, sessionId);
 	}
 
 	async getCurrentUser(sessionId: string) {
-		return this.request('/api/users/me/profile', { method: 'GET' }, sessionId);
+		return this.request('/users/me/profile', {}, sessionId);
 	}
 
-	// Restaurant endpoints
-	async getRestaurants(sessionId?: string) {
-		return this.request('/api/restaurants', { method: 'GET' }, sessionId);
+	// Restaurant methods
+	async getRestaurants() {
+		return this.request('/restaurants');
 	}
 
-	async getRestaurant(id: string, sessionId?: string) {
-		return this.request(`/api/restaurants/${id}`, { method: 'GET' }, sessionId);
+	async getRestaurant(id: string) {
+		return this.request(`/restaurants/${id}`);
 	}
 
-	async createRestaurant(
-		restaurantData: {
-			name: string;
-			description?: string;
-			cuisineType?: string;
-			address?: string;
-			latitude?: number;
-			longitude?: number;
-			phone?: string;
-			website?: string;
-			priceRange?: number;
-			categoryIds?: string[];
-		},
-		sessionId: string
-	) {
-		return this.request(
-			'/api/restaurants',
-			{
-				method: 'POST',
-				body: restaurantData,
-			},
-			sessionId
-		);
+	async createRestaurant(restaurantData: CreateRestaurantRequest) {
+		return this.request('/restaurants', {
+			method: 'POST',
+			body: restaurantData,
+		});
 	}
 
-	// Health check
+	async deleteRestaurant(id: string) {
+		return this.request(`/restaurants/${id}`, { method: 'DELETE' });
+	}
+
+	// Health check (not under /api prefix) - Uses JSON for monitoring compatibility
 	async healthCheck() {
-		return this.request('/health', { method: 'GET' });
+		const healthUrl = this.baseUrl.replace('/api', '/health');
+		const headers: HeadersInit = {
+			'Accept': 'application/json', // Health check uses JSON for monitoring systems
+		};
+
+		try {
+			console.log(`🌐 Health Check: GET ${healthUrl}`);
+			
+			const response = await fetch(healthUrl, { headers });
+
+			console.log(`📡 Response: ${response.status} ${response.statusText}`);
+
+			if (!response.ok) {
+				throw new Error(`HTTP ${response.status}`);
+			}
+
+			const data = await response.json(); // Parse as JSON for health checks
+
+			console.log(`✅ Health Check Success:`, data);
+			return data;
+		} catch (error) {
+			console.error('❌ Health check failed:', { url: healthUrl, error });
+			throw error;
+		}
 	}
 }
 
 export const apiClient = new ApiClient();
+export default apiClient;

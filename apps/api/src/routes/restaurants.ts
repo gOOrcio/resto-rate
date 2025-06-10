@@ -1,83 +1,45 @@
 import type { FastifyPluginAsync } from 'fastify';
 import { type CreateRestaurantRequest } from '@resto-rate/database';
-import { requireAuth, optionalAuth } from '../middleware/auth';
 import * as restaurantService from '../services/restaurant.service';
-import { handleRoute, successMessage, requireUser } from '../utils/route-helpers';
+import { handleRoute } from '../utils/route-helpers';
 
 export const restaurantRoutes: FastifyPluginAsync = async (fastify) => {
 	// Get all restaurants
-	fastify.get('/', { preHandler: [optionalAuth] }, async (request, reply) => {
+	fastify.get('/', async (request, reply) => {
 		return handleRoute(reply, async () => {
-			const { limit = 20, offset = 0 } = request.query as {
-				limit?: number;
-				offset?: number;
-			};
-
-			const result = await restaurantService.getRestaurants({
-				limit: Number(limit),
-				offset: Number(offset),
-			});
-
-			return {
-				...result,
-				authenticated: !!request.user,
-			};
+			const restaurants = await restaurantService.getRestaurants();
+			return { restaurants };
 		});
 	});
 
 	// Get restaurant by ID
-	fastify.get('/:id', { preHandler: [optionalAuth] }, async (request, reply) => {
+	fastify.get('/:id', async (request, reply) => {
 		return handleRoute(reply, async () => {
 			const { id } = request.params as { id: string };
 			const restaurant = await restaurantService.getRestaurantById(id);
 
-			return {
-				restaurant: {
-					...restaurant,
-					reviewStats: restaurant.reviewStats,
-				},
-				reviews: restaurant.reviews,
-				authenticated: !!request.user,
-			};
+			if (!restaurant) {
+				throw new Error('Restaurant not found');
+			}
+
+			return { restaurant };
 		});
 	});
 
-	// Create restaurant (requires auth)
-	fastify.post<{ Body: CreateRestaurantRequest }>(
-		'/',
-		{ preHandler: [requireAuth] },
-		async (request, reply) => {
-			return handleRoute(reply, async () => {
-				const userId = requireUser(request.user?.id);
-				const restaurant = await restaurantService.createRestaurant(request.body, userId);
-				return { restaurant };
-			});
-		}
-	);
+	// Create restaurant
+	fastify.post<{ Body: CreateRestaurantRequest }>('/', async (request, reply) => {
+		return handleRoute(reply, async () => {
+			const restaurant = await restaurantService.createRestaurant(request.body);
+			return { restaurant };
+		});
+	});
 
-	// Update restaurant (requires auth, owner only)
-	fastify.put<{ Body: Partial<CreateRestaurantRequest>; Params: { id: string } }>(
-		'/:id',
-		{ preHandler: [requireAuth] },
-		async (request, reply) => {
-			return handleRoute(reply, async () => {
-				const { id } = request.params;
-				const userId = requireUser(request.user?.id);
-
-				const restaurant = await restaurantService.updateRestaurant(id, request.body, userId);
-				return { restaurant };
-			});
-		}
-	);
-
-	// Delete restaurant (requires auth, owner only)
-	fastify.delete('/:id', { preHandler: [requireAuth] }, async (request, reply) => {
+	// Delete restaurant
+	fastify.delete('/:id', async (request, reply) => {
 		return handleRoute(reply, async () => {
 			const { id } = request.params as { id: string };
-			const userId = requireUser(request.user?.id);
-
-			await restaurantService.deleteRestaurant(id, userId);
-			return successMessage('Restaurant deleted successfully');
+			await restaurantService.deleteRestaurant(id);
+			return { message: 'Restaurant deleted successfully' };
 		});
 	});
 };

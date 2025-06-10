@@ -3,6 +3,28 @@
  * This package provides type-safe environment variable access across all apps
  */
 
+import { config as loadDotenv } from 'dotenv';
+import { resolve } from 'path';
+import { fileURLToPath } from 'url';
+import { dirname } from 'path';
+
+// Get __dirname equivalent for ES modules
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
+// Try to load .env from common locations
+try {
+	// Try root directory first (most common)
+	loadDotenv({ path: resolve(process.cwd(), '.env') });
+} catch {
+	try {
+		// Try project root relative to this package
+		loadDotenv({ path: resolve(__dirname, '../../../.env') });
+	} catch {
+		// Fallback - no .env file found, use process.env
+	}
+}
+
 export interface DatabaseConfig {
 	url: string;
 	maxConnections?: number;

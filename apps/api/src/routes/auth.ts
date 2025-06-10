@@ -5,6 +5,35 @@ import * as authService from '../services/auth.service';
 import { handleRoute, successMessage, requireUser } from '../utils/route-helpers';
 
 export const authRoutes: FastifyPluginAsync = async (fastify) => {
+	// Login endpoint
+	fastify.post('/login', async (request, reply) => {
+		return handleRoute(reply, async () => {
+			const { username, password } = request.body as { username: string; password: string };
+			
+			if (!username || !password) {
+				throw new Error('Username and password are required');
+			}
+
+			const result = await authService.login(username, password);
+			return result;
+		});
+	});
+
+	// Register endpoint
+	fastify.post('/register', async (request, reply) => {
+		return handleRoute(reply, async () => {
+			const { username, password, age } = request.body as { username: string; password: string; age?: number };
+			
+			if (!username || !password) {
+				throw new Error('Username and password are required');
+			}
+
+			const result = await authService.register(username, password, age);
+			return result;
+		});
+	});
+
+	// Verify session endpoint
 	fastify.get('/verify', { preHandler: [requireAuth] }, async (request, reply) => {
 		return handleRoute(reply, async () => {
 			requireUser(request.user?.id);
@@ -25,6 +54,7 @@ export const authRoutes: FastifyPluginAsync = async (fastify) => {
 		});
 	});
 
+	// Get session by ID endpoint
 	fastify.get('/session/:sessionId', async (request, reply) => {
 		return handleRoute(reply, async () => {
 			const { sessionId } = request.params as { sessionId: string };
@@ -32,6 +62,7 @@ export const authRoutes: FastifyPluginAsync = async (fastify) => {
 		});
 	});
 
+	// Logout endpoint
 	fastify.delete('/logout', { preHandler: [requireAuth] }, async (request, reply) => {
 		return handleRoute(reply, async () => {
 			const sessionId = requireUser(request.sessionId);
