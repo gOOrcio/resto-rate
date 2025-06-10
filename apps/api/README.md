@@ -14,12 +14,14 @@ Fastify-based API server with Drizzle ORM, msgpack communication, and shared aut
 ## Setup
 
 1. Install dependencies:
+
 ```bash
 bun install
 ```
 
 2. Set up environment variables:
-Create a `.env` file with:
+   Create a `.env` file with:
+
 ```
 DATABASE_URL="postgresql://username:password@localhost:5432/resto_rate"
 PORT=3001
@@ -27,11 +29,13 @@ NODE_ENV=development
 ```
 
 3. Run database migrations (if needed):
+
 ```bash
 bun run db:push
 ```
 
 4. Start the development server:
+
 ```bash
 bun run dev
 ```
@@ -39,11 +43,13 @@ bun run dev
 ## API Endpoints
 
 ### Authentication
+
 - `GET /api/auth/verify` - Verify current session
 - `GET /api/auth/session/:sessionId` - Get session info
 - `DELETE /api/auth/logout` - Logout and delete session
 
 ### Users
+
 - `GET /api/users` - Get all users (public)
 - `GET /api/users/:id` - Get user by ID (public)
 - `POST /api/users` - Create new user (public)
@@ -52,6 +58,7 @@ bun run dev
 - `GET /api/users/me/profile` - Get current user profile (requires auth)
 
 ### Health Check
+
 - `GET /health` - Server health status
 
 ## Authentication
@@ -68,13 +75,14 @@ The API shares the same database schema with the web app, so sessions created in
 All API responses can be returned in MessagePack format by setting the `Content-Type` header to `application/msgpack`. This provides more efficient serialization compared to JSON.
 
 Example usage:
+
 ```javascript
 // Request with msgpack response
 fetch('/api/users', {
-  headers: {
-    'Content-Type': 'application/msgpack'
-  }
-})
+	headers: {
+		'Content-Type': 'application/msgpack',
+	},
+});
 ```
 
 ## Development

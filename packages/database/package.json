@@ -1,0 +1,22 @@
+{
+	"name": "@resto-rate/database",
+	"version": "0.0.1",
+	"private": true,
+	"type": "module",
+	"main": "./index.ts",
+	"types": "./index.ts",
+	"exports": {
+		".": "./index.ts",
+		"./schema": "./schema.ts",
+		"./types": "./types.ts"
+	},
+	"dependencies": {
+		"drizzle-orm": "^0.44.2"
+	},
+	"devDependencies": {
+		"typescript": "^5.0.0"
+	},
+	"peerDependencies": {
+		"drizzle-orm": "^0.44.2"
+	}
+} 

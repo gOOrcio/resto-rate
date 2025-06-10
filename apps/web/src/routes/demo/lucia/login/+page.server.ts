@@ -1,10 +1,11 @@
 import { hash, verify } from '@node-rs/argon2';
-import { generateUserId } from '$lib/ulid';
+import { generateUserId } from '@resto-rate/ulid';
 import { fail, redirect } from '@sveltejs/kit';
 import { eq } from 'drizzle-orm';
 import * as auth from '$lib/server/auth';
 import { db } from '$lib/server/db';
-import * as table from '$lib/server/db/schema';
+import * as table from '@resto-rate/database';
+import { validateUsername, validatePassword } from '@resto-rate/validation';
 import type { Actions, PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async (event) => {
@@ -86,17 +87,4 @@ export const actions: Actions = {
 	}
 };
 
-// generateUserId is now imported from $lib/ulid
-
-function validateUsername(username: unknown): username is string {
-	return (
-		typeof username === 'string' &&
-		username.length >= 3 &&
-		username.length <= 31 &&
-		/^[a-z0-9_-]+$/.test(username)
-	);
-}
-
-function validatePassword(password: unknown): password is string {
-	return typeof password === 'string' && password.length >= 6 && password.length <= 255;
-}
+// Validation functions are now imported from @resto-rate/validation

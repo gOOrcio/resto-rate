@@ -3,10 +3,12 @@
 ## 🎯 Recommended Approach: **Hybrid Architecture**
 
 ### Frontend Database Usage
+
 - ✅ **Sessions Only** - Direct DB access for Lucia authentication
 - ❌ **No Business Logic** - All other data operations via API
 
-### Backend Database Usage  
+### Backend Database Usage
+
 - ✅ **All Business Data** - Users, restaurants, reviews, ratings, etc.
 - ✅ **Session Validation** - Read sessions for API authentication
 - ✅ **Data Integrity** - Business logic, validations, relations
@@ -35,6 +37,7 @@
 ## 📊 Database Schema Design
 
 ### Core Authentication (Shared)
+
 ```sql
 -- Managed by Frontend (Lucia)
 TABLE users (
@@ -52,6 +55,7 @@ TABLE sessions (
 ```
 
 ### Business Data (API Only)
+
 ```sql
 -- Restaurants & Reviews Domain
 TABLE restaurants (
@@ -96,6 +100,7 @@ TABLE restaurant_categories (
 ## 🔒 Security & Access Control
 
 ### Frontend (Direct DB Access)
+
 ```typescript
 // ✅ ALLOWED: Session management only
 import { lucia } from '$lib/server/auth';
@@ -106,6 +111,7 @@ const session = await lucia.createSession(userId, {});
 ```
 
 ### API (Full DB Access)
+
 ```typescript
 // ✅ ALLOWED: All business operations
 import { db } from './db';
@@ -118,36 +124,42 @@ const reviews = await db.insert(reviewsTable).values(newReview);
 ## 🚀 Implementation Strategy
 
 ### 1. Extend Database Schema
+
 ```typescript
 // apps/api/src/db/schema.ts
 export const restaurants = pgTable('restaurants', {
-  id: uuid('id').defaultRandom().primaryKey(),
-  name: text('name').notNull(),
-  description: text('description'),
-  cuisineType: text('cuisine_type'),
-  address: text('address'),
-  latitude: decimal('latitude'),
-  longitude: decimal('longitude'),
-  createdBy: text('created_by').references(() => user.id),
-  createdAt: timestamp('created_at').defaultNow(),
-  updatedAt: timestamp('updated_at').defaultNow(),
+	id: uuid('id').defaultRandom().primaryKey(),
+	name: text('name').notNull(),
+	description: text('description'),
+	cuisineType: text('cuisine_type'),
+	address: text('address'),
+	latitude: decimal('latitude'),
+	longitude: decimal('longitude'),
+	createdBy: text('created_by').references(() => user.id),
+	createdAt: timestamp('created_at').defaultNow(),
+	updatedAt: timestamp('updated_at').defaultNow(),
 });
 
-export const reviews = pgTable('reviews', {
-  id: uuid('id').defaultRandom().primaryKey(),
-  restaurantId: uuid('restaurant_id').references(() => restaurants.id),
-  userId: text('user_id').references(() => user.id),
-  rating: integer('rating').notNull(),
-  title: text('title'),
-  content: text('content'),
-  createdAt: timestamp('created_at').defaultNow(),
-  updatedAt: timestamp('updated_at').defaultNow(),
-}, (table) => ({
-  uniqueUserRestaurant: unique().on(table.restaurantId, table.userId),
-}));
+export const reviews = pgTable(
+	'reviews',
+	{
+		id: uuid('id').defaultRandom().primaryKey(),
+		restaurantId: uuid('restaurant_id').references(() => restaurants.id),
+		userId: text('user_id').references(() => user.id),
+		rating: integer('rating').notNull(),
+		title: text('title'),
+		content: text('content'),
+		createdAt: timestamp('created_at').defaultNow(),
+		updatedAt: timestamp('updated_at').defaultNow(),
+	},
+	(table) => ({
+		uniqueUserRestaurant: unique().on(table.restaurantId, table.userId),
+	})
+);
 ```
 
 ### 2. Frontend Data Layer
+
 ```typescript
 // apps/web/src/lib/stores/restaurants.ts
 import { writable } from 'svelte/store';
@@ -157,50 +169,53 @@ export const restaurants = writable([]);
 export const loading = writable(false);
 
 export async function loadRestaurants() {
-  loading.set(true);
-  try {
-    const data = await apiClient.getRestaurants();
-    restaurants.set(data.restaurants);
-  } finally {
-    loading.set(false);
-  }
+	loading.set(true);
+	try {
+		const data = await apiClient.getRestaurants();
+		restaurants.set(data.restaurants);
+	} finally {
+		loading.set(false);
+	}
 }
 ```
 
 ### 3. API Business Logic
+
 ```typescript
 // apps/api/src/routes/restaurants.ts
 export const restaurantRoutes: FastifyPluginAsync = async (fastify) => {
-  // Get all restaurants
-  fastify.get('/', async (request, reply) => {
-    const restaurants = await db.select().from(restaurantsTable);
-    reply.header('content-type', 'application/msgpack');
-    return { restaurants };
-  });
+	// Get all restaurants
+	fastify.get('/', async (request, reply) => {
+		const restaurants = await db.select().from(restaurantsTable);
+		reply.header('content-type', 'application/msgpack');
+		return { restaurants };
+	});
 
-  // Create restaurant (auth required)
-  fastify.post('/', { preHandler: [requireAuth] }, async (request, reply) => {
-    const { name, description, cuisineType, address } = request.body;
-    
-    const [restaurant] = await db.insert(restaurantsTable)
-      .values({
-        name,
-        description,
-        cuisineType,
-        address,
-        createdBy: request.user!.id,
-      })
-      .returning();
+	// Create restaurant (auth required)
+	fastify.post('/', { preHandler: [requireAuth] }, async (request, reply) => {
+		const { name, description, cuisineType, address } = request.body;
 
-    reply.header('content-type', 'application/msgpack');
-    return { restaurant };
-  });
+		const [restaurant] = await db
+			.insert(restaurantsTable)
+			.values({
+				name,
+				description,
+				cuisineType,
+				address,
+				createdBy: request.user!.id,
+			})
+			.returning();
+
+		reply.header('content-type', 'application/msgpack');
+		return { restaurant };
+	});
 };
 ```
 
 ## 📈 Benefits of This Architecture
 
 ### ✅ Advantages
+
 - **Clear Separation**: Frontend focuses on UI/UX, API handles business logic
 - **Security**: Centralized data validation and access control in API
 - **Scalability**: API can serve multiple clients (web, mobile, etc.)
@@ -209,6 +224,7 @@ export const restaurantRoutes: FastifyPluginAsync = async (fastify) => {
 - **Caching**: Easy to implement API-level caching strategies
 
 ### ⚠️ Considerations
+
 - **Network Latency**: Extra HTTP calls vs direct DB access
 - **Complexity**: More moving parts than direct DB access
 - **Development**: Need to maintain API contracts
@@ -216,15 +232,18 @@ export const restaurantRoutes: FastifyPluginAsync = async (fastify) => {
 ## 🛠️ Migration Path
 
 ### Phase 1: Current State (Keep as-is)
+
 - Frontend: Direct DB for sessions (Lucia)
 - API: Sessions + Users management
 
 ### Phase 2: Extend Business Domain
+
 - API: Add restaurants, reviews, categories
 - Frontend: Use API client for all business data
 - Keep: Direct session access for auth
 
 ### Phase 3: Optimization
+
 - Add caching layers
 - Implement real-time features (WebSockets)
 - Add advanced search/filtering
@@ -238,4 +257,4 @@ export const restaurantRoutes: FastifyPluginAsync = async (fastify) => {
 3. **MessagePack provides efficiency** for data transfer
 4. **Scalable architecture** for future requirements
 
-This gives you the best of both worlds: fast authentication and clean business logic separation. 
+This gives you the best of both worlds: fast authentication and clean business logic separation.

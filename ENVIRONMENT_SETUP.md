@@ -3,6 +3,7 @@
 ## 🎯 Centralized Configuration Approach
 
 ### Architecture Overview
+
 ```
 ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
 │   ROOT .env     │    │ CONFIG PACKAGE  │    │   APPS          │
@@ -17,6 +18,7 @@
 ## 📁 File Structure
 
 ### Root Level
+
 ```
 resto-rate/
 ├── .env                    # Main environment file
@@ -31,6 +33,7 @@ resto-rate/
 ## 🔧 Environment Variables
 
 ### Required Variables
+
 ```bash
 # Database (Required)
 DATABASE_URL="postgresql://user:pass@localhost:5432/resto_rate"
@@ -43,7 +46,7 @@ DATABASE_SSL=false                 # Default: false in dev, true in prod
 API_PORT=3001                      # Default: 3001
 API_HOST=0.0.0.0                   # Default: 0.0.0.0
 
-# Web App Configuration  
+# Web App Configuration
 WEB_PORT=5173                      # Default: 5173
 API_URL=http://localhost:3001      # Default: dev URL
 
@@ -59,6 +62,7 @@ NODE_ENV=development              # Default: development
 ### Environment-Specific Configs
 
 #### Development (.env)
+
 ```bash
 DATABASE_URL="postgresql://dev:dev@localhost:5432/resto_rate_dev"
 API_PORT=3001
@@ -69,6 +73,7 @@ SESSION_SECRET=dev-secret-key-not-for-production
 ```
 
 #### Production
+
 ```bash
 DATABASE_URL="postgresql://prod_user:secure_pass@prod-db:5432/resto_rate"
 DATABASE_SSL=true
@@ -83,6 +88,7 @@ SESSION_MAX_AGE=604800  # 7 days for production
 ```
 
 #### Testing
+
 ```bash
 DATABASE_URL="postgresql://test:test@localhost:5432/resto_rate_test"
 NODE_ENV=test
@@ -93,6 +99,7 @@ API_PORT=3002  # Different port to avoid conflicts
 ## 💻 Usage in Code
 
 ### Centralized Config Package
+
 ```typescript
 // packages/config/env.ts
 import { getConfig, getDatabaseConfig, getApiConfig } from '@resto-rate/config';
@@ -103,11 +110,12 @@ const apiConfig = getApiConfig();
 
 // Environment checks
 if (isDevelopment()) {
-  console.log('Running in development mode');
+	console.log('Running in development mode');
 }
 ```
 
 ### API Usage
+
 ```typescript
 // apps/api/src/index.ts
 import { getApiConfig, getDatabaseConfig } from '@resto-rate/config';
@@ -115,13 +123,14 @@ import { getApiConfig, getDatabaseConfig } from '@resto-rate/config';
 const apiConfig = getApiConfig();
 const dbConfig = getDatabaseConfig();
 
-await server.listen({ 
-  port: apiConfig.port, 
-  host: apiConfig.host 
+await server.listen({
+	port: apiConfig.port,
+	host: apiConfig.host,
 });
 ```
 
 ### Web App Usage
+
 ```typescript
 // apps/web/src/lib/api.ts
 import { getWebConfig } from '@resto-rate/config';
@@ -131,31 +140,35 @@ const apiClient = new ApiClient(webConfig.apiUrl);
 ```
 
 ### Database Connection
+
 ```typescript
 // Shared across both apps
 import { getDatabaseConfig } from '@resto-rate/config';
 
 const dbConfig = getDatabaseConfig();
 const client = postgres(dbConfig.url, {
-  max: dbConfig.maxConnections,
-  ssl: dbConfig.ssl
+	max: dbConfig.maxConnections,
+	ssl: dbConfig.ssl,
 });
 ```
 
 ## 🔄 Setup Process
 
 ### 1. Copy Environment Template
+
 ```bash
 cp env.template .env
 # Edit .env with your values
 ```
 
 ### 2. Install Dependencies
+
 ```bash
 bun install  # Installs workspace packages
 ```
 
 ### 3. Configure Database
+
 ```bash
 # Start database (if using Docker)
 cd apps/web && bun run db:start
@@ -165,6 +178,7 @@ bun run db:push
 ```
 
 ### 4. Start Development
+
 ```bash
 bun run dev  # Starts both apps with shared config
 ```
@@ -172,6 +186,7 @@ bun run dev  # Starts both apps with shared config
 ## 🏗️ Benefits
 
 ### ✅ Advantages
+
 - **Type Safety**: All environment variables are typed and validated
 - **Single Source**: One .env file for entire monorepo
 - **Validation**: Missing required variables throw clear errors
@@ -180,6 +195,7 @@ bun run dev  # Starts both apps with shared config
 - **IDE Support**: Full autocomplete and intellisense
 
 ### 🔧 Configuration Features
+
 - **Automatic Parsing**: Numbers, booleans parsed correctly
 - **Environment Detection**: Development vs production logic
 - **Validation**: Required variables checked at startup
@@ -188,6 +204,7 @@ bun run dev  # Starts both apps with shared config
 ## 🚀 Deployment
 
 ### Docker Compose
+
 ```yaml
 # docker-compose.yml
 version: '3.8'
@@ -196,7 +213,7 @@ services:
     env_file: .env
     environment:
       - NODE_ENV=production
-  
+
   web:
     env_file: .env
     environment:
@@ -204,6 +221,7 @@ services:
 ```
 
 ### Vercel/Netlify
+
 ```bash
 # Set environment variables in dashboard
 DATABASE_URL=production-db-url
@@ -215,11 +233,13 @@ NODE_ENV=production
 ## 🛡️ Security Best Practices
 
 ### Development
+
 - ✅ Use `.env` file (gitignored)
 - ✅ Provide `env.template` for team
 - ✅ Use weak secrets (clearly marked)
 
 ### Production
+
 - ✅ Use secure random secrets
 - ✅ Enable database SSL
 - ✅ Set appropriate CORS origins
@@ -229,12 +249,14 @@ NODE_ENV=production
 ## 🔍 Troubleshooting
 
 ### Common Issues
+
 1. **Missing Variables**: Check required variables in console output
 2. **Wrong Database URL**: Verify format and credentials
 3. **Port Conflicts**: Change default ports if needed
 4. **CORS Issues**: Update API CORS configuration
 
 ### Debug Commands
+
 ```bash
 # Check config loading
 bun --print "console.log(require('@resto-rate/config').getConfig())"
@@ -246,4 +268,4 @@ cd apps/api && bun run dev  # Shows connection status
 curl http://localhost:3001/health
 ```
 
-This centralized approach provides type safety, validation, and easy environment management across your entire monorepo! 
+This centralized approach provides type safety, validation, and easy environment management across your entire monorepo!

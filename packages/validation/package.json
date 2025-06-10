@@ -1,14 +1,14 @@
 {
-	"name": "@resto-rate/config",
+	"name": "@resto-rate/validation",
 	"version": "0.0.1",
 	"private": true,
 	"type": "module",
-	"main": "./env.ts",
-	"types": "./env.ts",
+	"main": "./index.ts",
+	"types": "./index.ts",
 	"exports": {
-		".": "./env.ts"
+		".": "./index.ts"
 	},
 	"devDependencies": {
 		"typescript": "^5.0.0"
 	}
-}
+} 

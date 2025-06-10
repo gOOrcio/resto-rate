@@ -5,7 +5,7 @@ Restaurant rating and review application built with SvelteKit frontend and Fasti
 ## Architecture
 
 - **Frontend**: SvelteKit with TailwindCSS, Lucia auth, Drizzle ORM
-- **Backend**: Fastify API with MessagePack, authentication middleware  
+- **Backend**: Fastify API with MessagePack, authentication middleware
 - **Database**: PostgreSQL with shared schema
 - **Communication**: MessagePack for efficient binary serialization
 - **Monorepo**: Turborepo with bun package manager
@@ -13,27 +13,32 @@ Restaurant rating and review application built with SvelteKit frontend and Fasti
 ## Quick Start
 
 1. **Install dependencies**:
+
 ```bash
 bun install
 ```
 
 2. **Set up environment**:
+
 ```bash
 cp env.template .env
 # Edit .env with your database credentials
 ```
 
 3. **Start database** (Docker recommended):
+
 ```bash
 cd apps/web && bun run db:start
 ```
 
 4. **Run migrations**:
+
 ```bash
 cd apps/web && bun run db:push
 ```
 
 5. **Start development**:
+
 ```bash
 bun run dev
 ```
@@ -56,7 +61,7 @@ resto-rate/
 ## Development
 
 - `bun run dev` - Start both apps
-- `bun run build` - Build all apps  
+- `bun run build` - Build all apps
 - `bun run lint` - Lint all packages
 
 ## Documentation
