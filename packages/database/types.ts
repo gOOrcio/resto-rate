@@ -1,14 +1,14 @@
 import * as schema from './schema';
 
 // =============================================================================
-// TABLE TYPES
+// DATABASE TABLE TYPES
 // =============================================================================
 export type Session = typeof schema.session.$inferSelect;
 export type User = typeof schema.user.$inferSelect;
 export type Restaurant = typeof schema.restaurant.$inferSelect;
 
 // =============================================================================
-// INSERT TYPES
+// DATABASE INSERT TYPES
 // =============================================================================
 export type InsertUser = typeof schema.user.$inferInsert;
 export type InsertSession = typeof schema.session.$inferInsert;

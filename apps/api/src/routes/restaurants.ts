@@ -1,5 +1,5 @@
 import type { FastifyPluginAsync } from 'fastify';
-import { type CreateRestaurantRequest } from '@resto-rate/database';
+import { type CreateRestaurantRequest } from '@resto-rate/constants';
 import * as restaurantService from '../services/restaurant.service';
 import { handleRoute } from '../utils/route-helpers';
 

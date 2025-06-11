@@ -19,6 +19,25 @@ export interface ContextualLogger {
 	child: (context: object) => ContextualLogger;
 }
 
+// Safely check for browser environment
+function isBrowserEnvironment(): boolean {
+	return typeof globalThis !== 'undefined' && 
+		   typeof (globalThis as any).window !== 'undefined' && 
+		   typeof (globalThis as any).document !== 'undefined';
+}
+
+// Safely access localStorage
+function getLocalStorageItem(key: string): string | null {
+	try {
+		if (isBrowserEnvironment() && typeof (globalThis as any).localStorage !== 'undefined') {
+			return (globalThis as any).localStorage.getItem(key);
+		}
+	} catch {
+		// localStorage might not be available in some contexts
+	}
+	return null;
+}
+
 class PinoLogger implements ContextualLogger {
 	constructor(private logger: Logger) {}
 
@@ -66,15 +85,9 @@ class BrowserLogger implements ContextualLogger {
 
 	private getEffectiveLevel(): LogLevel {
 		// Only check localStorage when we're actually in a browser environment
-		if (typeof window !== 'undefined' && typeof localStorage !== 'undefined') {
-			try {
-				const stored = localStorage.getItem('resto-rate-log-level') as LogLevel;
-				if (stored && ['trace', 'debug', 'info', 'warn', 'error', 'fatal'].includes(stored)) {
-					return stored;
-				}
-			} catch {
-				// localStorage might not be available in some browser contexts
-			}
+		const stored = getLocalStorageItem('resto-rate-log-level') as LogLevel;
+		if (stored && ['trace', 'debug', 'info', 'warn', 'error', 'fatal'].includes(stored)) {
+			return stored;
 		}
 		return this.level;
 	}
@@ -157,7 +170,7 @@ class NoOpLogger implements ContextualLogger {
 export function createLogger(config: LoggerConfig): ContextualLogger {
 	try {
 		// Detect environment - be safe about browser detection
-		const isBrowser = typeof window !== 'undefined' && typeof document !== 'undefined';
+		const isBrowser = isBrowserEnvironment();
 		
 		if (isBrowser) {
 			return new BrowserLogger(config.level, config.service);

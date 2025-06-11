@@ -1,5 +1,6 @@
 import { db } from '../db';
-import { user, type CreateUserRequest } from '@resto-rate/database';
+import { user } from '@resto-rate/database';
+import { type CreateUserRequest } from '@resto-rate/constants';
 import { eq } from 'drizzle-orm';
 import { generateUserId } from '@resto-rate/ulid';
 

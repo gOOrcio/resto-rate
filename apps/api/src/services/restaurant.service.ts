@@ -1,5 +1,6 @@
 import { db } from '../db';
-import { restaurant, type CreateRestaurantRequest, type Restaurant } from '@resto-rate/database';
+import { restaurant, type Restaurant } from '@resto-rate/database';
+import { type CreateRestaurantRequest } from '@resto-rate/constants';
 import { eq, desc } from 'drizzle-orm';
 import { generateRestaurantId } from '@resto-rate/ulid';
 

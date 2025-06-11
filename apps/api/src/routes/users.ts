@@ -1,5 +1,5 @@
 import type { FastifyPluginAsync } from 'fastify';
-import { type CreateUserRequest } from '@resto-rate/database';
+import { type CreateUserRequest } from '@resto-rate/constants';
 import { requireAuth, optionalAuth } from '../middleware/auth';
 import * as userService from '../services/user.service';
 import { handleRoute, successMessage, requireUser } from '../utils/route-helpers';

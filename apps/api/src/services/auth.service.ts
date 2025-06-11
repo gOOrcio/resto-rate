@@ -1,5 +1,6 @@
 import { db } from '../db';
-import { session, user, type AuthResponse } from '@resto-rate/database';
+import { session, user } from '@resto-rate/database';
+import { type AuthResponse } from '@resto-rate/constants';
 import { eq, and, gt } from 'drizzle-orm';
 import { requireQueryResult } from '@resto-rate/validation';
 import { generateUserId, generateSessionId } from '@resto-rate/ulid';
