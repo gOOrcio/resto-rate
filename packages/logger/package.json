@@ -1,0 +1,16 @@
+{
+	"name": "@resto-rate/logger",
+	"version": "0.0.0",
+	"type": "module",
+	"exports": {
+		".": "./index.ts"
+	},
+	"dependencies": {
+		"pino": "^8.19.0",
+		"pino-pretty": "^10.3.1"
+	},
+	"devDependencies": {
+		"@resto-rate/typescript-config": "workspace:*",
+		"typescript": "^5.0.0"
+	}
+} 

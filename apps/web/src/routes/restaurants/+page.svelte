@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { apiClient } from '$lib/api';
+	import { createPageLogger } from '$lib/logger';
 
 	type Restaurant = {
 		id: string;
@@ -16,6 +17,9 @@
 	let loading = false;
 	let error: string | null = null;
 
+	// Create page-specific logger - safe for SSR
+	const logger = createPageLogger('restaurants');
+
 	// Form data
 	let formData = {
 		name: '',
@@ -27,12 +31,14 @@
 	async function loadRestaurants() {
 		loading = true;
 		error = null;
+		logger.debug('Loading restaurants list');
 		try {
 			const response = (await apiClient.getRestaurants()) as { restaurants: Restaurant[] };
 			restaurants = response.restaurants || [];
+			logger.info('Restaurants loaded successfully', { count: restaurants.length });
 		} catch (err) {
 			error = `Failed to load restaurants: ${err}`;
-			console.error('Error loading restaurants:', err);
+			logger.error('Failed to load restaurants', { error: err });
 		} finally {
 			loading = false;
 		}
@@ -51,6 +57,7 @@
 
 		loading = true;
 		error = null;
+		logger.debug('Creating new restaurant', { name: formData.name });
 		try {
 			const restaurantData = {
 				name: formData.name.trim(),
@@ -60,6 +67,7 @@
 			};
 
 			await apiClient.createRestaurant(restaurantData);
+			logger.info('Restaurant created successfully', { name: restaurantData.name });
 
 			// Reset form
 			formData = {
@@ -73,7 +81,7 @@
 			await loadRestaurants();
 		} catch (err) {
 			error = `Failed to create restaurant: ${err}`;
-			console.error('Error creating restaurant:', err);
+			logger.error('Failed to create restaurant', { error: err, formData });
 		} finally {
 			loading = false;
 		}

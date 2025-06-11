@@ -1,4 +1,7 @@
 import type { FastifyReply } from 'fastify';
+import { createLoggerFromEnv } from '@resto-rate/logger';
+
+const logger = createLoggerFromEnv('api-routes');
 
 // Standard error mapping
 const ERROR_STATUS_MAP: Record<string, number> = {
@@ -45,7 +48,8 @@ export async function handleRoute<T>(
 		const message = (error as Error).message;
 		const status = getStatusFromError(message);
 		
-		console.error('🚨 Route error:', { message, status });
+		const logger = createLoggerFromEnv('api-routes');
+		logger.error('Route error', { message, status, stack: (error as Error).stack });
 		
 		// Use MessagePack for error responses too
 		reply.header('content-type', 'application/msgpack');

@@ -1,4 +1,5 @@
 import { encode, decode } from '@msgpack/msgpack';
+import { apiLogger } from './logger';
 
 // Client-side API URL - use environment variable or fallback to localhost in dev
 const API_BASE_URL =
@@ -7,6 +8,9 @@ const API_BASE_URL =
 			? 'http://localhost:3001/api'
 			: '/api'
 		: 'http://localhost:3001/api';
+
+// Use the pre-configured API logger
+const logger = apiLogger;
 
 type CreateRestaurantRequest = {
 	name: string;
@@ -47,7 +51,12 @@ export class ApiClient {
 		}
 
 		try {
-			console.log(`🌐 API Request: ${options.method || 'GET'} ${url}`);
+			logger.debug('API Request', {
+				method: options.method || 'GET',
+				url,
+				hasBody: body !== undefined,
+				sessionId: sessionId ? '***' : undefined,
+			});
 			
 			const response = await fetch(url, {
 				...options,
@@ -58,7 +67,11 @@ export class ApiClient {
 				body,
 			});
 
-			console.log(`📡 Response: ${response.status} ${response.statusText}`);
+			logger.debug('API Response', {
+				status: response.status,
+				statusText: response.statusText,
+				url,
+			});
 
 			if (!response.ok) {
 				// Even error responses should be MessagePack
@@ -69,7 +82,11 @@ export class ApiClient {
 				} catch {
 					// Last resort fallback if error response isn't MessagePack
 					const text = await response.text();
-					console.warn('⚠️ Error response not in MessagePack format:', text);
+					logger.warn('Error response not in MessagePack format', {
+						status: response.status,
+						text,
+						url,
+					});
 					throw new Error(`HTTP ${response.status}: ${text}`);
 				}
 			}
@@ -78,10 +95,10 @@ export class ApiClient {
 			const arrayBuffer = await response.arrayBuffer();
 			const data = decode(new Uint8Array(arrayBuffer)) as T;
 
-			console.log(`✅ API Success:`, data);
+			logger.debug('API Success', { url, dataKeys: Object.keys(data as object || {}) });
 			return data;
 		} catch (error) {
-			console.error('❌ API request failed:', { url, error });
+			logger.error('API request failed', { url, error });
 			throw error;
 		}
 	}
@@ -162,11 +179,14 @@ export class ApiClient {
 		};
 
 		try {
-			console.log(`🌐 Health Check: GET ${healthUrl}`);
+			logger.debug('Health Check Request', { url: healthUrl });
 			
 			const response = await fetch(healthUrl, { headers });
 
-			console.log(`📡 Response: ${response.status} ${response.statusText}`);
+			logger.debug('Health Check Response', {
+				status: response.status,
+				statusText: response.statusText,
+			});
 
 			if (!response.ok) {
 				throw new Error(`HTTP ${response.status}`);
@@ -174,10 +194,10 @@ export class ApiClient {
 
 			const data = await response.json(); // Parse as JSON for health checks
 
-			console.log(`✅ Health Check Success:`, data);
+			logger.info('Health Check Success', { status: data.status, environment: data.environment });
 			return data;
 		} catch (error) {
-			console.error('❌ Health check failed:', { url: healthUrl, error });
+			logger.error('Health check failed', { url: healthUrl, error });
 			throw error;
 		}
 	}

@@ -14,13 +14,47 @@ import Fastify from 'fastify';
 import cors from '@fastify/cors';
 import helmet from '@fastify/helmet';
 import { encode, decode } from '@msgpack/msgpack';
-import { getApiConfig, getDatabaseConfig } from '@resto-rate/config';
+import { getApiConfig, getDatabaseConfig, getLoggingConfig } from '@resto-rate/config';
+import { createLogger } from '@resto-rate/logger';
 import { userRoutes } from './routes/users';
 import { authRoutes } from './routes/auth';
 import { restaurantRoutes } from './routes/restaurants';
 
+// Create logger from configuration
+const loggingConfig = getLoggingConfig();
+const logger = createLogger({
+	level: loggingConfig.level,
+	service: 'api',
+	environment: process.env.NODE_ENV as 'development' | 'production' | 'test' || 'development',
+	pretty: loggingConfig.pretty,
+});
+
 const server = Fastify({
-	logger: true,
+	logger: {
+		level: loggingConfig.level,
+		transport: loggingConfig.pretty ? {
+			target: 'pino-pretty',
+			options: {
+				colorize: true,
+				translateTime: 'HH:MM:ss',
+				ignore: 'pid,hostname',
+			},
+		} : undefined,
+		serializers: {
+			req: (request) => ({
+				method: request.method,
+				url: request.url,
+				host: request.headers?.host,
+				remoteAddress: request.ip,
+				remotePort: request.socket?.remotePort,
+			}),
+			res: (response) => ({
+				statusCode: response.statusCode,
+			}),
+		},
+	},
+	// Disable default request logging and implement our own at DEBUG level
+	disableRequestLogging: true,
 });
 
 async function startServer() {
@@ -37,6 +71,27 @@ async function startServer() {
 			allowedHeaders: ['Content-Type', 'Authorization', 'X-Session-Id'],
 		});
 
+		// Add custom request logging at DEBUG level
+		server.addHook('onRequest', async (request) => {
+			logger.debug('Incoming request', {
+				method: request.method,
+				url: request.url,
+				host: request.headers?.host,
+				remoteAddress: request.ip,
+				userAgent: request.headers?.['user-agent'],
+			});
+		});
+
+		server.addHook('onResponse', async (request, reply) => {
+			const responseTime = reply.elapsedTime;
+			logger.debug('Request completed', {
+				method: request.method,
+				url: request.url,
+				statusCode: reply.statusCode,
+				responseTime: `${responseTime}ms`,
+			});
+		});
+
 		server.addContentTypeParser('application/msgpack', { parseAs: 'buffer' }, (req, body, done) => {
 			try {
 				// Handle empty bodies gracefully
@@ -48,7 +103,7 @@ async function startServer() {
 				const parsed = decode(body as Uint8Array);
 				done(null, parsed);
 			} catch (err) {
-				console.error('❌ MessagePack parsing error:', err);
+				logger.error('MessagePack parsing error', { error: err });
 				done(err as Error);
 			}
 		});
@@ -69,7 +124,7 @@ async function startServer() {
 					const encoded = encode(data);
 					return Buffer.from(encoded);
 				} catch (error) {
-					console.error('❌ Critical MessagePack encoding error:', error);
+					logger.error('Critical MessagePack encoding error', { error });
 					// If MessagePack encoding fails, this is a server error
 					reply.status(500);
 					reply.header('content-type', 'application/msgpack');
@@ -101,9 +156,12 @@ async function startServer() {
 			host: apiConfig.host,
 		});
 
-		console.log(`🚀 API Server ready at http://${apiConfig.host}:${apiConfig.port}`);
-		console.log(`📊 Environment: ${apiConfig.nodeEnv}`);
-		console.log(`🗄️  Database: ${dbConfig.url.replace(/\/\/.*@/, '//*****@')}`);
+		logger.info('API Server started', {
+			url: `http://${apiConfig.host}:${apiConfig.port}`,
+			environment: apiConfig.nodeEnv,
+			database: dbConfig.url.replace(/\/\/.*@/, '//*****@'),
+			logLevel: loggingConfig.level,
+		});
 	} catch (err) {
 		server.log.error(err);
 		process.exit(1);

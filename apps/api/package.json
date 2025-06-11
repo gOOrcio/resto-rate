@@ -17,7 +17,8 @@
 		"db:drop": "drizzle-kit drop",
 		"db:check": "drizzle-kit check",
 		"db:up": "drizzle-kit up",
-		"db:seed": "tsx src/scripts/seed.ts"
+		"db:seed": "tsx src/scripts/seed.ts",
+		"test:logging": "tsx src/scripts/test-logging.ts"
 	},
 	"dependencies": {
 		"@fastify/cors": "^11.0.1",
@@ -30,6 +31,7 @@
 		"@resto-rate/config": "workspace:*",
 		"@resto-rate/constants": "workspace:*",
 		"@resto-rate/database": "workspace:*",
+		"@resto-rate/logger": "workspace:*",
 		"@resto-rate/ulid": "workspace:*",
 		"@resto-rate/validation": "workspace:*",
 		"dotenv": "^16.5.0",

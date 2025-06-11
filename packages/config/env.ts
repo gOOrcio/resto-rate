@@ -15,7 +15,7 @@ const __dirname = dirname(__filename);
 // Try to load .env from common locations
 try {
 	// Try root directory first (most common)
-	loadDotenv({ path: resolve(process.cwd(), '.env') });
+	loadDotenv({ path: resolve(process.cwd(), '../../.env') });
 } catch {
 	try {
 		// Try project root relative to this package
@@ -23,6 +23,15 @@ try {
 	} catch {
 		// Fallback - no .env file found, use process.env
 	}
+}
+
+export type LogLevel = 'trace' | 'debug' | 'info' | 'warn' | 'error' | 'fatal';
+
+export interface LoggingConfig {
+	level: LogLevel;
+	pretty: boolean;
+	enableFile: boolean;
+	logDir: string;
 }
 
 export interface DatabaseConfig {
@@ -55,30 +64,39 @@ export interface AppConfig {
 	api: ApiConfig;
 	web: WebConfig;
 	auth: AuthConfig;
+	logging: LoggingConfig;
 }
 
 /**
  * Parse and validate environment variables
  */
 function parseEnv(): AppConfig {
-	// Required variables check
-	const requiredVars = ['DATABASE_URL'];
-	const missing = requiredVars.filter((key) => !process.env[key]);
-	if (missing.length > 0) {
-		throw new Error(`Missing required environment variables: ${missing.join(', ')}`);
+	const requiredEnvVars = ['DATABASE_URL', 'SESSION_SECRET'];
+	for (const envVar of requiredEnvVars) {
+		if (!process.env[envVar]) {
+			throw new Error(`Missing required environment variable: ${envVar}`);
+		}
 	}
 
-	// Parse boolean helper
 	const parseBoolean = (value: string | undefined, defaultValue: boolean): boolean => {
-		if (!value) return defaultValue;
+		if (value === undefined) return defaultValue;
 		return value.toLowerCase() === 'true';
 	};
 
-	// Parse number helper
 	const parseNumber = (value: string | undefined, defaultValue: number): number => {
-		if (!value) return defaultValue;
+		if (value === undefined) return defaultValue;
 		const parsed = parseInt(value, 10);
 		return isNaN(parsed) ? defaultValue : parsed;
+	};
+
+	const getLogLevel = (): LogLevel => {
+		const level = process.env.LOG_LEVEL?.toLowerCase() as LogLevel;
+		const validLevels: LogLevel[] = ['trace', 'debug', 'info', 'warn', 'error', 'fatal'];
+		if (level && validLevels.includes(level)) {
+			return level;
+		}
+		// Default based on environment
+		return process.env.NODE_ENV === 'production' ? 'info' : 'debug';
 	};
 
 	const nodeEnv = (process.env.NODE_ENV || 'development') as 'development' | 'production' | 'test';
@@ -86,42 +104,41 @@ function parseEnv(): AppConfig {
 	return {
 		database: {
 			url: process.env.DATABASE_URL!,
-			maxConnections: parseNumber(process.env.DATABASE_MAX_CONNECTIONS, 20),
-			ssl: parseBoolean(process.env.DATABASE_SSL, nodeEnv === 'production'),
+			maxConnections: parseNumber(process.env.DATABASE_MAX_CONNECTIONS, 10),
+			ssl: parseBoolean(process.env.DATABASE_SSL, false),
 		},
 		api: {
 			port: parseNumber(process.env.API_PORT, 3001),
 			host: process.env.API_HOST || '0.0.0.0',
-			corsOrigin:
-				nodeEnv === 'development'
-					? ['http://localhost:5173', 'http://localhost:3000']
-					: process.env.CORS_ORIGIN?.split(',') || [],
+			corsOrigin: process.env.CORS_ORIGIN || 'http://localhost:5173',
 			nodeEnv,
 		},
 		web: {
 			port: parseNumber(process.env.WEB_PORT, 5173),
-			apiUrl:
-				process.env.API_URL ||
-				(nodeEnv === 'development' ? 'http://localhost:3001' : 'https://api.yourdomain.com'),
+			apiUrl: process.env.API_URL || 'http://localhost:3001',
 			nodeEnv,
 		},
 		auth: {
-			sessionSecret:
-				process.env.SESSION_SECRET ||
-				(nodeEnv === 'development' ? 'dev-secret-key-change-in-production' : ''),
+			sessionSecret: process.env.SESSION_SECRET!,
 			sessionMaxAge: parseNumber(process.env.SESSION_MAX_AGE, 30 * 24 * 60 * 60), // 30 days
 			bcryptRounds: parseNumber(process.env.BCRYPT_ROUNDS, 12),
+		},
+		logging: {
+			level: getLogLevel(),
+			pretty: parseBoolean(process.env.LOG_PRETTY, process.env.NODE_ENV !== 'production'),
+			enableFile: parseBoolean(process.env.LOG_FILE, false),
+			logDir: process.env.LOG_DIR || './logs',
 		},
 	};
 }
 
-let config: AppConfig | null = null;
+let appConfig: AppConfig | null = null;
 
 export function getConfig(): AppConfig {
-	if (!config) {
-		config = parseEnv();
+	if (!appConfig) {
+		appConfig = parseEnv();
 	}
-	return config;
+	return appConfig;
 }
 
 export const isDevelopment = () => getConfig().api.nodeEnv === 'development';
@@ -132,3 +149,4 @@ export const getDatabaseConfig = () => getConfig().database;
 export const getApiConfig = () => getConfig().api;
 export const getWebConfig = () => getConfig().web;
 export const getAuthConfig = () => getConfig().auth;
+export const getLoggingConfig = () => getConfig().logging;

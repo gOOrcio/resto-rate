@@ -1,3 +1,17 @@
+<script lang="ts">
+	import { onMount } from 'svelte';
+	import { createPageLogger } from '$lib/logger';
+
+	// Create a safe logger for this page
+	const logger = createPageLogger('home');
+
+	onMount(() => {
+		// Test logging on page mount
+		logger.info('Home page mounted successfully');
+		logger.debug('Testing debug level logging');
+	});
+</script>
+
 <div class="container mx-auto max-w-4xl p-6">
 	<h1 class="mb-8 text-3xl font-bold text-center">Resto Rate</h1>
 
@@ -26,6 +40,7 @@
 			<a
 				href="/restaurants"
 				class="block bg-purple-500 text-white px-6 py-4 rounded-lg shadow hover:bg-purple-700 transition"
+				on:click={() => logger.info('Navigating to restaurants page')}
 			>
 				<h2 class="text-xl font-semibold mb-2">Restaurants</h2>
 				<p class="text-sm opacity-90">Manage restaurants</p>
