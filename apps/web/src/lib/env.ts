@@ -4,5 +4,4 @@
 
 export const env = {
 	NODE_ENV: typeof window === 'undefined' ? process.env.NODE_ENV : undefined,
-	// Add other frontend-specific environment variables here as needed
 };

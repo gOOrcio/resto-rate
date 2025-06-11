@@ -48,7 +48,6 @@ export async function handleRoute<T>(
 		const message = (error as Error).message;
 		const status = getStatusFromError(message);
 		
-		const logger = createLoggerFromEnv('api-routes');
 		logger.error('Route error', { message, status, stack: (error as Error).stack });
 		
 		// Use MessagePack for error responses too

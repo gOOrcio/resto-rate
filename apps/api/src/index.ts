@@ -1,13 +1,10 @@
-// Load environment variables from root .env file
 import { config } from 'dotenv';
 import { resolve, dirname } from 'path';
 import { fileURLToPath } from 'url';
 
-// Get __dirname equivalent for ES modules
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-// Load .env from project root (two levels up from src/)
 config({ path: resolve(__dirname, '../../../.env') });
 
 import Fastify from 'fastify';
@@ -19,8 +16,8 @@ import { createServerLogger } from '@resto-rate/logger';
 import { userRoutes } from './routes/users';
 import { authRoutes } from './routes/auth';
 import { restaurantRoutes } from './routes/restaurants';
+import { db } from './db';
 
-// Create logger from configuration
 const loggingConfig = getLoggingConfig();
 const logger = createServerLogger({
 	level: loggingConfig.level,
@@ -135,13 +132,22 @@ async function startServer() {
 		});
 
 		server.get('/health', async (request, reply) => {
+			let dbConnected: boolean;
+			try {
+				// Perform a simple DB query to check connectivity
+				await db().execute('SELECT 1');
+				dbConnected = true;
+			} catch (err) {
+				logger.error('Database health check failed', { error: err });
+				dbConnected = false;
+			}
 			reply.header('content-type', 'application/json');
 			return {
-				status: 'ok',
+				status: dbConnected ? 'ok' : 'degraded',
 				timestamp: new Date().toISOString(),
 				environment: apiConfig.nodeEnv,
 				database: {
-					connected: true, // You could add actual DB health check here
+					connected: dbConnected,
 					ssl: dbConfig.ssl,
 				},
 			};
@@ -168,4 +174,6 @@ async function startServer() {
 	}
 }
 
-startServer();
+startServer().catch((err) => {
+	logger.error(err);
+});
