@@ -15,14 +15,14 @@ import cors from '@fastify/cors';
 import helmet from '@fastify/helmet';
 import { encode, decode } from '@msgpack/msgpack';
 import { getApiConfig, getDatabaseConfig, getLoggingConfig } from '@resto-rate/config';
-import { createLogger } from '@resto-rate/logger';
+import { createServerLogger } from '@resto-rate/logger';
 import { userRoutes } from './routes/users';
 import { authRoutes } from './routes/auth';
 import { restaurantRoutes } from './routes/restaurants';
 
 // Create logger from configuration
 const loggingConfig = getLoggingConfig();
-const logger = createLogger({
+const logger = createServerLogger({
 	level: loggingConfig.level,
 	service: 'api',
 	environment: process.env.NODE_ENV as 'development' | 'production' | 'test' || 'development',
