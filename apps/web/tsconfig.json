@@ -1,5 +1,5 @@
 {
-	"extends": ["@resto-rate/typescript-config/svelte.json", "./.svelte-kit/tsconfig.json"],
+	"extends": ["../../packages/typescript-config/svelte.json", "./.svelte-kit/tsconfig.json"],
 	"compilerOptions": {
 		// SvelteKit handles path aliases automatically
 	},

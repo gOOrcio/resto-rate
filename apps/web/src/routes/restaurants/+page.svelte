@@ -2,6 +2,12 @@
 	import { onMount } from 'svelte';
 	import { apiClient } from '$lib/api';
 	import { createPageLogger } from '$lib/logger';
+	import { Button } from '$lib/components/ui/button';
+	import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '$lib/components/ui/card';
+	import { Input } from '$lib/components/ui/input';
+	import { Label } from '$lib/components/ui/label';
+	import { Alert, AlertDescription } from '$lib/components/ui/alert';
+	import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '$lib/components/ui/table';
 
 	type Restaurant = {
 		id: string;
@@ -110,185 +116,143 @@
 	});
 </script>
 
-<div class="container mx-auto max-w-6xl p-6">
-	<h1 class="mb-6 text-3xl font-bold">Restaurants</h1>
+<div class="container mx-auto max-w-6xl p-6 space-y-6">
+	<h1 class="text-3xl font-bold tracking-tight">Restaurants</h1>
 
 	{#if error}
-		<div class="mb-4 rounded border border-red-400 bg-red-100 px-4 py-3 text-red-700">
-			{error}
-		</div>
+		<Alert variant="destructive">
+			{#snippet children()}
+				<AlertDescription>{error}</AlertDescription>
+			{/snippet}
+		</Alert>
 	{/if}
 
-	<!-- Create Restaurant Form -->
-	<div class="bg-white rounded-lg shadow p-6 mb-6">
-		<h2 class="text-xl font-semibold mb-4">Add New Restaurant</h2>
+	<Card>
+		<CardHeader>
+			<CardTitle>Add New Restaurant</CardTitle>
+			<CardDescription>Fill in the details to add a new restaurant to the list.</CardDescription>
+		</CardHeader>
+		<CardContent>
+			<form on:submit|preventDefault={createRestaurant} class="space-y-4">
+				<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+					<div class="space-y-2">
+						<Label for="name">Restaurant Name *</Label>
+						<Input
+							type="text"
+							id="name"
+							bind:value={formData.name}
+							placeholder="Enter restaurant name"
+							required
+						/>
+					</div>
 
-		<form on:submit|preventDefault={createRestaurant} class="space-y-4">
-			<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-				<div>
-					<label for="name" class="block text-sm font-medium text-gray-700 mb-1">
-						Restaurant Name *
-					</label>
-					<input
-						type="text"
-						id="name"
-						bind:value={formData.name}
-						class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-						placeholder="Enter restaurant name"
-						required
-					/>
+					<div class="space-y-2">
+						<Label for="address">Address</Label>
+						<Input
+							type="text"
+							id="address"
+							bind:value={formData.address}
+							placeholder="Enter address"
+						/>
+					</div>
 				</div>
 
-				<div>
-					<label for="address" class="block text-sm font-medium text-gray-700 mb-1">
-						Address
-					</label>
-					<input
-						type="text"
-						id="address"
-						bind:value={formData.address}
-						class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-						placeholder="Enter address"
-					/>
-				</div>
-			</div>
+				<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+					<div class="space-y-2">
+						<Label for="rating">Rating (1-5)</Label>
+						<Input
+							type="number"
+							id="rating"
+							bind:value={formData.rating}
+							min="1"
+							max="5"
+							placeholder="1-5"
+						/>
+					</div>
 
-			<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-				<div>
-					<label for="rating" class="block text-sm font-medium text-gray-700 mb-1">
-						Rating (1-5)
-					</label>
-					<input
-						type="number"
-						id="rating"
-						bind:value={formData.rating}
-						min="1"
-						max="5"
-						class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-						placeholder="1-5"
-					/>
+					<div class="space-y-2">
+						<Label for="comment">Comment</Label>
+						<Input
+							type="text"
+							id="comment"
+							bind:value={formData.comment}
+							placeholder="Enter your comment"
+						/>
+					</div>
 				</div>
 
-				<div>
-					<label for="comment" class="block text-sm font-medium text-gray-700 mb-1">
-						Comment
-					</label>
-					<input
-						type="text"
-						id="comment"
-						bind:value={formData.comment}
-						class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-						placeholder="Enter your comment"
-					/>
+				<Button type="submit" disabled={loading}>
+					{loading ? 'Adding...' : 'Add Restaurant'}
+				</Button>
+			</form>
+		</CardContent>
+	</Card>
+
+	<Card>
+		<CardHeader>
+			<CardTitle>All Restaurants ({restaurants.length})</CardTitle>
+		</CardHeader>
+		<CardContent>
+			{#if loading && restaurants.length === 0}
+				<div class="text-center text-muted-foreground py-8">Loading restaurants...</div>
+			{:else if restaurants.length === 0}
+				<div class="text-center text-muted-foreground py-8">
+					No restaurants found. Add one using the form above!
 				</div>
-			</div>
-
-			<button
-				type="submit"
-				disabled={loading}
-				class="bg-blue-500 text-white py-2 px-4 rounded-md hover:bg-blue-700 transition disabled:opacity-50"
-			>
-				{loading ? 'Adding...' : 'Add Restaurant'}
-			</button>
-		</form>
-	</div>
-
-	<!-- Restaurants Table -->
-	<div class="bg-white rounded-lg shadow overflow-hidden">
-		<div class="px-6 py-4 border-b border-gray-200">
-			<h2 class="text-xl font-semibold">All Restaurants ({restaurants.length})</h2>
-		</div>
-
-		{#if loading && restaurants.length === 0}
-			<div class="px-6 py-8 text-center text-gray-500">Loading restaurants...</div>
-		{:else if restaurants.length === 0}
-			<div class="px-6 py-8 text-center text-gray-500">
-				No restaurants found. Add one using the form above!
-			</div>
-		{:else}
-			<div class="overflow-x-auto">
-				<table class="min-w-full divide-y divide-gray-200">
-					<thead class="bg-gray-50">
-						<tr>
-							<th
-								class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-							>
-								Name
-							</th>
-							<th
-								class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-							>
-								Address
-							</th>
-							<th
-								class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-							>
-								Rating
-							</th>
-							<th
-								class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-							>
-								Comment
-							</th>
-							<th
-								class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-							>
-								Added
-							</th>
-							<th
-								class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-							>
-								Actions
-							</th>
-						</tr>
-					</thead>
-					<tbody class="bg-white divide-y divide-gray-200">
-						{#each restaurants as restaurant (restaurant.id)}
-							<tr>
-								<td class="px-6 py-4 whitespace-nowrap">
-									<div class="text-sm font-medium text-gray-900">{restaurant.name}</div>
-								</td>
-								<td class="px-6 py-4 whitespace-nowrap">
-									<div class="text-sm text-gray-500">{restaurant.address || '-'}</div>
-								</td>
-								<td class="px-6 py-4 whitespace-nowrap">
-									{#if restaurant.rating}
-										<div class="text-sm text-gray-900">
-											{'★'.repeat(restaurant.rating)}{'☆'.repeat(5 - restaurant.rating)}
-											<span class="ml-1">({restaurant.rating}/5)</span>
-										</div>
-									{:else}
-										<div class="text-sm text-gray-500">-</div>
-									{/if}
-								</td>
-								<td class="px-6 py-4">
-									<div class="text-sm text-gray-500 max-w-xs truncate">
+			{:else}
+				<div class="rounded-md border">
+					<Table>
+						<TableHeader>
+							<TableRow>
+								<TableHead>Name</TableHead>
+								<TableHead>Address</TableHead>
+								<TableHead>Rating</TableHead>
+								<TableHead>Comment</TableHead>
+								<TableHead>Added</TableHead>
+								<TableHead>Actions</TableHead>
+							</TableRow>
+						</TableHeader>
+						<TableBody>
+							{#each restaurants as restaurant (restaurant.id)}
+								<TableRow>
+									<TableCell class="font-medium">{restaurant.name}</TableCell>
+									<TableCell class="text-muted-foreground">{restaurant.address || '-'}</TableCell>
+									<TableCell>
+										{#if restaurant.rating}
+											<div class="text-foreground">
+												{'★'.repeat(restaurant.rating)}{'☆'.repeat(5 - restaurant.rating)}
+												<span class="ml-1 text-muted-foreground">({restaurant.rating}/5)</span>
+											</div>
+										{:else}
+											<span class="text-muted-foreground">-</span>
+										{/if}
+									</TableCell>
+									<TableCell class="max-w-xs truncate text-muted-foreground">
 										{restaurant.comment || '-'}
-									</div>
-								</td>
-								<td class="px-6 py-4 whitespace-nowrap">
-									<div class="text-sm text-gray-500">
+									</TableCell>
+									<TableCell class="text-muted-foreground">
 										{new Date(restaurant.createdAt).toLocaleDateString()}
-									</div>
-								</td>
-								<td class="px-6 py-4 whitespace-nowrap">
-									<button
-										on:click={() => deleteRestaurant(restaurant.id)}
-										disabled={loading}
-										class="text-red-600 hover:text-red-900 disabled:opacity-50"
-									>
-										Delete
-									</button>
-								</td>
-							</tr>
-						{/each}
-					</tbody>
-				</table>
-			</div>
-		{/if}
-	</div>
+									</TableCell>
+									<TableCell>
+										<Button
+											variant="destructive"
+											size="sm"
+											on:click={() => deleteRestaurant(restaurant.id)}
+											disabled={loading}
+										>
+											Delete
+										</Button>
+									</TableCell>
+								</TableRow>
+							{/each}
+						</TableBody>
+					</Table>
+				</div>
+			{/if}
+		</CardContent>
+	</Card>
 
-	<div class="mt-6">
-		<a href="/" class="text-blue-500 hover:text-blue-700">← Back to Home</a>
+	<div>
+		<Button variant="link" href="/" class="p-0">← Back to Home</Button>
 	</div>
 </div>
