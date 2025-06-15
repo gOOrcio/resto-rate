@@ -8,6 +8,7 @@
 	import { Label } from '$lib/components/ui/label';
 	import { Alert, AlertDescription } from '$lib/components/ui/alert';
 	import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '$lib/components/ui/table';
+	import { AuthApi } from '$lib/client';
 
 	type Restaurant = {
 		id: string;
@@ -22,6 +23,7 @@
 	let restaurants: Restaurant[] = [];
 	let loading = false;
 	let error: string | null = null;
+	const api = new AuthApi();
 
 	// Create page-specific logger - safe for SSR
 	const logger = createPageLogger('restaurants');
@@ -39,8 +41,8 @@
 		error = null;
 		logger.debug('Loading restaurants list');
 		try {
-			const response = (await apiClient.getRestaurants()) as { restaurants: Restaurant[] };
-			restaurants = response.restaurants || [];
+			const response = await api.getRestaurants();
+			restaurants = response.data;
 			logger.info('Restaurants loaded successfully', { count: restaurants.length });
 		} catch (err) {
 			error = `Failed to load restaurants: ${err}`;
@@ -101,8 +103,9 @@
 		loading = true;
 		error = null;
 		try {
-			await apiClient.deleteRestaurant(id);
-			await loadRestaurants();
+			await api.deleteRestaurant(id);
+			restaurants = restaurants.filter(r => r.id !== id);
+			logger.info('Restaurant deleted successfully', { id });
 		} catch (err) {
 			error = `Failed to delete restaurant: ${err}`;
 			console.error('Error deleting restaurant:', err);
@@ -237,7 +240,7 @@
 										<Button
 											variant="destructive"
 											size="sm"
-											on:click={() => deleteRestaurant(restaurant.id)}
+											on:click={(e) => deleteRestaurant(restaurant.id)}
 											disabled={loading}
 										>
 											Delete

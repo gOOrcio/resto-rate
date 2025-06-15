@@ -3,6 +3,9 @@
 	import type { HTMLAnchorAttributes, HTMLButtonAttributes } from "svelte/elements";
 	import { type VariantProps, tv } from "tailwind-variants";
 
+	/**
+	 * @event click
+	 */
 	export const buttonVariants = tv({
 		base: "focus-visible:border-ring focus-visible:ring-ring/50 aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive inline-flex shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium outline-none transition-all focus-visible:ring-[3px] disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg:not([class*='size-'])]:size-4 [&_svg]:pointer-events-none [&_svg]:shrink-0",
 		variants: {
@@ -37,6 +40,10 @@
 			variant?: ButtonVariant;
 			size?: ButtonSize;
 		};
+
+	export const events = {
+		click: MouseEvent,
+	};
 </script>
 
 <script lang="ts">
@@ -71,8 +78,8 @@
 		bind:this={ref}
 		data-slot="button"
 		class={cn(buttonVariants({ variant, size }), className)}
-		{type}
-		{disabled}
+		type={type}
+		disabled={disabled}
 		{...restProps}
 	>
 		{@render children?.()}
