@@ -10,18 +10,10 @@ dotenv.config({ path: envPath });
 
 export default defineConfig({
 	plugins: [
+		// @ts-expect-error. Tailwind is not typed.
 		tailwindcss(),
 		sveltekit(), 
 	],
-	build: {
-		rollupOptions: {
-			onwarn(warning, warn) {
-				// Suppress some warnings that might cause issues
-				if (warning.code === 'CIRCULAR_DEPENDENCY') return;
-				warn(warning);
-			}
-		}
-	},
 	optimizeDeps: {
 		include: ['@msgpack/msgpack']
 	}
