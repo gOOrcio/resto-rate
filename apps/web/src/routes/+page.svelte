@@ -3,7 +3,13 @@
 	import { createPageLogger } from '$lib/logger';
 	import { authStore } from '$lib/stores/auth';
 	import { authService } from '$lib/services/auth.service';
-	import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '$lib/components/ui/card';
+	import {
+		Card,
+		CardContent,
+		CardDescription,
+		CardHeader,
+		CardTitle,
+	} from '$lib/components/ui/card';
 
 	// Create a safe logger for this page
 	const logger = createPageLogger('home');
@@ -36,7 +42,10 @@
 						<CardDescription>Manage and rate restaurants</CardDescription>
 					</CardHeader>
 					<CardContent>
-						<a href="/restaurants" class="block w-full text-center px-4 py-2 text-sm font-medium text-primary hover:underline">
+						<a
+							href="/restaurants"
+							class="block w-full text-center px-4 py-2 text-sm font-medium text-primary hover:underline"
+						>
 							View Restaurants
 						</a>
 					</CardContent>
@@ -48,7 +57,10 @@
 						<CardDescription>View all users</CardDescription>
 					</CardHeader>
 					<CardContent>
-						<a href="/users" class="block w-full text-center px-4 py-2 text-sm font-medium text-primary hover:underline">
+						<a
+							href="/users"
+							class="block w-full text-center px-4 py-2 text-sm font-medium text-primary hover:underline"
+						>
 							View Users
 						</a>
 					</CardContent>
@@ -69,7 +81,7 @@
 						<CardDescription>Sign in with Google to start rating restaurants</CardDescription>
 					</CardHeader>
 					<CardContent>
-						<button 
+						<button
 							class="w-full px-4 py-2 text-sm font-medium rounded-md border border-input bg-background hover:bg-accent hover:text-accent-foreground"
 							onclick={handleGoogleLogin}
 						>

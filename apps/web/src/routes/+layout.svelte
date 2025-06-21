@@ -4,7 +4,7 @@
 	import { authStore } from '$lib/stores/auth';
 	import { authService } from '$lib/services/auth.service';
 	import ThemeToggle from '$lib/components/ThemeToggle.svelte';
-	import { Button } from '$lib/components/ui/button';
+	import { ModeWatcher } from 'tailwind-variants/svelte';
 	import { onMount } from 'svelte';
 
 	const { children } = $props();
@@ -16,7 +16,7 @@
 				theme.set(storedTheme as 'dark' | 'light');
 			}
 		}
-		
+
 		authService.verifySession();
 	});
 
@@ -29,6 +29,8 @@
 	}
 </script>
 
+<ModeWatcher />
+
 <div class="min-h-screen bg-background text-foreground">
 	<nav class="container mx-auto flex h-16 items-center justify-between px-4">
 		<a href="/" class="text-xl font-bold">RestoRate</a>
@@ -39,14 +41,14 @@
 				</span>
 				<a href="/restaurants" class="hover:text-accent-foreground">Restaurants</a>
 				<a href="/users" class="hover:text-accent-foreground">Users</a>
-				<button 
+				<button
 					class="px-3 py-1 text-sm rounded-md hover:bg-accent hover:text-accent-foreground"
 					onclick={handleLogout}
 				>
 					Logout
 				</button>
 			{:else}
-				<button 
+				<button
 					class="px-3 py-1 text-sm rounded-md border border-input bg-background hover:bg-accent hover:text-accent-foreground"
 					onclick={handleGoogleLogin}
 				>

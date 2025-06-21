@@ -33,9 +33,10 @@ cp env.template .env
    c. Enable Google+ API
    d. Create OAuth 2.0 credentials
    e. Add authorized redirect URIs:
-      - Development: `http://localhost:3001/api/auth/google/callback`
-      - Production: `https://yourdomain.com/api/auth/google/callback`
-   f. Update your `.env` file with the credentials
+
+   - Development: `http://localhost:3001/api/auth/google/callback`
+   - Production: `https://yourdomain.com/api/auth/google/callback`
+     f. Update your `.env` file with the credentials
 
 4. **Start database** (Docker recommended):
 

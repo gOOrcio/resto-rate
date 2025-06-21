@@ -30,4 +30,4 @@ export function isValidSession(result: SessionValidationResult): result is {
 	user: NonNullable<SessionValidationResult['user']>;
 } {
 	return result.session !== null && result.user !== null;
-} 
+}

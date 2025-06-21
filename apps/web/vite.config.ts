@@ -12,9 +12,9 @@ export default defineConfig({
 	plugins: [
 		// @ts-expect-error. Tailwind is not typed.
 		tailwindcss(),
-		sveltekit(), 
+		sveltekit(),
 	],
 	optimizeDeps: {
-		include: ['@msgpack/msgpack']
-	}
+		include: ['@msgpack/msgpack'],
+	},
 });

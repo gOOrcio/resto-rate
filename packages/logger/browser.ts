@@ -1,9 +1,14 @@
-import { type LoggerConfig, type ContextualLogger, type LogLevel, getDefaultLogLevel } from './shared';
+import {
+	type LoggerConfig,
+	type ContextualLogger,
+	type LogLevel,
+	getDefaultLogLevel,
+} from './shared';
 
 class BrowserLogger implements ContextualLogger {
 	private context: object = {};
 	private actualLevel: LogLevel;
-	
+
 	constructor(
 		private config: LoggerConfig,
 		context?: object
@@ -94,11 +99,11 @@ export function createBrowserLoggerFromEnv(service: string): ContextualLogger {
 	// Simple browser-safe environment detection
 	const environment = 'development'; // Default for browser, can be overridden
 	const level = getDefaultLogLevel(environment);
-	
+
 	return createBrowserLogger({
 		level,
 		service,
 		environment,
 		pretty: true,
 	});
-} 
+}

@@ -18,13 +18,17 @@
 
 	type AlertVariant = VariantProps<typeof alertVariants>['variant'];
 
-	let { variant = 'default', class: className = '', children } = $props<{
+	const {
+		variant = 'default',
+		class: className = '',
+		children,
+	} = $props<{
 		variant?: AlertVariant;
 		class?: string;
-		children?: () => any;
+		children?: import('svelte').Snippet;
 	}>();
 </script>
 
 <div class={cn(alertVariants({ variant }), className)}>
 	{@render children?.()}
-</div> 
+</div>

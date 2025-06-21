@@ -10,13 +10,13 @@ export const authRoutes: FastifyPluginAsync = async (fastify) => {
 	fastify.get('/google/callback', async (request, reply) => {
 		return handleRoute(reply, async () => {
 			const { code } = request.query as { code: string };
-			
+
 			if (!code) {
 				throw new Error('Authorization code is required');
 			}
 
 			const result = await authService.authenticateWithGoogle(code);
-			
+
 			// Return the auth response instead of redirecting
 			return result;
 		});
@@ -34,7 +34,7 @@ export const authRoutes: FastifyPluginAsync = async (fastify) => {
 	fastify.post('/login', async (request, reply) => {
 		return handleRoute(reply, async () => {
 			const { username, password } = request.body as { username: string; password: string };
-			
+
 			if (!username || !password) {
 				throw new Error('Username and password are required');
 			}
@@ -47,8 +47,12 @@ export const authRoutes: FastifyPluginAsync = async (fastify) => {
 	// Register endpoint
 	fastify.post('/register', async (request, reply) => {
 		return handleRoute(reply, async () => {
-			const { username, password, age } = request.body as { username: string; password: string; age?: number };
-			
+			const { username, password, age } = request.body as {
+				username: string;
+				password: string;
+				age?: number;
+			};
+
 			if (!username || !password) {
 				throw new Error('Username and password are required');
 			}

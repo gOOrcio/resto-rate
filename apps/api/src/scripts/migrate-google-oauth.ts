@@ -28,7 +28,7 @@ async function migrateGoogleOAuth() {
 	try {
 		// Add Google OAuth columns to user table
 		console.log('📝 Adding Google OAuth columns to user table...');
-		
+
 		await db().execute(`
 			ALTER TABLE "user" 
 			ADD COLUMN IF NOT EXISTS "google_id" text UNIQUE,
@@ -39,7 +39,7 @@ async function migrateGoogleOAuth() {
 
 		// Make username and password_hash optional for OAuth users
 		console.log('🔧 Making username and password_hash optional...');
-		
+
 		await db().execute(`
 			ALTER TABLE "user" 
 			ALTER COLUMN "username" DROP NOT NULL,
@@ -48,7 +48,7 @@ async function migrateGoogleOAuth() {
 
 		// Add indexes for performance
 		console.log('📊 Adding performance indexes...');
-		
+
 		await db().execute(`
 			CREATE INDEX IF NOT EXISTS idx_user_google_id ON "user"("google_id");
 			CREATE INDEX IF NOT EXISTS idx_user_email ON "user"("email");
@@ -59,7 +59,6 @@ async function migrateGoogleOAuth() {
 		console.log('   - Added google_id, email, name, is_admin columns');
 		console.log('   - Made username and password_hash optional');
 		console.log('   - Added performance indexes');
-		
 	} catch (error) {
 		console.error('❌ Migration failed:', error);
 		logger.error('Google OAuth migration failed', { error });
@@ -77,4 +76,4 @@ if (import.meta.url === `file://${process.argv[1]}`) {
 		});
 }
 
-export { migrateGoogleOAuth }; 
+export { migrateGoogleOAuth };

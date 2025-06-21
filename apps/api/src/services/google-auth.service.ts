@@ -10,7 +10,7 @@ import { getAuthConfig } from '@resto-rate/config';
  */
 export async function exchangeCodeForTokens(code: string): Promise<GoogleTokens> {
 	const authConfig = getAuthConfig();
-	
+
 	const tokenResponse = await fetch('https://oauth2.googleapis.com/token', {
 		method: 'POST',
 		headers: {
@@ -30,7 +30,7 @@ export async function exchangeCodeForTokens(code: string): Promise<GoogleTokens>
 		throw new Error(`Failed to exchange code for tokens: ${tokenResponse.status} ${errorText}`);
 	}
 
-	const tokens = await tokenResponse.json() as GoogleTokens;
+	const tokens = (await tokenResponse.json()) as GoogleTokens;
 	return tokens;
 }
 
@@ -47,7 +47,7 @@ export async function getGoogleUserInfo(accessToken: string): Promise<GoogleUser
 		throw new Error(`Failed to get user info: ${userInfoResponse.status} ${errorText}`);
 	}
 
-	const userInfo = await userInfoResponse.json() as GoogleUserInfo;
+	const userInfo = (await userInfoResponse.json()) as GoogleUserInfo;
 	return userInfo;
 }
 
@@ -68,7 +68,7 @@ export async function createOrUpdateUserFromGoogle(googleUser: GoogleUserInfo): 
 		if (!existingUser) {
 			throw new Error('User not found');
 		}
-		
+
 		const [updatedUser] = await db()
 			.update(user)
 			.set({
@@ -95,7 +95,7 @@ export async function createOrUpdateUserFromGoogle(googleUser: GoogleUserInfo): 
 		if (!existingUser) {
 			throw new Error('User not found');
 		}
-		
+
 		const [updatedUser] = await db()
 			.update(user)
 			.set({
@@ -130,10 +130,10 @@ export async function createOrUpdateUserFromGoogle(googleUser: GoogleUserInfo): 
  */
 export function generateGoogleAuthUrl(): string {
 	const authConfig = getAuthConfig();
-	
+
 	// Use frontend callback URL instead of backend
 	const redirectUri = 'http://localhost:5173/auth/callback';
-	
+
 	const params = new URLSearchParams({
 		client_id: authConfig.googleClientId,
 		redirect_uri: redirectUri,
@@ -144,4 +144,4 @@ export function generateGoogleAuthUrl(): string {
 	});
 
 	return `https://accounts.google.com/o/oauth2/v2/auth?${params.toString()}`;
-} 
+}

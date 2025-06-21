@@ -33,7 +33,7 @@ export class ApiClient {
 	): Promise<T> {
 		const url = `${this.baseUrl}${endpoint}`;
 		const headers: HeadersInit = {
-			'Accept': 'application/msgpack', // Always request MessagePack responses
+			Accept: 'application/msgpack', // Always request MessagePack responses
 		};
 
 		// Only set Content-Type for requests with a body
@@ -57,7 +57,7 @@ export class ApiClient {
 				hasBody: body !== undefined,
 				sessionId: sessionId ? '***' : undefined,
 			});
-			
+
 			const response = await fetch(url, {
 				...options,
 				headers: {
@@ -95,7 +95,7 @@ export class ApiClient {
 			const arrayBuffer = await response.arrayBuffer();
 			const data = decode(new Uint8Array(arrayBuffer)) as T;
 
-			logger.debug('API Success', { url, dataKeys: Object.keys(data as object || {}) });
+			logger.debug('API Success', { url, dataKeys: Object.keys((data as object) || {}) });
 			return data;
 		} catch (error) {
 			logger.error('API request failed', { url, error });
@@ -184,12 +184,12 @@ export class ApiClient {
 	async healthCheck() {
 		const healthUrl = this.baseUrl.replace('/api', '/health');
 		const headers: HeadersInit = {
-			'Accept': 'application/json', // Health check uses JSON for monitoring systems
+			Accept: 'application/json', // Health check uses JSON for monitoring systems
 		};
 
 		try {
 			logger.debug('Health Check Request', { url: healthUrl });
-			
+
 			const response = await fetch(healthUrl, { headers });
 
 			logger.debug('Health Check Response', {

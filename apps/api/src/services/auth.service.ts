@@ -7,10 +7,10 @@ import { generateUserId, generateSessionId } from '@resto-rate/ulid';
 import { hash, verify } from '@node-rs/argon2';
 import { sha256 } from '@oslojs/crypto/sha2';
 import { encodeHexLowerCase } from '@oslojs/encoding';
-import { 
-	exchangeCodeForTokens, 
-	getGoogleUserInfo, 
-	createOrUpdateUserFromGoogle 
+import {
+	exchangeCodeForTokens,
+	getGoogleUserInfo,
+	createOrUpdateUserFromGoogle,
 } from './google-auth.service';
 
 const DAY_IN_MS = 1000 * 60 * 60 * 24;
@@ -19,7 +19,7 @@ export async function login(username: string, password: string): Promise<AuthRes
 	// Find user by username
 	const users = await db().select().from(user).where(eq(user.username, username)).limit(1);
 	const existingUser = users[0];
-	
+
 	if (!existingUser) {
 		throw new Error('Invalid username or password');
 	}
@@ -69,7 +69,11 @@ export async function login(username: string, password: string): Promise<AuthRes
 	};
 }
 
-export async function register(username: string, password: string, age?: number): Promise<AuthResponse> {
+export async function register(
+	username: string,
+	password: string,
+	age?: number
+): Promise<AuthResponse> {
 	// Basic validation
 	if (username.length < 3 || username.length > 31) {
 		throw new Error('Username must be between 3 and 31 characters');
@@ -183,13 +187,13 @@ export async function authenticateWithGoogle(code: string): Promise<AuthResponse
 	try {
 		// 1. Exchange authorization code for tokens
 		const tokens = await exchangeCodeForTokens(code);
-		
+
 		// 2. Get user info from Google
 		const googleUser = await getGoogleUserInfo(tokens.access_token);
-		
+
 		// 3. Create or update user in database (email + name only)
 		const dbUser = await createOrUpdateUserFromGoogle(googleUser);
-		
+
 		// 4. Create session (30 days)
 		const sessionToken = generateSessionId();
 		const sessionId = encodeHexLowerCase(sha256(new TextEncoder().encode(sessionToken)));

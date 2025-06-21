@@ -1,7 +1,7 @@
 <script lang="ts">
-    import { cn } from "$lib/utils";
+	import { cn } from '$lib/utils';
 </script>
 
-<tbody class={cn("[&_tr:last-child]:border-0")} {...$$restProps}>
-    <slot />
-</tbody> 
+<tbody class={cn('[&_tr:last-child]:border-0')} {...$$restProps}>
+	<slot />
+</tbody>

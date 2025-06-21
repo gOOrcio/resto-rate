@@ -37,9 +37,10 @@ export function getConfigFromEnv(service: string): LoggerConfig {
 		return defaultValue;
 	};
 
-	const environment = (getEnvVar('NODE_ENV') as 'development' | 'production' | 'test') || 'development';
+	const environment =
+		(getEnvVar('NODE_ENV') as 'development' | 'production' | 'test') || 'development';
 	const level = (getEnvVar('LOG_LEVEL') as LogLevel) || getDefaultLogLevel(environment);
 	const pretty = getEnvVar('LOG_PRETTY') === 'true' || environment === 'development';
 
 	return { level, service, environment, pretty };
-} 
+}

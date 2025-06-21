@@ -3,11 +3,24 @@
 	import { apiClient } from '$lib/api';
 	import { createPageLogger } from '$lib/logger';
 	import { Button } from '$lib/components/ui/button';
-	import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '$lib/components/ui/card';
+	import {
+		Card,
+		CardContent,
+		CardDescription,
+		CardHeader,
+		CardTitle,
+	} from '$lib/components/ui/card';
 	import { Input } from '$lib/components/ui/input';
 	import { Label } from '$lib/components/ui/label';
 	import { Alert, AlertDescription } from '$lib/components/ui/alert';
-	import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '$lib/components/ui/table';
+	import {
+		Table,
+		TableBody,
+		TableCell,
+		TableHead,
+		TableHeader,
+		TableRow,
+	} from '$lib/components/ui/table';
 	import ProtectedRoute from '$lib/components/ProtectedRoute.svelte';
 
 	type Restaurant = {
@@ -40,7 +53,7 @@
 		error = null;
 		logger.debug('Loading restaurants list');
 		try {
-			const response = await apiClient.getRestaurants() as { restaurants: Restaurant[] };
+			const response = (await apiClient.getRestaurants()) as { restaurants: Restaurant[] };
 			restaurants = response.restaurants;
 			logger.info('Restaurants loaded successfully', { count: restaurants.length });
 		} catch (err) {
@@ -103,7 +116,7 @@
 		error = null;
 		try {
 			await apiClient.deleteRestaurant(id);
-			restaurants = restaurants.filter(r => r.id !== id);
+			restaurants = restaurants.filter((r) => r.id !== id);
 			logger.info('Restaurant deleted successfully', { id });
 		} catch (err) {
 			error = `Failed to delete restaurant: ${err}`;
@@ -129,9 +142,7 @@
 
 		{#if error}
 			<Alert variant="destructive">
-				{#snippet children()}
-					<AlertDescription>{error}</AlertDescription>
-				{/snippet}
+				<AlertDescription>{error}</AlertDescription>
 			</Alert>
 		{/if}
 

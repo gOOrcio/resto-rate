@@ -22,21 +22,23 @@ const loggingConfig = getLoggingConfig();
 const logger = createServerLogger({
 	level: loggingConfig.level,
 	service: 'api',
-	environment: process.env.NODE_ENV as 'development' | 'production' | 'test' || 'development',
+	environment: (process.env.NODE_ENV as 'development' | 'production' | 'test') || 'development',
 	pretty: loggingConfig.pretty,
 });
 
 const server = Fastify({
 	logger: {
 		level: loggingConfig.level,
-		transport: loggingConfig.pretty ? {
-			target: 'pino-pretty',
-			options: {
-				colorize: true,
-				translateTime: 'HH:MM:ss',
-				ignore: 'pid,hostname',
-			},
-		} : undefined,
+		transport: loggingConfig.pretty
+			? {
+					target: 'pino-pretty',
+					options: {
+						colorize: true,
+						translateTime: 'HH:MM:ss',
+						ignore: 'pid,hostname',
+					},
+				}
+			: undefined,
 		serializers: {
 			req: (request) => ({
 				method: request.method,
@@ -96,7 +98,7 @@ async function startServer() {
 					done(null, null);
 					return;
 				}
-				
+
 				const parsed = decode(body as Uint8Array);
 				done(null, parsed);
 			} catch (err) {
@@ -117,7 +119,7 @@ async function startServer() {
 					} else {
 						data = payload;
 					}
-					
+
 					const encoded = encode(data);
 					return Buffer.from(encoded);
 				} catch (error) {

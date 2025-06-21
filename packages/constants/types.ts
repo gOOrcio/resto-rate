@@ -58,4 +58,4 @@ export type ValidationError = {
 export type ApiError = {
 	error: string;
 	details?: ValidationError[];
-}; 
+};

@@ -11,13 +11,13 @@ export class AuthService {
 	 */
 	async initiateGoogleLogin(): Promise<void> {
 		if (!browser) return;
-		
+
 		try {
 			authStore.setLoading(true);
-			
+
 			// Get Google OAuth URL from backend using apiClient
 			const response = await apiClient.getGoogleAuthUrl();
-			
+
 			// Redirect to Google OAuth
 			window.location.href = (response as { authUrl: string }).authUrl;
 		} catch (error) {
@@ -31,13 +31,13 @@ export class AuthService {
 	 */
 	async handleGoogleCallback(code: string): Promise<void> {
 		if (!browser) return;
-		
+
 		try {
 			authStore.setLoading(true);
-			
+
 			// Exchange code for session via backend using apiClient
 			const response = await apiClient.handleGoogleCallback(code);
-			
+
 			// Update auth store with the session
 			const { user, sessionId } = response as { user: UserResponse; sessionId: string };
 			authStore.login(user, sessionId);
@@ -52,10 +52,10 @@ export class AuthService {
 	 */
 	async verifySession(): Promise<void> {
 		if (!browser) return;
-		
+
 		const state = get(authStore);
 		const sessionId = state.sessionId;
-		
+
 		if (!sessionId) {
 			authStore.logout();
 			return;
@@ -63,9 +63,9 @@ export class AuthService {
 
 		try {
 			authStore.setLoading(true);
-			
-			const response = await apiClient.verifySession(sessionId) as { user: UserResponse };
-			
+
+			const response = (await apiClient.verifySession(sessionId)) as { user: UserResponse };
+
 			// Update store with fresh user data
 			authStore.updateUser(response.user);
 		} catch (error) {
@@ -82,11 +82,11 @@ export class AuthService {
 	 */
 	async logout(): Promise<void> {
 		if (!browser) return;
-		
+
 		try {
 			const state = get(authStore);
 			const sessionId = state.sessionId;
-			
+
 			if (sessionId) {
 				// Call backend to invalidate session
 				await apiClient.logout(sessionId);
@@ -97,7 +97,7 @@ export class AuthService {
 		} finally {
 			// Clear local state
 			authStore.logout();
-			
+
 			// Redirect to home page
 			goto('/');
 		}
@@ -129,4 +129,4 @@ export class AuthService {
 	}
 }
 
-export const authService = new AuthService(); 
+export const authService = new AuthService();

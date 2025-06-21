@@ -20,7 +20,7 @@ function createAuthStore(): AuthStore {
 	// Initialize from localStorage if available
 	const storedSessionId = browser ? localStorage.getItem('sessionId') : null;
 	const storedUser = browser ? localStorage.getItem('user') : null;
-	
+
 	const initialState: AuthState = {
 		user: storedUser ? JSON.parse(storedUser) : null,
 		sessionId: storedSessionId,
@@ -60,15 +60,15 @@ function createAuthStore(): AuthStore {
 			});
 		},
 		setLoading: (loading: boolean) => {
-			update(state => ({ ...state, isLoading: loading }));
+			update((state) => ({ ...state, isLoading: loading }));
 		},
 		updateUser: (user: UserResponse) => {
 			if (browser) {
 				localStorage.setItem('user', JSON.stringify(user));
 			}
-			update(state => ({ ...state, user }));
+			update((state) => ({ ...state, user }));
 		},
 	};
 }
 
-export const authStore = createAuthStore(); 
+export const authStore = createAuthStore();

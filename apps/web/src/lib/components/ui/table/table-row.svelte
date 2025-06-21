@@ -1,7 +1,10 @@
 <script lang="ts">
-    import { cn } from "$lib/utils";
+	import { cn } from '$lib/utils';
 </script>
 
-<tr class={cn("border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted")} {...$$restProps}>
-    <slot />
-</tr> 
+<tr
+	class={cn('border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted')}
+	{...$$restProps}
+>
+	<slot />
+</tr>

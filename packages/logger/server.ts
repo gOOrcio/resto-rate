@@ -60,4 +60,4 @@ export function createServerLogger(config: LoggerConfig): ContextualLogger {
 
 export function createServerLoggerFromEnv(service: string): ContextualLogger {
 	return createServerLogger(getConfigFromEnv(service));
-} 
+}

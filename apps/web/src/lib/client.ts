@@ -1,1 +1,1 @@
-export { ApiClient as AuthApi } from './api'; 
+export { ApiClient as AuthApi } from './api';

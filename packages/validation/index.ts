@@ -74,7 +74,7 @@ export function createValidationError(field: string, message: string): Validatio
  * Combine multiple validation results
  */
 export function combineValidationResults(...results: ValidationResult[]): ValidationResult {
-	const errors = results.flatMap(r => r.errors);
+	const errors = results.flatMap((r) => r.errors);
 	return { valid: errors.length === 0, errors };
 }
 

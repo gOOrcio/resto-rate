@@ -1,62 +1,77 @@
 {
-  "name": "resto-rate",
-  "private": true,
-  "scripts": {
-    "build": "nx run-many -t build",
-    "dev": "nx run-many -t dev",
-    "dev:api": "cd apps/api && bun run dev",
-    "dev:web": "cd apps/web && bun run dev",
-    "lint": "nx run-many -t lint",
-    "format": "prettier --write \"**/*.{ts,tsx,js,jsx,svelte,json,md}\"",
-    "check-types": "nx run-many -t check-types",
-    "install:all": "bun install",
-    "clean:all": "find . -name 'node_modules' -type d -prune -exec rm -rf '{}' + && find . -name '.svelte-kit' -type d -prune -exec rm -rf '{}' +",
-    "refresh:all": "bun run clean:all && bun run install:all",
-    "db:start": "docker compose up -d",
-    "db:stop": "docker compose down",
-    "db:restart": "bun run db:stop && bun run db:start",
-    "db:logs": "docker compose logs -f postgres",
-    "db:push": "cd apps/api && bun run db:push",
-    "db:generate": "cd apps/api && bun run db:generate",
-    "db:migrate": "cd apps/api && bun run db:migrate",
-    "db:studio": "cd apps/api && bun run db:studio",
-    "db:drop": "cd apps/api && bun run db:drop",
-    "db:check": "cd apps/api && bun run db:check",
-    "db:up": "cd apps/api && bun run db:up",
-    "db:wait": "until docker compose exec postgres pg_isready -U ${POSTGRES_USER:-postgres}; do echo 'Waiting for database...'; sleep 2; done",
-    "db:reset": "bun run db:drop && bun run db:push",
-    "db:seed": "cd apps/api && bun run db:seed",
-    "db:purge": "bun run db:stop && docker compose rm -f && docker volume prune -f && bun run db:start && bun run db:wait && bun run db:push",
-    "db:fresh": "bun run db:purge && bun run db:seed"
-  },
-  "devDependencies": {
-    "@nxext/svelte": "^21.0.0",
-    "@sveltejs/kit": "2.16.0",
-    "@sveltejs/vite-plugin-svelte": "5.0.0",
-    "eslint": "^9.29.0",
-    "npm-check-updates": "^18.0.1",
-    "nx": "^21.2.1",
-    "prettier": "^3.5.3",
-    "prettier-plugin-svelte": "^3.4.0",
-    "prettier-plugin-tailwindcss": "^0.6.13",
-    "typescript": "^5.8.3",
-    "vite": "6.2.6"
-  },
-  "engines": {
-    "node": ">=18"
-  },
-  "packageManager": "bun@1.2.17",
-  "workspaces": [
-    "apps/*",
-    "packages/*"
-  ],
-  "dependencies": {
-    "dotenv": "^16.5.0"
-  },
-  "trustedDependencies": [
-    "@tailwindcss/oxide",
-    "esbuild",
-    "nx",
-    "web"
-  ]
+	"name": "resto-rate",
+	"private": true,
+	"scripts": {
+		"build": "nx run-many -t build",
+		"dev": "nx run-many -t dev",
+		"dev:api": "cd apps/api && bun run dev",
+		"dev:web": "cd apps/web && bun run dev",
+		"lint": "nx run-many -t lint",
+		"format": "prettier --write \"**/*.{ts,tsx,js,jsx,svelte,json,md,css}\"",
+		"check-types": "nx run-many -t check-types",
+		"test": "nx run-many -t test",
+		"test:affected": "nx affected -t test",
+		"build:affected": "nx affected -t build",
+		"lint:affected": "nx affected -t lint",
+		"check-types:affected": "nx affected -t check-types",
+		"graph": "nx graph",
+		"show": "nx show projects",
+		"reset": "nx reset",
+		"sync": "nx sync",
+		"migrate": "nx migrate",
+		"repair": "nx repair",
+		"report": "nx report",
+		"install:all": "bun install",
+		"clean:all": "find . -name 'node_modules' -type d -prune -exec rm -rf '{}' + && find . -name '.svelte-kit' -type d -prune -exec rm -rf '{}' +",
+		"refresh:all": "bun run clean:all && bun run install:all",
+		"clean:nx": "rm -rf .nx/cache .nx/workspace-data",
+		"clean:full": "bun run clean:all && bun run clean:nx",
+		"refresh:full": "bun run clean:full && bun run install:all",
+		"db:start": "docker compose up -d",
+		"db:stop": "docker compose down",
+		"db:restart": "bun run db:stop && bun run db:start",
+		"db:logs": "docker compose logs -f postgres",
+		"db:push": "cd apps/api && bun run db:push",
+		"db:generate": "cd apps/api && bun run db:generate",
+		"db:migrate": "cd apps/api && bun run db:migrate",
+		"db:studio": "cd apps/api && bun run db:studio",
+		"db:drop": "cd apps/api && bun run db:drop",
+		"db:check": "cd apps/api && bun run db:check",
+		"db:up": "cd apps/api && bun run db:up",
+		"db:wait": "until docker compose exec postgres pg_isready -U ${POSTGRES_USER:-postgres}; do echo 'Waiting for database...'; sleep 2; done",
+		"db:reset": "bun run db:drop && bun run db:push",
+		"db:seed": "cd apps/api && bun run db:seed",
+		"db:purge": "bun run db:stop && docker compose rm -f && docker volume prune -f && bun run db:start && bun run db:wait && bun run db:push",
+		"db:fresh": "bun run db:purge && bun run db:seed"
+	},
+	"devDependencies": {
+		"@nxext/svelte": "^21.0.0",
+		"@sveltejs/kit": "2.16.0",
+		"@sveltejs/vite-plugin-svelte": "5.0.0",
+		"eslint": "^9.29.0",
+		"npm-check-updates": "^18.0.1",
+		"nx": "^21.2.1",
+		"prettier": "^3.5.3",
+		"prettier-plugin-svelte": "^3.4.0",
+		"prettier-plugin-tailwindcss": "^0.6.13",
+		"typescript": "^5.8.3",
+		"vite": "6.2.6"
+	},
+	"engines": {
+		"node": ">=18"
+	},
+	"packageManager": "bun@1.2.17",
+	"workspaces": [
+		"apps/*",
+		"packages/*"
+	],
+	"dependencies": {
+		"dotenv": "^16.5.0"
+	},
+	"trustedDependencies": [
+		"@tailwindcss/oxide",
+		"esbuild",
+		"nx",
+		"web"
+	]
 }

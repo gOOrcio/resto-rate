@@ -4,7 +4,8 @@ import { resolve } from 'path';
 
 config({ path: resolve(process.cwd(), '../../.env') });
 
-const databaseUrl = process.env.DATABASE_URL || 'postgresql://postgres:password@localhost:5432/resto_rate';
+const databaseUrl =
+	process.env.DATABASE_URL || 'postgresql://postgres:password@localhost:5432/resto_rate';
 
 export default {
 	schema: '../../packages/database/schema.ts',

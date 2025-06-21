@@ -6,7 +6,8 @@ export function createWebLogger(service: string, level: LogLevel = 'debug') {
 	return createBrowserLogger({
 		level,
 		service,
-		environment: browser && window?.location?.hostname === 'localhost' ? 'development' : 'production',
+		environment:
+			browser && window?.location?.hostname === 'localhost' ? 'development' : 'production',
 		pretty: true,
 	});
 }
@@ -27,4 +28,4 @@ export function createComponentLogger(componentName: string) {
 // Utility to create page-specific loggers
 export function createPageLogger(pageName: string) {
 	return createWebLogger(`page-${pageName}`);
-} 
+}

@@ -14,4 +14,4 @@ export { createServerLoggerFromEnv as createLoggerFromEnv } from './server';
 
 // Default logger instance for server environments
 import { createServerLoggerFromEnv } from './server';
-export const logger = createServerLoggerFromEnv('resto-rate'); 
+export const logger = createServerLoggerFromEnv('resto-rate');

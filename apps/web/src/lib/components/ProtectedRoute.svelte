@@ -2,17 +2,17 @@
 	import { authStore } from '$lib/stores/auth';
 	import { goto } from '$app/navigation';
 	import { onMount } from 'svelte';
-	
+
 	export let fallback: string = '/';
-	
+
 	onMount(() => {
 		// Check authentication status on mount
-		const unsubscribe = authStore.subscribe(state => {
+		const unsubscribe = authStore.subscribe((state) => {
 			if (!state.isAuthenticated && !state.isLoading) {
 				goto(fallback);
 			}
 		});
-		
+
 		return unsubscribe;
 	});
 </script>
@@ -26,4 +26,4 @@
 			<p class="text-muted-foreground">Loading...</p>
 		</div>
 	</div>
-{/if} 
+{/if}
