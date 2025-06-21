@@ -40,10 +40,6 @@
 			variant?: ButtonVariant;
 			size?: ButtonSize;
 		};
-
-	export const events = {
-		click: MouseEvent,
-	};
 </script>
 
 <script lang="ts">

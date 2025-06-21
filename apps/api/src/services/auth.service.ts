@@ -7,6 +7,11 @@ import { generateUserId, generateSessionId } from '@resto-rate/ulid';
 import { hash, verify } from '@node-rs/argon2';
 import { sha256 } from '@oslojs/crypto/sha2';
 import { encodeHexLowerCase } from '@oslojs/encoding';
+import { 
+	exchangeCodeForTokens, 
+	getGoogleUserInfo, 
+	createOrUpdateUserFromGoogle 
+} from './google-auth.service';
 
 const DAY_IN_MS = 1000 * 60 * 60 * 24;
 
@@ -20,6 +25,10 @@ export async function login(username: string, password: string): Promise<AuthRes
 	}
 
 	// Verify password
+	if (!existingUser.passwordHash) {
+		throw new Error('Invalid username or password');
+	}
+
 	const validPassword = await verify(existingUser.passwordHash, password, {
 		memoryCost: 19456,
 		timeCost: 2,
@@ -47,6 +56,10 @@ export async function login(username: string, password: string): Promise<AuthRes
 	return {
 		user: {
 			id: existingUser.id,
+			googleId: existingUser.googleId,
+			email: existingUser.email,
+			name: existingUser.name,
+			isAdmin: existingUser.isAdmin || false,
 			username: existingUser.username,
 			age: existingUser.age,
 			createdAt: existingUser.createdAt,
@@ -122,6 +135,10 @@ export async function verifySession(sessionId: string): Promise<AuthResponse> {
 			session: session,
 			user: {
 				id: user.id,
+				googleId: user.googleId,
+				email: user.email,
+				name: user.name,
+				isAdmin: user.isAdmin,
 				username: user.username,
 				age: user.age,
 				createdAt: user.createdAt,
@@ -136,7 +153,17 @@ export async function verifySession(sessionId: string): Promise<AuthResponse> {
 	const sessionResult = requireQueryResult(result, 'Session not found or expired');
 
 	return {
-		user: sessionResult.user,
+		user: {
+			id: sessionResult.user.id,
+			googleId: sessionResult.user.googleId,
+			email: sessionResult.user.email,
+			name: sessionResult.user.name,
+			isAdmin: sessionResult.user.isAdmin || undefined,
+			username: sessionResult.user.username,
+			age: sessionResult.user.age,
+			createdAt: sessionResult.user.createdAt,
+			updatedAt: sessionResult.user.updatedAt,
+		},
 		sessionId: sessionId,
 	};
 }
@@ -147,4 +174,50 @@ export async function getSession(sessionId: string): Promise<AuthResponse> {
 
 export async function invalidateSession(sessionId: string): Promise<void> {
 	await db().delete(session).where(eq(session.id, sessionId));
+}
+
+/**
+ * Authenticate user with Google OAuth
+ */
+export async function authenticateWithGoogle(code: string): Promise<AuthResponse> {
+	try {
+		// 1. Exchange authorization code for tokens
+		const tokens = await exchangeCodeForTokens(code);
+		
+		// 2. Get user info from Google
+		const googleUser = await getGoogleUserInfo(tokens.access_token);
+		
+		// 3. Create or update user in database (email + name only)
+		const dbUser = await createOrUpdateUserFromGoogle(googleUser);
+		
+		// 4. Create session (30 days)
+		const sessionToken = generateSessionId();
+		const sessionId = encodeHexLowerCase(sha256(new TextEncoder().encode(sessionToken)));
+		const expiresAt = new Date(Date.now() + DAY_IN_MS * 30);
+
+		const newSession = {
+			id: sessionId,
+			userId: dbUser.id,
+			expiresAt,
+		};
+
+		await db().insert(session).values(newSession);
+
+		// 5. Return auth response
+		return {
+			user: {
+				id: dbUser.id,
+				email: dbUser.email,
+				name: dbUser.name,
+				username: dbUser.username,
+				age: dbUser.age,
+				isAdmin: dbUser.isAdmin || undefined,
+				createdAt: dbUser.createdAt,
+				updatedAt: dbUser.updatedAt,
+			},
+			sessionId: sessionToken,
+		};
+	} catch (error) {
+		throw new Error(`Google OAuth authentication failed: ${(error as Error).message}`);
+	}
 }

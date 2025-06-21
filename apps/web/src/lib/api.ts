@@ -116,6 +116,15 @@ export class ApiClient {
 		return this.request('/auth/logout', { method: 'DELETE' }, sessionId);
 	}
 
+	// Google OAuth methods
+	async getGoogleAuthUrl() {
+		return this.request('/auth/google/url');
+	}
+
+	async handleGoogleCallback(code: string) {
+		return this.request(`/auth/google/callback?code=${code}`);
+	}
+
 	// User methods
 	async getUsers(sessionId?: string) {
 		return this.request('/users', {}, sessionId);

@@ -8,7 +8,7 @@
 	import { Label } from '$lib/components/ui/label';
 	import { Alert, AlertDescription } from '$lib/components/ui/alert';
 	import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '$lib/components/ui/table';
-	import { AuthApi } from '$lib/client';
+	import ProtectedRoute from '$lib/components/ProtectedRoute.svelte';
 
 	type Restaurant = {
 		id: string;
@@ -23,7 +23,6 @@
 	let restaurants: Restaurant[] = [];
 	let loading = false;
 	let error: string | null = null;
-	const api = new AuthApi();
 
 	// Create page-specific logger - safe for SSR
 	const logger = createPageLogger('restaurants');
@@ -41,8 +40,8 @@
 		error = null;
 		logger.debug('Loading restaurants list');
 		try {
-			const response = await api.getRestaurants();
-			restaurants = response.data;
+			const response = await apiClient.getRestaurants() as { restaurants: Restaurant[] };
+			restaurants = response.restaurants;
 			logger.info('Restaurants loaded successfully', { count: restaurants.length });
 		} catch (err) {
 			error = `Failed to load restaurants: ${err}`;
@@ -103,7 +102,7 @@
 		loading = true;
 		error = null;
 		try {
-			await api.deleteRestaurant(id);
+			await apiClient.deleteRestaurant(id);
 			restaurants = restaurants.filter(r => r.id !== id);
 			logger.info('Restaurant deleted successfully', { id });
 		} catch (err) {
@@ -114,148 +113,154 @@
 		}
 	}
 
+	async function handleSubmit(event: Event) {
+		event.preventDefault();
+		await createRestaurant();
+	}
+
 	onMount(() => {
 		loadRestaurants();
 	});
 </script>
 
-<div class="container mx-auto max-w-6xl p-6 space-y-6">
-	<h1 class="text-3xl font-bold tracking-tight">Restaurants</h1>
+<ProtectedRoute>
+	<div class="container mx-auto max-w-6xl p-6 space-y-6">
+		<h1 class="text-3xl font-bold tracking-tight">Restaurants</h1>
 
-	{#if error}
-		<Alert variant="destructive">
-			{#snippet children()}
-				<AlertDescription>{error}</AlertDescription>
-			{/snippet}
-		</Alert>
-	{/if}
+		{#if error}
+			<Alert variant="destructive">
+				{#snippet children()}
+					<AlertDescription>{error}</AlertDescription>
+				{/snippet}
+			</Alert>
+		{/if}
 
-	<Card>
-		<CardHeader>
-			<CardTitle>Add New Restaurant</CardTitle>
-			<CardDescription>Fill in the details to add a new restaurant to the list.</CardDescription>
-		</CardHeader>
-		<CardContent>
-			<form on:submit|preventDefault={createRestaurant} class="space-y-4">
-				<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-					<div class="space-y-2">
-						<Label for="name">Restaurant Name *</Label>
-						<Input
-							type="text"
-							id="name"
-							bind:value={formData.name}
-							placeholder="Enter restaurant name"
-							required
-						/>
+		<Card>
+			<CardHeader>
+				<CardTitle>Add New Restaurant</CardTitle>
+				<CardDescription>Fill in the details to add a new restaurant to the list.</CardDescription>
+			</CardHeader>
+			<CardContent>
+				<form onsubmit={handleSubmit} class="space-y-4">
+					<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+						<div class="space-y-2">
+							<Label for="name">Restaurant Name *</Label>
+							<Input
+								type="text"
+								id="name"
+								bind:value={formData.name}
+								placeholder="Enter restaurant name"
+								required
+							/>
+						</div>
+
+						<div class="space-y-2">
+							<Label for="address">Address</Label>
+							<Input
+								type="text"
+								id="address"
+								bind:value={formData.address}
+								placeholder="Enter address"
+							/>
+						</div>
 					</div>
 
-					<div class="space-y-2">
-						<Label for="address">Address</Label>
-						<Input
-							type="text"
-							id="address"
-							bind:value={formData.address}
-							placeholder="Enter address"
-						/>
+					<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+						<div class="space-y-2">
+							<Label for="rating">Rating (1-5)</Label>
+							<Input
+								type="number"
+								id="rating"
+								bind:value={formData.rating}
+								min="1"
+								max="5"
+								placeholder="1-5"
+							/>
+						</div>
+
+						<div class="space-y-2">
+							<Label for="comment">Comment</Label>
+							<Input
+								type="text"
+								id="comment"
+								bind:value={formData.comment}
+								placeholder="Enter your comment"
+							/>
+						</div>
 					</div>
-				</div>
 
-				<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-					<div class="space-y-2">
-						<Label for="rating">Rating (1-5)</Label>
-						<Input
-							type="number"
-							id="rating"
-							bind:value={formData.rating}
-							min="1"
-							max="5"
-							placeholder="1-5"
-						/>
+					<Button type="submit" disabled={loading}>
+						{loading ? 'Adding...' : 'Add Restaurant'}
+					</Button>
+				</form>
+			</CardContent>
+		</Card>
+
+		<Card>
+			<CardHeader>
+				<CardTitle>All Restaurants ({restaurants.length})</CardTitle>
+			</CardHeader>
+			<CardContent>
+				{#if loading && restaurants.length === 0}
+					<div class="text-center text-muted-foreground py-8">Loading restaurants...</div>
+				{:else if restaurants.length === 0}
+					<div class="text-center text-muted-foreground py-8">
+						No restaurants found. Add one using the form above!
 					</div>
-
-					<div class="space-y-2">
-						<Label for="comment">Comment</Label>
-						<Input
-							type="text"
-							id="comment"
-							bind:value={formData.comment}
-							placeholder="Enter your comment"
-						/>
-					</div>
-				</div>
-
-				<Button type="submit" disabled={loading}>
-					{loading ? 'Adding...' : 'Add Restaurant'}
-				</Button>
-			</form>
-		</CardContent>
-	</Card>
-
-	<Card>
-		<CardHeader>
-			<CardTitle>All Restaurants ({restaurants.length})</CardTitle>
-		</CardHeader>
-		<CardContent>
-			{#if loading && restaurants.length === 0}
-				<div class="text-center text-muted-foreground py-8">Loading restaurants...</div>
-			{:else if restaurants.length === 0}
-				<div class="text-center text-muted-foreground py-8">
-					No restaurants found. Add one using the form above!
-				</div>
-			{:else}
-				<div class="rounded-md border">
-					<Table>
-						<TableHeader>
-							<TableRow>
-								<TableHead>Name</TableHead>
-								<TableHead>Address</TableHead>
-								<TableHead>Rating</TableHead>
-								<TableHead>Comment</TableHead>
-								<TableHead>Added</TableHead>
-								<TableHead>Actions</TableHead>
-							</TableRow>
-						</TableHeader>
-						<TableBody>
-							{#each restaurants as restaurant (restaurant.id)}
+				{:else}
+					<div class="rounded-md border">
+						<Table>
+							<TableHeader>
 								<TableRow>
-									<TableCell class="font-medium">{restaurant.name}</TableCell>
-									<TableCell class="text-muted-foreground">{restaurant.address || '-'}</TableCell>
-									<TableCell>
-										{#if restaurant.rating}
-											<div class="text-foreground">
-												{'★'.repeat(restaurant.rating)}{'☆'.repeat(5 - restaurant.rating)}
-												<span class="ml-1 text-muted-foreground">({restaurant.rating}/5)</span>
-											</div>
-										{:else}
-											<span class="text-muted-foreground">-</span>
-										{/if}
-									</TableCell>
-									<TableCell class="max-w-xs truncate text-muted-foreground">
-										{restaurant.comment || '-'}
-									</TableCell>
-									<TableCell class="text-muted-foreground">
-										{new Date(restaurant.createdAt).toLocaleDateString()}
-									</TableCell>
-									<TableCell>
-										<Button
-											variant="destructive"
-											size="sm"
-											on:click={(e) => deleteRestaurant(restaurant.id)}
-											disabled={loading}
-										>
-											Delete
-										</Button>
-									</TableCell>
+									<TableHead>Name</TableHead>
+									<TableHead>Address</TableHead>
+									<TableHead>Rating</TableHead>
+									<TableHead>Comment</TableHead>
+									<TableHead>Added</TableHead>
+									<TableHead>Actions</TableHead>
 								</TableRow>
-							{/each}
-						</TableBody>
-					</Table>
-				</div>
-			{/if}
-		</CardContent>
-	</Card>
+							</TableHeader>
+							<TableBody>
+								{#each restaurants as restaurant (restaurant.id)}
+									<TableRow>
+										<TableCell class="font-medium">{restaurant.name}</TableCell>
+										<TableCell class="text-muted-foreground">{restaurant.address || '-'}</TableCell>
+										<TableCell>
+											{#if restaurant.rating}
+												<div class="text-foreground">
+													{'★'.repeat(restaurant.rating)}{'☆'.repeat(5 - restaurant.rating)}
+													<span class="ml-1 text-muted-foreground">({restaurant.rating}/5)</span>
+												</div>
+											{:else}
+												<span class="text-muted-foreground">-</span>
+											{/if}
+										</TableCell>
+										<TableCell class="max-w-xs truncate text-muted-foreground">
+											{restaurant.comment || '-'}
+										</TableCell>
+										<TableCell class="text-muted-foreground">
+											{new Date(restaurant.createdAt).toLocaleDateString()}
+										</TableCell>
+										<TableCell>
+											<button
+												class="px-3 py-1 text-sm rounded-md bg-destructive text-destructive-foreground hover:bg-destructive/90 disabled:opacity-50"
+												onclick={() => deleteRestaurant(restaurant.id)}
+												disabled={loading}
+											>
+												Delete
+											</button>
+										</TableCell>
+									</TableRow>
+								{/each}
+							</TableBody>
+						</Table>
+					</div>
+				{/if}
+			</CardContent>
+		</Card>
 
-	<div>
-		<Button variant="link" href="/" class="p-0">← Back to Home</Button>
+		<div>
+			<a href="/" class="text-primary hover:underline">← Back to Home</a>
+		</div>
 	</div>
-</div>
+</ProtectedRoute>

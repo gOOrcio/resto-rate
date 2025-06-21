@@ -1,22 +1,20 @@
 <script lang="ts">
     import { theme } from '$lib/stores/theme';
-    import { Button } from '$lib/components/ui/button';
 
     let currentTheme = $theme;
 
     $: currentTheme = $theme;
 
-    function handleClick(event: MouseEvent) {
+    function handleClick() {
         const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
         theme.set(newTheme);
     }
 </script>
 
-<Button
-    variant="ghost"
-    size="icon"
-    on:click={handleClick}
-    class="h-9 w-9"
+<button
+    type="button"
+    onclick={handleClick}
+    class="h-9 w-9 inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground"
     aria-label="Toggle theme"
 >
     {#if currentTheme === 'dark'}
@@ -28,4 +26,4 @@
             <path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z" />
         </svg>
     {/if}
-</Button> 
+</button> 

@@ -21,8 +21,12 @@ export type CreateRestaurantRequest = {
 
 export type UserResponse = {
 	id: string;
-	username: string;
-	age: number | null;
+	googleId?: string | null;
+	email?: string | null;
+	name?: string | null;
+	isAdmin?: boolean;
+	username?: string | null;
+	age?: number | null;
 	createdAt: Date | null;
 	updatedAt: Date | null;
 };

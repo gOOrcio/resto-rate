@@ -2,9 +2,34 @@ import type { FastifyPluginAsync } from 'fastify';
 import { type AuthResponse } from '@resto-rate/constants';
 import { requireAuth } from '../middleware/auth';
 import * as authService from '../services/auth.service';
+import { generateGoogleAuthUrl } from '../services/google-auth.service';
 import { handleRoute, successMessage, requireUser } from '../utils/route-helpers';
 
 export const authRoutes: FastifyPluginAsync = async (fastify) => {
+	// Google OAuth callback
+	fastify.get('/google/callback', async (request, reply) => {
+		return handleRoute(reply, async () => {
+			const { code } = request.query as { code: string };
+			
+			if (!code) {
+				throw new Error('Authorization code is required');
+			}
+
+			const result = await authService.authenticateWithGoogle(code);
+			
+			// Return the auth response instead of redirecting
+			return result;
+		});
+	});
+
+	// Get Google OAuth URL
+	fastify.get('/google/url', async (request, reply) => {
+		return handleRoute(reply, async () => {
+			const authUrl = generateGoogleAuthUrl();
+			return { authUrl };
+		});
+	});
+
 	// Login endpoint
 	fastify.post('/login', async (request, reply) => {
 		return handleRoute(reply, async () => {
@@ -42,6 +67,10 @@ export const authRoutes: FastifyPluginAsync = async (fastify) => {
 			const response: AuthResponse = {
 				user: {
 					id: request.user!.id,
+					googleId: request.user!.googleId,
+					email: request.user!.email,
+					name: request.user!.name,
+					isAdmin: request.user!.isAdmin || undefined,
 					username: request.user!.username,
 					age: request.user!.age,
 					createdAt: request.user!.createdAt,

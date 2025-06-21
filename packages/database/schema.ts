@@ -1,4 +1,4 @@
-import { pgTable, text, integer, timestamp } from 'drizzle-orm/pg-core';
+import { pgTable, text, integer, timestamp, boolean } from 'drizzle-orm/pg-core';
 
 // =============================================================================
 // CORE AUTHENTICATION TABLES
@@ -6,9 +6,13 @@ import { pgTable, text, integer, timestamp } from 'drizzle-orm/pg-core';
 
 export const user = pgTable('user', {
 	id: text('id').primaryKey(), // ULID
+	googleId: text('google_id').unique(), // Google OAuth ID
+	email: text('email').unique(), // Email from Google
+	name: text('name'), // Full name from Google
+	isAdmin: boolean('is_admin').default(false), // Future admin support
+	username: text('username').unique(), // Optional for OAuth users
+	passwordHash: text('password_hash'), // Optional for OAuth users
 	age: integer('age'),
-	username: text('username').notNull().unique(),
-	passwordHash: text('password_hash').notNull(),
 	createdAt: timestamp('created_at', { withTimezone: true, mode: 'date' }).defaultNow(),
 	updatedAt: timestamp('updated_at', { withTimezone: true, mode: 'date' }).defaultNow(),
 });

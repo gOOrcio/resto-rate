@@ -55,8 +55,11 @@ export interface WebConfig {
 
 export interface AuthConfig {
 	sessionSecret: string;
-	sessionMaxAge: number; // in seconds
+	sessionMaxAge: number; // 30 days in seconds
 	bcryptRounds: number;
+	googleClientId: string;
+	googleClientSecret: string;
+	googleRedirectUri: string;
 }
 
 export interface AppConfig {
@@ -122,6 +125,9 @@ function parseEnv(): AppConfig {
 			sessionSecret: process.env.SESSION_SECRET!,
 			sessionMaxAge: parseNumber(process.env.SESSION_MAX_AGE, 30 * 24 * 60 * 60), // 30 days
 			bcryptRounds: parseNumber(process.env.BCRYPT_ROUNDS, 12),
+			googleClientId: process.env.GOOGLE_CLIENT_ID || '',
+			googleClientSecret: process.env.GOOGLE_CLIENT_SECRET || '',
+			googleRedirectUri: process.env.GOOGLE_REDIRECT_URI || '',
 		},
 		logging: {
 			level: getLogLevel(),
