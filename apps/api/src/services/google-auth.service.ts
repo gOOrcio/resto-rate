@@ -30,7 +30,7 @@ export async function exchangeCodeForTokens(code: string): Promise<GoogleTokens>
 		throw new Error(`Failed to exchange code for tokens: ${tokenResponse.status} ${errorText}`);
 	}
 
-	const tokens: GoogleTokens = await tokenResponse.json();
+	const tokens = await tokenResponse.json() as GoogleTokens;
 	return tokens;
 }
 
@@ -47,7 +47,7 @@ export async function getGoogleUserInfo(accessToken: string): Promise<GoogleUser
 		throw new Error(`Failed to get user info: ${userInfoResponse.status} ${errorText}`);
 	}
 
-	const userInfo: GoogleUserInfo = await userInfoResponse.json();
+	const userInfo = await userInfoResponse.json() as GoogleUserInfo;
 	return userInfo;
 }
 

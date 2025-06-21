@@ -10,6 +10,10 @@ export async function getAllUsers(): Promise<UserResponse[]> {
 	return db()
 		.select({
 			id: user.id,
+			googleId: user.googleId,
+			email: user.email,
+			name: user.name,
+			isAdmin: user.isAdmin,
 			username: user.username,
 			age: user.age,
 			createdAt: user.createdAt,
@@ -22,6 +26,10 @@ export async function getUserById(id: string): Promise<UserResponse | null> {
 	const users = await db()
 		.select({
 			id: user.id,
+			googleId: user.googleId,
+			email: user.email,
+			name: user.name,
+			isAdmin: user.isAdmin,
 			username: user.username,
 			age: user.age,
 			createdAt: user.createdAt,
@@ -53,6 +61,10 @@ export async function createUser(data: CreateUserRequest): Promise<UserResponse>
 			})
 			.returning({
 				id: user.id,
+				googleId: user.googleId,
+				email: user.email,
+				name: user.name,
+				isAdmin: user.isAdmin,
 				username: user.username,
 				age: user.age,
 				createdAt: user.createdAt,
@@ -84,6 +96,10 @@ export async function updateUser(
 	try {
 		const [updatedUser] = await db().update(user).set(data).where(eq(user.id, id)).returning({
 			id: user.id,
+			googleId: user.googleId,
+			email: user.email,
+			name: user.name,
+			isAdmin: user.isAdmin,
 			username: user.username,
 			age: user.age,
 			createdAt: user.createdAt,
