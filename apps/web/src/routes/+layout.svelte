@@ -4,7 +4,6 @@
 	import { authStore } from '$lib/stores/auth';
 	import { authService } from '$lib/services/auth.service';
 	import ThemeToggle from '$lib/components/ThemeToggle.svelte';
-	import { ModeWatcher } from 'tailwind-variants/svelte';
 	import { onMount } from 'svelte';
 
 	const { children } = $props();
@@ -28,8 +27,6 @@
 		await authService.logout();
 	}
 </script>
-
-<ModeWatcher />
 
 <div class="min-h-screen bg-background text-foreground">
 	<nav class="container mx-auto flex h-16 items-center justify-between px-4">
