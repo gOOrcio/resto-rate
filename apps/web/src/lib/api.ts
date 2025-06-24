@@ -78,7 +78,8 @@ export class ApiClient {
 				try {
 					const arrayBuffer = await response.arrayBuffer();
 					const errorData = decode(new Uint8Array(arrayBuffer)) as { error: string };
-					throw new Error(errorData.error || `HTTP ${response.status}`);
+					logger.error('API error response', { url, error: errorData.error });
+					return Promise.reject(new Error(errorData.error || `HTTP ${response.status}`));
 				} catch {
 					// Last resort fallback if error response isn't MessagePack
 					const text = await response.text();
@@ -87,7 +88,8 @@ export class ApiClient {
 						text,
 						url,
 					});
-					throw new Error(`HTTP ${response.status}: ${text}`);
+					logger.error('API error response', { url, error: text });
+					return Promise.reject(new Error(`HTTP ${response.status}: ${text}`));
 				}
 			}
 
@@ -176,8 +178,20 @@ export class ApiClient {
 		});
 	}
 
+	async updateRestaurant(id: string, restaurantData: Partial<CreateRestaurantRequest>) {
+		return this.request(`/restaurants/${id}`, {
+			method: 'PATCH',
+			body: restaurantData,
+		});
+	}
+
 	async deleteRestaurant(id: string) {
 		return this.request(`/restaurants/${id}`, { method: 'DELETE' });
+	}
+
+	// Google Places
+	async searchPlaces(query: string) {
+		return this.request<{ results: unknown[] }>(`/google/places?q=${encodeURIComponent(query)}`);
 	}
 
 	// Health check (not under /api prefix) - Uses JSON for monitoring compatibility
@@ -198,7 +212,8 @@ export class ApiClient {
 			});
 
 			if (!response.ok) {
-				throw new Error(`HTTP ${response.status}`);
+				logger.error('Health check error', { url: healthUrl, status: response.status });
+				return Promise.reject(new Error(`HTTP ${response.status}`));
 			}
 
 			const data = await response.json(); // Parse as JSON for health checks
@@ -207,7 +222,7 @@ export class ApiClient {
 			return data;
 		} catch (error) {
 			logger.error('Health check failed', { url: healthUrl, error });
-			throw error;
+			return Promise.reject(error);
 		}
 	}
 }

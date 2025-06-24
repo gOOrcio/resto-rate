@@ -16,6 +16,7 @@ import { createServerLogger } from '@resto-rate/logger';
 import { userRoutes } from './routes/users';
 import { authRoutes } from './routes/auth';
 import { restaurantRoutes } from './routes/restaurants';
+import { googleRoutes } from './routes/google';
 import { db } from './db';
 
 const loggingConfig = getLoggingConfig();
@@ -158,6 +159,7 @@ async function startServer() {
 		await server.register(authRoutes, { prefix: '/api/auth' });
 		await server.register(userRoutes, { prefix: '/api/users' });
 		await server.register(restaurantRoutes, { prefix: '/api/restaurants' });
+		await server.register(googleRoutes, { prefix: '/api/google' });
 
 		await server.listen({
 			port: apiConfig.port,

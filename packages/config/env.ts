@@ -156,3 +156,9 @@ export const getApiConfig = () => getConfig().api;
 export const getWebConfig = () => getConfig().web;
 export const getAuthConfig = () => getConfig().auth;
 export const getLoggingConfig = () => getConfig().logging;
+
+export function getGoogleConfig() {
+	return {
+		apiKey: process.env.GOOGLE_API_KEY || '',
+	};
+}

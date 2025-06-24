@@ -34,6 +34,23 @@ export const restaurantRoutes: FastifyPluginAsync = async (fastify) => {
 		});
 	});
 
+	// Update restaurant
+	fastify.patch('/:id', async (request, reply) => {
+		return handleRoute(reply, async () => {
+			const { id } = request.params as { id: string };
+			const restaurant = await restaurantService.updateRestaurant(
+				id,
+				request.body as Partial<{
+					name: string;
+					address: string;
+					rating: number;
+					comment: string;
+				}>
+			);
+			return { restaurant };
+		});
+	});
+
 	// Delete restaurant
 	fastify.delete('/:id', async (request, reply) => {
 		return handleRoute(reply, async () => {

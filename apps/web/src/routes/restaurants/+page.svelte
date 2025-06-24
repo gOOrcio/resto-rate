@@ -1,8 +1,10 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
+	import type { Place } from '@googlemaps/google-maps-services-js';
 	import { apiClient } from '$lib/api';
 	import { createPageLogger } from '$lib/logger';
-	import { Button } from '$lib/components/ui/button';
+	import { buttonVariants } from '$lib/components/ui/button';
+	import { cn } from '$lib/utils';
 	import {
 		Card,
 		CardContent,
@@ -10,8 +12,6 @@
 		CardHeader,
 		CardTitle,
 	} from '$lib/components/ui/card';
-	import { Input } from '$lib/components/ui/input';
-	import { Label } from '$lib/components/ui/label';
 	import { Alert, AlertDescription } from '$lib/components/ui/alert';
 	import {
 		Table,
@@ -22,6 +22,9 @@
 		TableRow,
 	} from '$lib/components/ui/table';
 	import ProtectedRoute from '$lib/components/ProtectedRoute.svelte';
+	import AddRestaurantModal from '$lib/components/AddRestaurantModal.svelte';
+	import RestaurantSearch from '$lib/components/RestaurantSearch.svelte';
+	import StarRating from '$lib/components/StarRating.svelte';
 
 	type Restaurant = {
 		id: string;
@@ -36,17 +39,11 @@
 	let restaurants: Restaurant[] = [];
 	let loading = false;
 	let error: string | null = null;
+	let modalOpen = false;
+	let searchResults: Partial<Place>[] = [];
+	let searchError: string | null = null;
 
-	// Create page-specific logger - safe for SSR
 	const logger = createPageLogger('restaurants');
-
-	// Form data
-	let formData = {
-		name: '',
-		address: '',
-		rating: null as number | null,
-		comment: '',
-	};
 
 	async function loadRestaurants() {
 		loading = true;
@@ -59,49 +56,6 @@
 		} catch (err) {
 			error = `Failed to load restaurants: ${err}`;
 			logger.error('Failed to load restaurants', { error: err });
-		} finally {
-			loading = false;
-		}
-	}
-
-	async function createRestaurant() {
-		if (!formData.name.trim()) {
-			error = 'Restaurant name is required';
-			return;
-		}
-
-		if (formData.rating && (formData.rating < 1 || formData.rating > 5)) {
-			error = 'Rating must be between 1 and 5';
-			return;
-		}
-
-		loading = true;
-		error = null;
-		logger.debug('Creating new restaurant', { name: formData.name });
-		try {
-			const restaurantData = {
-				name: formData.name.trim(),
-				address: formData.address.trim() || undefined,
-				rating: formData.rating || undefined,
-				comment: formData.comment.trim() || undefined,
-			};
-
-			await apiClient.createRestaurant(restaurantData);
-			logger.info('Restaurant created successfully', { name: restaurantData.name });
-
-			// Reset form
-			formData = {
-				name: '',
-				address: '',
-				rating: null,
-				comment: '',
-			};
-
-			// Reload restaurants
-			await loadRestaurants();
-		} catch (err) {
-			error = `Failed to create restaurant: ${err}`;
-			logger.error('Failed to create restaurant', { error: err, formData });
 		} finally {
 			loading = false;
 		}
@@ -126,9 +80,52 @@
 		}
 	}
 
-	async function handleSubmit(event: Event) {
-		event.preventDefault();
-		await createRestaurant();
+	function handleSearchResults(event: CustomEvent<Partial<Place>[]>) {
+		searchResults = event.detail;
+		searchError = null;
+	}
+
+	function handleSearchError(event: CustomEvent<string>) {
+		searchError = event.detail;
+		searchResults = [];
+	}
+
+	async function addFromGoogle(place: Partial<Place>) {
+		if (!place.name) return;
+
+		loading = true;
+		error = null;
+		try {
+			const restaurantData = {
+				name: place.name,
+				address: place.formatted_address || place.vicinity || 'N/A',
+				// Google rating is 0-5, our rating is 1-5. We can show google rating separately.
+				// For now, let's not set a rating.
+			};
+			await apiClient.createRestaurant(restaurantData);
+			await loadRestaurants();
+			searchResults = []; // Clear search results after adding
+		} catch (err) {
+			error = `Failed to add restaurant: ${err}`;
+		} finally {
+			loading = false;
+		}
+	}
+
+	async function updateRating(restaurantId: string, newRating: number) {
+		const originalRestaurants = [...restaurants];
+		// Optimistically update UI
+		restaurants = restaurants.map((r) => (r.id === restaurantId ? { ...r, rating: newRating } : r));
+
+		try {
+			await apiClient.updateRestaurant(restaurantId, { rating: newRating });
+			logger.info('Restaurant rating updated', { id: restaurantId, rating: newRating });
+		} catch (err) {
+			// Revert on error
+			restaurants = originalRestaurants;
+			error = `Failed to update rating: ${err}`;
+			logger.error('Failed to update rating', { error: err });
+		}
 	}
 
 	onMount(() => {
@@ -148,64 +145,71 @@
 
 		<Card>
 			<CardHeader>
-				<CardTitle>Add New Restaurant</CardTitle>
-				<CardDescription>Fill in the details to add a new restaurant to the list.</CardDescription>
+				<CardTitle>Find a Restaurant</CardTitle>
+				<CardDescription>Search for a restaurant on Google or add one manually.</CardDescription>
 			</CardHeader>
-			<CardContent>
-				<form onsubmit={handleSubmit} class="space-y-4">
-					<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-						<div class="space-y-2">
-							<Label for="name">Restaurant Name *</Label>
-							<Input
-								type="text"
-								id="name"
-								bind:value={formData.name}
-								placeholder="Enter restaurant name"
-								required
-							/>
-						</div>
-
-						<div class="space-y-2">
-							<Label for="address">Address</Label>
-							<Input
-								type="text"
-								id="address"
-								bind:value={formData.address}
-								placeholder="Enter address"
-							/>
-						</div>
+			<CardContent class="space-y-4">
+				<div class="flex items-center space-x-2">
+					<div class="flex-grow">
+						<RestaurantSearch
+							on:searchresults={handleSearchResults}
+							on:searcherror={handleSearchError}
+						/>
 					</div>
-
-					<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-						<div class="space-y-2">
-							<Label for="rating">Rating (1-5)</Label>
-							<Input
-								type="number"
-								id="rating"
-								bind:value={formData.rating}
-								min="1"
-								max="5"
-								placeholder="1-5"
-							/>
-						</div>
-
-						<div class="space-y-2">
-							<Label for="comment">Comment</Label>
-							<Input
-								type="text"
-								id="comment"
-								bind:value={formData.comment}
-								placeholder="Enter your comment"
-							/>
-						</div>
-					</div>
-
-					<Button type="submit" disabled={loading}>
-						{loading ? 'Adding...' : 'Add Restaurant'}
-					</Button>
-				</form>
+					<button
+						class={cn(buttonVariants({ variant: 'default' }))}
+						on:click={() => (modalOpen = true)}>Add Manually</button
+					>
+				</div>
 			</CardContent>
 		</Card>
+
+		{#if searchError}
+			<Alert variant="destructive">
+				<AlertDescription>{searchError}</AlertDescription>
+			</Alert>
+		{/if}
+
+		{#if searchResults.length > 0}
+			<Card>
+				<CardHeader>
+					<CardTitle>Google Search Results</CardTitle>
+				</CardHeader>
+				<CardContent>
+					<div class="rounded-md border">
+						<Table>
+							<TableHeader>
+								<TableRow>
+									<TableHead>Name</TableHead>
+									<TableHead>Address</TableHead>
+									<TableHead>Google Rating</TableHead>
+									<TableHead>Actions</TableHead>
+								</TableRow>
+							</TableHeader>
+							<TableBody>
+								{#each searchResults as place (place.place_id)}
+									<TableRow>
+										<TableCell>{place.name}</TableCell>
+										<TableCell>{place.formatted_address || place.vicinity}</TableCell>
+										<TableCell
+											>{place.rating
+												? `${place.rating} (${place.user_ratings_total} reviews)`
+												: 'N/A'}</TableCell
+										>
+										<TableCell>
+											<button
+												class={cn(buttonVariants({ size: 'default' }))}
+												on:click={() => addFromGoogle(place)}>Add</button
+											>
+										</TableCell>
+									</TableRow>
+								{/each}
+							</TableBody>
+						</Table>
+					</div>
+				</CardContent>
+			</Card>
+		{/if}
 
 		<Card>
 			<CardHeader>
@@ -237,14 +241,11 @@
 										<TableCell class="font-medium">{restaurant.name}</TableCell>
 										<TableCell class="text-muted-foreground">{restaurant.address || '-'}</TableCell>
 										<TableCell>
-											{#if restaurant.rating}
-												<div class="text-foreground">
-													{'★'.repeat(restaurant.rating)}{'☆'.repeat(5 - restaurant.rating)}
-													<span class="ml-1 text-muted-foreground">({restaurant.rating}/5)</span>
-												</div>
-											{:else}
-												<span class="text-muted-foreground">-</span>
-											{/if}
+											<StarRating
+												rating={restaurant.rating}
+												editable={true}
+												on:rate={(e) => updateRating(restaurant.id, e.detail.rating)}
+											/>
 										</TableCell>
 										<TableCell class="max-w-xs truncate text-muted-foreground">
 											{restaurant.comment || '-'}
@@ -254,12 +255,10 @@
 										</TableCell>
 										<TableCell>
 											<button
-												class="px-3 py-1 text-sm rounded-md bg-destructive text-destructive-foreground hover:bg-destructive/90 disabled:opacity-50"
-												onclick={() => deleteRestaurant(restaurant.id)}
-												disabled={loading}
+												class={cn(buttonVariants({ variant: 'default', size: 'default' }))}
+												on:click={() => deleteRestaurant(restaurant.id)}
+												disabled={loading}>Delete</button
 											>
-												Delete
-											</button>
 										</TableCell>
 									</TableRow>
 								{/each}
@@ -269,9 +268,7 @@
 				{/if}
 			</CardContent>
 		</Card>
-
-		<div>
-			<a href="/" class="text-primary hover:underline">← Back to Home</a>
-		</div>
 	</div>
+
+	<AddRestaurantModal bind:open={modalOpen} on:added={loadRestaurants} />
 </ProtectedRoute>

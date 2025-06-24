@@ -40,6 +40,27 @@ export async function createRestaurant(data: CreateRestaurantRequest): Promise<R
 	return newRestaurant!;
 }
 
+export async function updateRestaurant(
+	id: string,
+	data: Partial<Pick<Restaurant, 'name' | 'address' | 'rating' | 'comment'>>
+): Promise<Restaurant> {
+	if (data.rating && (data.rating < 1 || data.rating > 5)) {
+		throw new Error('Rating must be between 1 and 5');
+	}
+
+	const [updatedRestaurant] = await db()
+		.update(restaurant)
+		.set({ ...data, updatedAt: new Date() })
+		.where(eq(restaurant.id, id))
+		.returning();
+
+	if (!updatedRestaurant) {
+		throw new Error('Restaurant not found or no changes made');
+	}
+
+	return updatedRestaurant;
+}
+
 export async function deleteRestaurant(id: string): Promise<void> {
 	await db().delete(restaurant).where(eq(restaurant.id, id));
 }
