@@ -4,7 +4,7 @@ import { pgTable, text, integer, timestamp, boolean } from 'drizzle-orm/pg-core'
 // CORE AUTHENTICATION TABLES
 // =============================================================================
 
-export const user = pgTable('user', {
+export const user = pgTable('users', {
 	id: text('id').primaryKey(), // ULID
 	googleId: text('google_id').unique(), // Google OAuth ID
 	email: text('email').unique(), // Email from Google
@@ -17,7 +17,7 @@ export const user = pgTable('user', {
 	updatedAt: timestamp('updated_at', { withTimezone: true, mode: 'date' }).defaultNow(),
 });
 
-export const session = pgTable('session', {
+export const session = pgTable('sessions', {
 	id: text('id').primaryKey(), // ULID
 	userId: text('user_id')
 		.notNull()
@@ -29,7 +29,7 @@ export const session = pgTable('session', {
 // BUSINESS DOMAIN TABLES
 // =============================================================================
 
-export const restaurant = pgTable('restaurant', {
+export const restaurant = pgTable('restaurants', {
 	id: text('id').primaryKey(), // ULID
 	name: text('name').notNull(),
 	address: text('address'),
