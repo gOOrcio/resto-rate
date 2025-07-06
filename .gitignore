@@ -40,8 +40,9 @@ yarn-error.log*
 **/*.log
 
 .idea
+.jj/
 
-
+/pgdata
 
 .nx/cache
 .nx/workspace-data

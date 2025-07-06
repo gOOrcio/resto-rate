@@ -1,9 +1,18 @@
+// @title RestoRate API
+// @version 0.1
+// @description This is the RestoRate API documentation.
+// @BasePath /api/v1
+
 package main
 
 import (
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
+	swaggerfiles "github.com/swaggo/files"
+	ginSwagger "github.com/swaggo/gin-swagger"
+	"go-app/src/database"
+	docs "go-app/src/docs"
 	"go-app/src/routers"
 	"go-app/src/services"
 	"gorm.io/driver/postgres"
@@ -11,19 +20,20 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strings"
 )
 
 func setupRouter(userService *services.UserService, restaurantsService *services.RestaurantsService) *gin.Engine {
 	r := gin.Default()
+	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerfiles.Handler))
+
 	r.GET("/ping", func(c *gin.Context) {
 		c.String(http.StatusOK, "pong")
 	})
 
-	users := r.Group("/users")
-	routers.RegisterUserRoutes(users, userService)
-
-	restaurants := r.Group("/restaurants")
-	routers.RegisterRestaurantsRoutes(restaurants, restaurantsService)
+	api := r.Group("/api/v1")
+	routers.RegisterUserRoutes(api, userService)
+	routers.RegisterRestaurantsRoutes(api, restaurantsService)
 
 	return r
 }
@@ -69,8 +79,20 @@ func main() {
 	}
 	userService := &services.UserService{DB: db}
 	restaurantsService := &services.RestaurantsService{DB: db}
+
+	if strings.EqualFold(os.Getenv("SEED"), "true") {
+		if err := database.AutoMigrateAndSeed(db); err != nil {
+			log.Fatal("Failed to auto-migrate and seed database: ", err)
+		}
+	}
 	r := setupRouter(userService, restaurantsService)
-	if err := r.Run(":" + os.Getenv("API_PORT")); err != nil {
+
+	apiPort := os.Getenv("API_PORT")
+	// docs.SwaggerInfo.Title and Version are now set via annotation comments above.
+	log.Printf("Swagger docs available at http://localhost:%s/swagger/index.html", apiPort)
+	log.Printf("Swagger base path: %s", docs.SwaggerInfo.BasePath)
+
+	if err := r.Run(":" + apiPort); err != nil {
 		log.Fatal("Failed to run application: ", err)
 	}
 }

@@ -1,6 +1,7 @@
 package services
 
 import (
+	"go-app/src/services/models"
 	"gorm.io/gorm"
 	"time"
 )
@@ -10,11 +11,10 @@ type RestaurantsService struct {
 }
 
 type Restaurant struct {
-	ID        string    `gorm:"primaryKey" json:"id"`
+	models.ULID
 	GoogleID  string    `gorm:"uniqueIndex" json:"googleId"`
 	Email     string    `gorm:"uniqueIndex" json:"email"`
 	Name      string    `gorm:"not null" json:"name"`
-	IsAdmin   bool      `gorm:"default:false" json:"isAdmin"`
 	CreatedAt time.Time `gorm:"autoCreateTime" json:"createdAt"`
 	UpdatedAt time.Time `gorm:"autoUpdateTime" json:"updatedAt"`
 }

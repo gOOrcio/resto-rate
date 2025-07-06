@@ -1,6 +1,7 @@
 package services
 
 import (
+	"go-app/src/services/models"
 	"gorm.io/gorm"
 	"time"
 )
@@ -10,13 +11,14 @@ type UserService struct {
 }
 
 type User struct {
-	id        string    `gorm:"primaryKey"`
-	googleId  string    `gorm:"uniqueIndex"`
-	email     string    `gorm:"uniqueIndex"`
-	name      string    `gorm:"not null"`
-	isAdmin   bool      `gorm:"default:false"`
-	createdAt time.Time `gorm:"autoCreateTime"`
-	updatedAt time.Time `gorm:"autoUpdateTime"`
+	models.ULID
+	GoogleId  string    `gorm:"uniqueIndex"`
+	Email     string    `gorm:"uniqueIndex"`
+	Username  string    `gorm:"uniqueIndex"`
+	Name      string    `gorm:"not null"`
+	IsAdmin   bool      `gorm:"default:false"`
+	CreatedAt time.Time `gorm:"autoCreateTime"`
+	UpdatedAt time.Time `gorm:"autoUpdateTime"`
 }
 
 func (s *UserService) GetUserByID(id string) (*User, error) {

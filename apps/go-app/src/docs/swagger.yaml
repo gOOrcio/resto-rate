@@ -1,0 +1,108 @@
+basePath: /api/v1
+info:
+  contact: {}
+  description: This is the RestoRate API documentation.
+  title: RestoRate API
+  version: "0.1"
+paths:
+  /restaurants/{ulid}:
+    get:
+      consumes:
+      - application/json
+      description: Get restaurant details by ULID
+      parameters:
+      - description: ULID of the restaurant
+        in: path
+        name: ulid
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success
+          schema:
+            additionalProperties: true
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Get restaurant by ULID
+      tags:
+      - restaurants
+  /restaurants/all:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve a list of all restaurants
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Get all restaurants
+      tags:
+      - restaurants
+  /users/{ulid}:
+    get:
+      consumes:
+      - application/json
+      description: Get user details by ULID
+      parameters:
+      - description: ULID of the user
+        in: path
+        name: ulid
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success
+          schema:
+            additionalProperties: true
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Get user by ULID
+      tags:
+      - users
+  /users/all:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve a list of all users
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Get all users
+      tags:
+      - users
+swagger: "2.0"
