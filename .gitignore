@@ -43,7 +43,7 @@ yarn-error.log*
 .zed
 .vscode
 /pgdata
-.js
+.jj
 
 .nx/cache
 .nx/workspace-data
