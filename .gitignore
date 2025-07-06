@@ -41,7 +41,9 @@ yarn-error.log*
 
 .idea
 .zed
-
+.vscode
+/pgdata
+.js
 
 .nx/cache
 .nx/workspace-data
