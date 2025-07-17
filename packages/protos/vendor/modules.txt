@@ -1,0 +1,10 @@
+# github.com/infobloxopen/protoc-gen-gorm v1.1.4
+## explicit; go 1.17
+# github.com/jinzhu/inflection v1.0.0
+## explicit
+# github.com/jinzhu/now v1.1.5
+## explicit; go 1.12
+# google.golang.org/protobuf v1.32.0
+## explicit; go 1.17
+# gorm.io/gorm v1.23.2
+## explicit; go 1.14
