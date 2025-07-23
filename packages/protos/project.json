@@ -9,14 +9,8 @@
 			"executor": "nx:run-commands",
 			"options": {
 				"cwd": "packages/protos",
-				"command": "sh -c 'protoc --proto_path=. --proto_path=$(go env GOPATH)/pkg/mod --go_out=../../ --gorm_out=../../ --go-grpc_out=../../ *.proto'"
+				"command": "find src -name '*.proto' -exec protoc --go_out=generated/go --go-grpc_out=generated/go --proto_path=src {} +"
 			}
-		},
-		"test": {
-			"executor": "@nx-go/nx-go:test"
-		},
-		"lint": {
-			"executor": "@nx-go/nx-go:lint"
 		}
 	}
 }

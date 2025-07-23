@@ -20,6 +20,8 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"path/filepath"
+	"runtime"
 	"strings"
 )
 
@@ -41,7 +43,9 @@ func setupRouter(userService *services.UserService, restaurantsService *services
 func loadEnv() error {
 	envFile := os.Getenv("ENV_FILE")
 	if envFile == "" {
-		envFile = "./apps/go-app/.env"
+		_, filename, _, _ := runtime.Caller(0)
+		dir := filepath.Dir(filename)
+		envFile = filepath.Join(dir, "../.env")
 	}
 	if err := godotenv.Load(envFile); err != nil {
 		return fmt.Errorf("error loading %s file: %w", envFile, err)

@@ -1,0 +1,45 @@
+syntax = "proto3";
+
+package restaurant.v1;
+
+import "packages/protos/src/restaurant/v1/restaurant.proto";
+import "google/protobuf/empty.proto";
+
+option go_package = "resto-rate/generated/go/restaurant/v1";
+
+service RestaurantService {
+  rpc CreateRestaurant(CreateRestaurantRequest) returns (Restaurant);
+  rpc GetRestaurant(GetRestaurantRequest) returns (Restaurant);
+  rpc UpdateRestaurant(UpdateRestaurantRequest) returns (Restaurant);
+  rpc DeleteRestaurant(DeleteRestaurantRequest) returns (google.protobuf.Empty);
+  rpc ListRestaurants(ListRestaurantsRequest) returns (ListRestaurantsResponse);
+}
+
+message CreateRestaurantRequest {
+  Restaurant restaurant = 1;
+}
+
+message GetRestaurantRequest {
+  string id = 1; // ULID as string
+}
+
+message UpdateRestaurantRequest {
+  Restaurant restaurant = 1;
+}
+
+message DeleteRestaurantRequest {
+  string id = 1; // ULID as string
+}
+
+message ListRestaurantsRequest {
+  int32 page = 1; // Page number for pagination
+  int32 page_size = 2; // Number of restaurants per page
+}
+
+message ListRestaurantsResponse {
+  repeated Restaurant restaurants = 1; // List of restaurants
+  int32 total_count = 2; // Total number of restaurants
+  int32 page = 3; // Current page number
+  int32 page_size = 4; // Number of restaurants per page
+  string next_page_token = 5; // Token for the next page, if available
+}
