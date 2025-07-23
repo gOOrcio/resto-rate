@@ -1,7 +1,7 @@
 package models
 
 import (
-	restaurantpb "go-app/src/generated/resto-rate/generated/go/restaurants/v1"
+	restaurantpb "app/src/generated/resto-rate/generated/go/restaurants/v1"
 	"gorm.io/gorm"
 	"time"
 )

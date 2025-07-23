@@ -10,8 +10,8 @@
 			"options": {
 				"cwd": ".",
 				"commands": [
-					"mkdir -p apps/go-app/src/generated",
-					"find packages/protos/src -name '*.proto' -exec protoc --go_out=apps/go-app/src/generated --go-grpc_out=apps/go-app/src/generated --proto_path=. {} +"
+					"mkdir -p apps/app/src/generated",
+					"find packages/protos/src -name '*.proto' -exec protoc --go_out=apps/app/src/generated --go-grpc_out=apps/app/src/generated --proto_path=. {} +"
 				],
 				"parallel": false
 			}

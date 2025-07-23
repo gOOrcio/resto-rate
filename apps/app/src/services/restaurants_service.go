@@ -1,12 +1,12 @@
 package services
 
 import (
+	restaurantpb "app/src/generated/resto-rate/generated/go/restaurants/v1"
+	"app/src/services/models"
+	"app/src/services/utils"
 	"context"
 	"errors"
 	"fmt"
-	restaurantpb "go-app/src/generated/resto-rate/generated/go/restaurants/v1"
-	"go-app/src/services/models"
-	"go-app/src/services/utils"
 	"google.golang.org/protobuf/types/known/emptypb"
 	"gorm.io/gorm"
 )

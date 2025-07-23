@@ -52,4 +52,4 @@ yarn-error.log*
 /packages/protos/go.sum
 
 # Generated protobuf files
-apps/go-app/src/generated/
+apps/app/src/generated/

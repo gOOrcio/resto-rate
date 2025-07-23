@@ -1,12 +1,12 @@
 package main
 
 import (
+	"app/src/database"
+	restaurantpb "app/src/generated/resto-rate/generated/go/restaurants/v1"
+	userpb "app/src/generated/resto-rate/generated/go/users/v1"
+	"app/src/services"
 	"fmt"
 	"github.com/joho/godotenv"
-	"go-app/src/database"
-	restaurantpb "go-app/src/generated/resto-rate/generated/go/restaurants/v1"
-	userpb "go-app/src/generated/resto-rate/generated/go/users/v1"
-	"go-app/src/services"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
 	"gorm.io/driver/postgres"

@@ -1,7 +1,7 @@
 package database
 
 import (
-	"go-app/src/services/models"
+	"app/src/services/models"
 	"gorm.io/gorm"
 	"log"
 )
