@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	restaurantpb "github.com/goorcio/resto-rate-protos/generated/go/resto-rate/generated/go/restaurants/v1"
+	restaurantpb "go-app/src/generated/resto-rate/generated/go/restaurants/v1"
 	"go-app/src/services/models"
 	"go-app/src/services/utils"
 	"google.golang.org/protobuf/types/known/emptypb"

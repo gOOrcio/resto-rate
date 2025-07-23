@@ -50,3 +50,6 @@ yarn-error.log*
 .cursor/rules/nx-rules.mdc
 .github/instructions/nx.instructions.md
 /packages/protos/go.sum
+
+# Generated protobuf files
+apps/go-app/src/generated/

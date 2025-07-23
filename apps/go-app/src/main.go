@@ -2,10 +2,10 @@ package main
 
 import (
 	"fmt"
-	restaurantpb "github.com/goorcio/resto-rate-protos/generated/go/resto-rate/generated/go/restaurants/v1"
-	userpb "github.com/goorcio/resto-rate-protos/generated/go/resto-rate/generated/go/users/v1"
 	"github.com/joho/godotenv"
 	"go-app/src/database"
+	restaurantpb "go-app/src/generated/resto-rate/generated/go/restaurants/v1"
+	userpb "go-app/src/generated/resto-rate/generated/go/users/v1"
 	"go-app/src/services"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"

@@ -1,7 +1,7 @@
 package models
 
 import (
-	restaurantpb "github.com/goorcio/resto-rate-protos/generated/go/resto-rate/generated/go/restaurants/v1"
+	restaurantpb "go-app/src/generated/resto-rate/generated/go/restaurants/v1"
 	"gorm.io/gorm"
 	"time"
 )

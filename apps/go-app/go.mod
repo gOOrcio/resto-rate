@@ -3,7 +3,6 @@ module go-app
 go 1.24.4
 
 require (
-	github.com/goorcio/resto-rate-protos v0.0.0
 	github.com/joho/godotenv v1.5.1
 	github.com/oklog/ulid/v2 v2.1.1
 	google.golang.org/grpc v1.74.2
@@ -11,8 +10,6 @@ require (
 	gorm.io/driver/postgres v1.6.0
 	gorm.io/gorm v1.30.0
 )
-
-replace github.com/goorcio/resto-rate-protos => ../../packages/protos
 
 require (
 	github.com/jackc/pgpassfile v1.0.0 // indirect
