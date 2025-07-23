@@ -23,11 +23,7 @@
 		"repair": "nx repair",
 		"report": "nx report",
 		"install:all": "bun install",
-		"clean:all": "find . -name 'node_modules' -type d -prune -exec rm -rf '{}' + && find . -name '.svelte-kit' -type d -prune -exec rm -rf '{}' +",
-		"refresh:all": "bun run clean:all && bun run install:all",
-		"clean:nx": "rm -rf .nx/cache .nx/workspace-data",
-		"clean:full": "bun run clean:all && bun run clean:nx",
-		"refresh:full": "bun run clean:full && bun run install:all"
+		"clean:nx": "rm -rf .nx/cache .nx/workspace-data"
 	},
 	"devDependencies": {
 		"@nx-go/nx-go": "^3.3.1",

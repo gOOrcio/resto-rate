@@ -10,7 +10,7 @@
         "outputPath": "dist/apps/go-app",
         "main": "apps/go-app/src/main.go"
       },
-      "dependsOn": ["^generate"]
+      "dependsOn": ["protos:generate"]
     },
     "dev": {
       "executor": "nx:run-commands",
@@ -18,15 +18,15 @@
         "command": "go run ./src/main.go",
         "cwd": "apps/go-app"
       },
-      "dependsOn": ["^generate"]
+      "dependsOn": ["protos:generate"]
     },
     "lint": {
       "executor": "@nx-go/nx-go:lint",
-      "dependsOn": ["^generate"]
+      "dependsOn": ["protos:generate"]
     },
     "test": {
       "executor": "@nx-go/nx-go:test",
-      "dependsOn": ["^generate"]
+      "dependsOn": ["protos:generate"]
     }
   }
 }

@@ -1,0 +1,5 @@
+services:
+  postgres:
+    volumes:
+      - ./pgdata:/var/lib/postgresql/data
+    user: "${UID:-0}:${GID:-0}"

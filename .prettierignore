@@ -7,3 +7,4 @@ bun.lockb
 
 /.nx/cache
 /.nx/workspace-data/packages/protos/generated/
+/pgdata/**
