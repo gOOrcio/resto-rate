@@ -9,21 +9,24 @@
       "options": {
         "outputPath": "dist/apps/go-app",
         "main": "apps/go-app/src/main.go"
-      }
+      },
+      "dependsOn": ["^generate"]
     },
     "dev": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "bun run go run ./src/main.go",
+        "command": "go run ./src/main.go",
         "cwd": "apps/go-app"
-      }
+      },
+      "dependsOn": ["^generate"]
     },
     "lint": {
-      "executor": "@nx-go/nx-go:lint"
+      "executor": "@nx-go/nx-go:lint",
+      "dependsOn": ["^generate"]
     },
     "test": {
-      "executor": "@nx-go/nx-go:test"
+      "executor": "@nx-go/nx-go:test",
+      "dependsOn": ["^generate"]
     }
   }
 }
-

@@ -1,22 +1,23 @@
 package database
 
 import (
-	"go-app/src/services"
+	"go-app/src/services/models"
 	"gorm.io/gorm"
+	"log"
 )
 
 func autoMigrateAndSeedRestaurants(db *gorm.DB) error {
-	if err := db.AutoMigrate(&services.Restaurant{}); err != nil {
+	if err := db.AutoMigrate(&models.Restaurant{}); err != nil {
 		return err
 	}
 
 	var count int64
-	if err := db.Model(&services.Restaurant{}).Count(&count).Error; err != nil {
+	if err := db.Model(&models.Restaurant{}).Count(&count).Error; err != nil {
 		return err
 	}
 
 	if count == 0 {
-		seedRestaurants := []services.Restaurant{
+		seedRestaurants := []models.Restaurant{
 			{GoogleID: "g1", Email: "a@b.com", Name: "Testaurant"},
 			{GoogleID: "g2", Email: "c@d.com", Name: "Food Place"},
 		}
@@ -28,17 +29,17 @@ func autoMigrateAndSeedRestaurants(db *gorm.DB) error {
 }
 
 func autoMigrateAndSeedUsers(db *gorm.DB) error {
-	if err := db.AutoMigrate(&services.User{}); err != nil {
+	if err := db.AutoMigrate(&models.User{}); err != nil {
 		return err
 	}
 
 	var count int64
-	if err := db.Model(&services.User{}).Count(&count).Error; err != nil {
+	if err := db.Model(&models.User{}).Count(&count).Error; err != nil {
 		return err
 	}
 
 	if count == 0 {
-		seedUsers := []services.User{
+		seedUsers := []models.User{
 			{GoogleId: "1", Email: "user1@example.com", Name: "User One", Username: "username-a", IsAdmin: true},
 			{GoogleId: "2", Email: "user2@example.com", Name: "User Two", Username: "username-b", IsAdmin: false},
 		}
@@ -56,5 +57,6 @@ func AutoMigrateAndSeed(db *gorm.DB) error {
 	if err := autoMigrateAndSeedUsers(db); err != nil {
 		return err
 	}
+	log.Println("Seeding finished")
 	return nil
 }

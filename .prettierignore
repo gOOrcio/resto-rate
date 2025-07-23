@@ -6,4 +6,4 @@ bun.lock
 bun.lockb
 
 /.nx/cache
-/.nx/workspace-data
+/.nx/workspace-data/packages/protos/generated/

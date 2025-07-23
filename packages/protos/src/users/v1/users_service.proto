@@ -1,0 +1,50 @@
+syntax = "proto3";
+
+package users.v1;
+
+import "packages/protos/src/users/v1/user.proto";
+import "google/protobuf/empty.proto";
+
+option go_package = "resto-rate/generated/go/users/v1";
+
+service UsersService {
+  rpc CreateUser(CreateUserRequest) returns (UserProto);
+  rpc CreateAdminUser(CreateUserRequest) returns (UserProto);
+  rpc GetUser(GetUserRequest) returns (UserProto);
+  rpc UpdateUser(UpdateUserRequest) returns (UserProto);
+  rpc DeleteUser(DeleteUserRequest) returns (google.protobuf.Empty);
+  rpc ListUsers(ListUsersRequest) returns (ListUsersResponse);
+}
+
+message CreateUserRequest {
+  UserProto user = 1;
+}
+
+message CreateAdminUserRequest {
+  UserProto user = 1;
+}
+
+message GetUserRequest {
+  string id = 1;
+}
+
+message UpdateUserRequest {
+  UserProto user = 1;
+}
+
+message DeleteUserRequest {
+  string id = 1;
+}
+
+message ListUsersRequest {
+  int32 page = 1; // Page number for pagination
+  int32 page_size = 2; // Number of users per page
+}
+
+message ListUsersResponse {
+  repeated UserProto users = 1; // List of users
+  int32 total_count = 2; // Total number of users
+  int32 page = 3; // Current page number
+  int32 page_size = 4; // Number of users per page
+  string next_page_token = 5; // Token for the next page, if available
+}

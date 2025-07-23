@@ -1,44 +1,23 @@
-// @title RestoRate API
-// @version 0.1
-// @description This is the RestoRate API documentation.
-// @BasePath /api/v1
-
 package main
 
 import (
 	"fmt"
-	"github.com/gin-gonic/gin"
+	restaurantpb "github.com/goorcio/resto-rate-protos/generated/go/resto-rate/generated/go/restaurants/v1"
+	userpb "github.com/goorcio/resto-rate-protos/generated/go/resto-rate/generated/go/users/v1"
 	"github.com/joho/godotenv"
-	swaggerfiles "github.com/swaggo/files"
-	ginSwagger "github.com/swaggo/gin-swagger"
 	"go-app/src/database"
-	docs "go-app/src/docs"
-	"go-app/src/routers"
 	"go-app/src/services"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/reflection"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 	"log"
-	"net/http"
+	"net"
 	"os"
 	"path/filepath"
 	"runtime"
 	"strings"
 )
-
-func setupRouter(userService *services.UserService, restaurantsService *services.RestaurantsService) *gin.Engine {
-	r := gin.Default()
-	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerfiles.Handler))
-
-	r.GET("/ping", func(c *gin.Context) {
-		c.String(http.StatusOK, "pong")
-	})
-
-	api := r.Group("/api/v1")
-	routers.RegisterUserRoutes(api, userService)
-	routers.RegisterRestaurantsRoutes(api, restaurantsService)
-
-	return r
-}
 
 func loadEnv() error {
 	envFile := os.Getenv("ENV_FILE")
@@ -66,37 +45,58 @@ func getDSN() string {
 
 func connectToDatabase() (*gorm.DB, error) {
 	dsn := getDSN()
+	log.Println("Connecting to database ...")
 	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
 	if err != nil {
 		return nil, fmt.Errorf("failed to connect to database: %w", err)
+	}
+	if db != nil {
+		log.Println("Database connected")
 	}
 	return db, nil
 }
 
 func main() {
+	log.Println("Application starting... ")
 	if err := loadEnv(); err != nil {
 		log.Fatal(err)
+	} else {
+		log.Println("Environment variables loaded")
 	}
+
 	db, err := connectToDatabase()
 	if err != nil {
 		log.Fatal(err)
 	}
-	userService := &services.UserService{DB: db}
-	restaurantsService := &services.RestaurantsService{DB: db}
 
 	if strings.EqualFold(os.Getenv("SEED"), "true") {
+		log.Println("Seeding... ")
 		if err := database.AutoMigrateAndSeed(db); err != nil {
 			log.Fatal("Failed to auto-migrate and seed database: ", err)
 		}
 	}
-	r := setupRouter(userService, restaurantsService)
+
+	userService := &services.UserService{DB: db}
+	restaurantsService := &services.RestaurantsService{DB: db}
 
 	apiPort := os.Getenv("API_PORT")
-	// docs.SwaggerInfo.Title and Version are now set via annotation comments above.
-	log.Printf("Swagger docs available at http://localhost:%s/swagger/index.html", apiPort)
-	log.Printf("Swagger base path: %s", docs.SwaggerInfo.BasePath)
+	if apiPort == "" {
+		log.Fatal("API_PORT is not set in the environment variables")
+	}
 
-	if err := r.Run(":" + apiPort); err != nil {
+	listener, err := net.Listen("tcp", ":"+apiPort)
+	if err != nil {
+		log.Fatalf("Failed to listen on port %s: %v", apiPort, err)
+	}
+
+	grpcServer := grpc.NewServer()
+	userpb.RegisterUsersServiceServer(grpcServer, userService)
+	restaurantpb.RegisterRestaurantServiceServer(grpcServer, restaurantsService)
+
+	reflection.Register(grpcServer)
+
+	log.Println("Application started on port " + apiPort)
+	if err := grpcServer.Serve(listener); err != nil {
 		log.Fatal("Failed to run application: ", err)
 	}
 }
