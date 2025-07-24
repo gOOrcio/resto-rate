@@ -27,18 +27,13 @@ type ServiceRegistration struct {
 
 func main() {
 	log.Println("Application starting...")
-
 	mustLoadEnvironmentVariables()
 	db := mustConnectToDatabase()
-	serviceHandlers := initializeServiceHandlers(db)
-	mux := setupHTTPHandlers(serviceHandlers)
+	mux := setupHTTPHandlers(initializeServiceHandlers(db))
 	setupDatabaseSchema(db)
-
 	optionallySeedDatabase(db)
 	optionallySetupGRPCReflection(mux)
-
-	apiPort := getAPIPort()
-	startServer(mux, apiPort)
+	startServer(mux, getAPIPort())
 }
 
 func startServer(mux *http.ServeMux, apiPort string) {
