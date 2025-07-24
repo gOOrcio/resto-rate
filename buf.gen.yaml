@@ -11,10 +11,10 @@ plugins:
     opt: paths=source_relative
 
   - local: protoc-gen-es
-    out: apps/web/src/generated
+    out: apps/web/src/lib/client/generated
     include_imports: true
     opt: target=ts
   - local: protoc-gen-connect-es
-    out: apps/web/src/generated
+    out: apps/web/src/lib/client/generated
     include_imports: true
     opt: target=ts
