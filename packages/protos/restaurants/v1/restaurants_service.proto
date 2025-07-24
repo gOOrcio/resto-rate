@@ -2,10 +2,10 @@ syntax = "proto3";
 
 package restaurants.v1;
 
-import "packages/protos/src/restaurants/v1/restaurant.proto";
+import "restaurants/v1/restaurant.proto";
 import "google/protobuf/empty.proto";
 
-option go_package = "resto-rate/generated/go/restaurants/v1";
+option go_package = "api/src/generated/restaurants/v1";
 
 service RestaurantService {
   rpc CreateRestaurant(CreateRestaurantRequest) returns (RestaurantProto);

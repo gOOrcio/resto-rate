@@ -1,9 +1,9 @@
 package services
 
 import (
-	restaurantpb "app/src/generated/resto-rate/generated/go/restaurants/v1"
-	"app/src/services/models"
-	"app/src/services/utils"
+	restaurantpb "api/src/generated/restaurants/v1"
+	"api/src/services/models"
+	"api/src/services/utils"
 	"context"
 	"errors"
 	"fmt"

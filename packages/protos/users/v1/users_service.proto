@@ -2,10 +2,10 @@ syntax = "proto3";
 
 package users.v1;
 
-import "packages/protos/src/users/v1/user.proto";
+import "users/v1/user.proto";
 import "google/protobuf/empty.proto";
 
-option go_package = "resto-rate/generated/go/users/v1";
+option go_package = "api/src/generated/users/v1";
 
 service UsersService {
   rpc CreateUser(CreateUserRequest) returns (UserProto);

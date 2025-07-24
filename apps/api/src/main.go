@@ -1,10 +1,10 @@
 package main
 
 import (
-	"app/src/database"
-	restaurantpb "app/src/generated/resto-rate/generated/go/restaurants/v1"
-	userpb "app/src/generated/resto-rate/generated/go/users/v1"
-	"app/src/services"
+	"api/src/database"
+	restaurantpb "api/src/generated/restaurants/v1"
+	userpb "api/src/generated/users/v1"
+	"api/src/services"
 	"fmt"
 	"github.com/joho/godotenv"
 	"google.golang.org/grpc"
@@ -58,17 +58,21 @@ func connectToDatabase() (*gorm.DB, error) {
 
 func main() {
 	log.Println("Application starting... ")
+
+	// Load Environment Variables
 	if err := loadEnv(); err != nil {
 		log.Fatal(err)
 	} else {
 		log.Println("Environment variables loaded")
 	}
 
+	//Connect to DB
 	db, err := connectToDatabase()
 	if err != nil {
 		log.Fatal(err)
 	}
 
+	// Optional: seed the db
 	if strings.EqualFold(os.Getenv("SEED"), "true") {
 		log.Println("Seeding... ")
 		if err := database.AutoMigrateAndSeed(db); err != nil {
@@ -76,6 +80,7 @@ func main() {
 		}
 	}
 
+	// Start gRPC server
 	userService := &services.UserService{DB: db}
 	restaurantsService := &services.RestaurantsService{DB: db}
 
@@ -93,7 +98,10 @@ func main() {
 	userpb.RegisterUsersServiceServer(grpcServer, userService)
 	restaurantpb.RegisterRestaurantServiceServer(grpcServer, restaurantsService)
 
-	reflection.Register(grpcServer)
+	//Enable reflection of the service if using development environemnt
+	if strings.EqualFold(os.Getenv("ENV"), "dev") {
+		reflection.Register(grpcServer)
+	}
 
 	log.Println("Application started on port " + apiPort)
 	if err := grpcServer.Serve(listener); err != nil {

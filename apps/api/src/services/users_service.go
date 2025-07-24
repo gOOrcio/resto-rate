@@ -1,9 +1,9 @@
 package services
 
 import (
-	userpb "app/src/generated/resto-rate/generated/go/users/v1"
-	"app/src/services/models"
-	"app/src/services/utils"
+	userpb "api/src/generated/users/v1"
+	"api/src/services/models"
+	"api/src/services/utils"
 	"context"
 	"errors"
 	"fmt"

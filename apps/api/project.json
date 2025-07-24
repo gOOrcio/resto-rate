@@ -1,14 +1,14 @@
 {
-  "name": "app",
+  "name": "api",
   "$schema": "../../node_modules/nx/schemas/project-schema.json",
   "projectType": "application",
-  "sourceRoot": "apps/app/src",
+  "sourceRoot": "apps/api/src",
   "targets": {
     "build": {
       "executor": "@nx-go/nx-go:build",
       "options": {
-        "outputPath": "dist/apps/app",
-        "main": "apps/app/src/main.go"
+        "outputPath": "dist/apps/api",
+        "main": "apps/api/src/main.go"
       },
       "dependsOn": ["protos:generate"]
     },
@@ -16,7 +16,7 @@
       "executor": "nx:run-commands",
       "options": {
         "command": "go run ./src/main.go",
-        "cwd": "apps/app"
+        "cwd": "apps/api"
       },
       "dependsOn": ["protos:generate"]
     },

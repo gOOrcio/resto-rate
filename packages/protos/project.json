@@ -8,12 +8,14 @@
 		"generate": {
 			"executor": "nx:run-commands",
 			"options": {
-				"cwd": ".",
-				"commands": [
-					"mkdir -p apps/app/src/generated",
-					"find packages/protos/src -name '*.proto' -exec protoc --go_out=apps/app/src/generated --go-grpc_out=apps/app/src/generated --proto_path=. {} +"
-				],
-				"parallel": false
+				"command": "buf generate",
+				"cwd": "."
+			}
+		},
+		"clean": {
+			"executor": "nx:run-commands",
+			"options": {
+				"command": "rm -rf apps/api/src/generated/* apps/web/src/generated/*"
 			}
 		}
 	}

@@ -1,8 +1,9 @@
-module app
+module api
 
 go 1.24.4
 
 require (
+	connectrpc.com/connect v1.18.1
 	github.com/joho/godotenv v1.5.1
 	github.com/oklog/ulid/v2 v2.1.1
 	google.golang.org/grpc v1.74.2

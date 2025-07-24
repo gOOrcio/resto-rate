@@ -1,7 +1,7 @@
 package models
 
 import (
-	userpb "app/src/generated/resto-rate/generated/go/users/v1"
+	userpb "api/src/generated/users/v1"
 	"gorm.io/gorm"
 	"time"
 )

@@ -1,7 +1,7 @@
 package database
 
 import (
-	"app/src/services/models"
+	"api/src/services/models"
 	"gorm.io/gorm"
 	"log"
 )
