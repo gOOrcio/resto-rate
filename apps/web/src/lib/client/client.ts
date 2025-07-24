@@ -5,7 +5,7 @@ import { UsersService } from '$lib/client/generated/users/v1/users_service_pb';
 
 
 const transport = createConnectTransport({
-  baseUrl: 'localhost:3001',
+  baseUrl: 'http://localhost:3001',
 });
 
 const restaurants = createClient(RestaurantService, transport);

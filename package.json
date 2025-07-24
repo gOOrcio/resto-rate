@@ -5,7 +5,6 @@
 		"build": "nx run-many -t build",
 		"dev": "nx run-many -t dev",
 		"dev:api": "nx run api:dev",
-		"dev:app": "nx run app:dev",
 		"dev:web": "nx run web:dev",
 		"lint": "nx run-many -t lint",
 		"format": "prettier --write \"**/*.{ts,tsx,js,jsx,svelte,json,md,css}\"",
@@ -27,6 +26,9 @@
 	},
 	"devDependencies": {
 		"@nx-go/nx-go": "^3.3.1",
+		"@nx/eslint": "^21.3.5",
+		"@nx/playwright": "^21.3.5",
+		"@nx/vite": "^21.3.5",
 		"eslint": "^9.29.0",
 		"npm-check-updates": "^18.0.1",
 		"nx": "21.2.1",

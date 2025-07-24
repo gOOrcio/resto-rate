@@ -12,11 +12,12 @@
       }
     },
     "dev": {
-      "executor": "@nx/vite:dev-server",
-      "defaultConfiguration": "development",
+      "executor": "nx:run-commands",
       "options": {
-        "buildTarget": "web:build"
-      }
+        "command": "vite dev",
+        "cwd": "apps/web"
+      },
+      "dependsOn": ["protos:generate"]
     },
     "preview": {
       "executor": "@nx/vite:preview-server",
@@ -58,7 +59,8 @@
       "executor": "@nx/eslint:lint",
       "outputs": ["{options.outputFile}"],
       "options": {
-        "lintFilePatterns": ["apps/web/**/*.{ts,js,svelte}"]
+        "lintFilePatterns": ["apps/web/**/*.{ts,js,svelte}"],
+        "cwd": "apps/web"
       }
     },
     "test": {
