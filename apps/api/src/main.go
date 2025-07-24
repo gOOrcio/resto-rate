@@ -5,33 +5,63 @@ import (
 	restaurantsv1connect "api/src/generated/restaurants/v1/v1connect"
 	usersv1connect "api/src/generated/users/v1/v1connect"
 	"api/src/services"
+	"connectrpc.com/grpcreflect"
 	"fmt"
+	"github.com/joho/godotenv"
+	"golang.org/x/net/http2"
+	"golang.org/x/net/http2/h2c"
+	"gorm.io/driver/postgres"
+	"gorm.io/gorm"
 	"log"
 	"net/http"
 	"os"
 	"path/filepath"
 	"runtime"
 	"strings"
-
-	"connectrpc.com/grpcreflect"
-	"github.com/joho/godotenv"
-	"golang.org/x/net/http2"
-	"golang.org/x/net/http2/h2c"
-	"gorm.io/driver/postgres"
-	"gorm.io/gorm"
 )
 
-func loadEnvironmentVariables() error {
+func main() {
+	log.Println("Application starting...")
+
+	mustLoadEnvironmentVariables()
+	db := mustConnectToDatabase()
+	userService, restaurantsService := initializeServices(db)
+	mux := setupHTTPHandlers(userService, restaurantsService)
+	setupDatabaseSchema(db)
+
+	optionallySeedDatabase(db)
+	optionallySetupGRPCReflection(mux)
+
+	apiPort := getAPIPort()
+	startServer(mux, apiPort)
+
+	log.Println("Application started successfully...")
+}
+
+func startServer(mux *http.ServeMux, apiPort string) {
+	log.Printf("Starting HTTP server on port %s", apiPort)
+	if err := http.ListenAndServe(
+		":"+apiPort,
+		h2c.NewHandler(mux, &http2.Server{}),
+	); err != nil {
+		log.Fatal("Failed to run application: ", err)
+	}
+}
+
+func mustLoadEnvironmentVariables() {
 	envFile := os.Getenv("ENV_FILE")
 	if envFile == "" {
 		_, filename, _, _ := runtime.Caller(0)
 		dir := filepath.Dir(filename)
 		envFile = filepath.Join(dir, "../.env")
 	}
+
 	if err := godotenv.Load(envFile); err != nil {
-		return fmt.Errorf("error loading %s file: %w", envFile, err)
+		log.Fatalf("Failed to load environment from %s: %v", envFile, err)
 	}
-	return nil
+
+	log.Println("Environment variables loaded")
+	log.Println("ENV:", os.Getenv("ENV"))
 }
 
 func getDatabaseDSN() string {
@@ -45,15 +75,17 @@ func getDatabaseDSN() string {
 	)
 }
 
-func connectToDatabase() (*gorm.DB, error) {
+func mustConnectToDatabase() *gorm.DB {
 	dsn := getDatabaseDSN()
 	log.Println("Connecting to database...")
+
 	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
 	if err != nil {
-		return nil, fmt.Errorf("failed to connect to database: %w", err)
+		log.Fatalf("Failed to connect to database: %v", err)
 	}
+
 	log.Println("Database connected")
-	return db, nil
+	return db
 }
 
 func initializeServices(db *gorm.DB) (*services.UserService, *services.RestaurantsService) {
@@ -62,7 +94,7 @@ func initializeServices(db *gorm.DB) (*services.UserService, *services.Restauran
 	return userService, restaurantsService
 }
 
-func setupHTTPHandlers(userService *services.UserService, restaurantsService *services.RestaurantsService) (*http.ServeMux, string, string) {
+func setupHTTPHandlers(userService *services.UserService, restaurantsService *services.RestaurantsService) *http.ServeMux {
 	mux := http.NewServeMux()
 
 	// Register user service
@@ -73,10 +105,13 @@ func setupHTTPHandlers(userService *services.UserService, restaurantsService *se
 	restaurantPath, restaurantHandler := restaurantsv1connect.NewRestaurantServiceHandler(restaurantsService)
 	mux.Handle(restaurantPath, restaurantHandler)
 
-	return mux, userPath, restaurantPath
+	log.Printf("User service available at: %s", userPath)
+	log.Printf("Restaurant service available at: %s", restaurantPath)
+
+	return mux
 }
 
-func setupGRPCReflection(mux *http.ServeMux) {
+func optionallySetupGRPCReflection(mux *http.ServeMux) {
 	if os.Getenv("ENV") == "dev" {
 		log.Println("-------------------!!!-------------------")
 		log.Println("gRPC reflection support enabled. We are not in production, right?")
@@ -91,12 +126,13 @@ func setupGRPCReflection(mux *http.ServeMux) {
 	}
 }
 
-func setupDatabase(db *gorm.DB) {
+func setupDatabaseSchema(db *gorm.DB) {
 	if err := database.CreateSchema(db); err != nil {
 		log.Fatal("Failed to create database schema: ", err)
 	}
+}
 
-	// Seed database only in dev environment when SEED=true
+func optionallySeedDatabase(db *gorm.DB) {
 	if os.Getenv("ENV") == "dev" && strings.EqualFold(os.Getenv("SEED"), "true") {
 		log.Println("Development environment detected with SEED=true, seeding database...")
 		if err := database.SeedDatabase(db); err != nil {
@@ -111,42 +147,4 @@ func getAPIPort() string {
 		log.Fatal("API_PORT is not set in the environment variables")
 	}
 	return apiPort
-}
-
-func startServer(mux *http.ServeMux, apiPort string) {
-	log.Printf("Starting HTTP server on port %s", apiPort)
-	if err := http.ListenAndServe(
-		":"+apiPort,
-		h2c.NewHandler(mux, &http2.Server{}),
-	); err != nil {
-		log.Fatal("Failed to run application: ", err)
-	}
-}
-
-func main() {
-	log.Println("Application starting...")
-
-	_ = loadEnvironmentVariables()
-	log.Println("Environment variables loaded")
-	log.Println("ENV: " + os.Getenv("ENV"))
-
-	db, err := connectToDatabase()
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	userService, restaurantsService := initializeServices(db)
-
-	mux, userPath, restaurantPath := setupHTTPHandlers(userService, restaurantsService)
-
-	setupGRPCReflection(mux)
-
-	setupDatabase(db)
-
-	apiPort := getAPIPort()
-
-	log.Printf("User service available at: %s", userPath)
-	log.Printf("Restaurant service available at: %s", restaurantPath)
-
-	startServer(mux, apiPort)
 }
