@@ -20,13 +20,18 @@ import (
 	"strings"
 )
 
+type ServiceRegistration struct {
+	Path    string
+	Handler http.Handler
+}
+
 func main() {
 	log.Println("Application starting...")
 
 	mustLoadEnvironmentVariables()
 	db := mustConnectToDatabase()
-	userService, restaurantsService := initializeServices(db)
-	mux := setupHTTPHandlers(userService, restaurantsService)
+	serviceHandlers := initializeServiceHandlers(db)
+	mux := setupHTTPHandlers(serviceHandlers)
 	setupDatabaseSchema(db)
 
 	optionallySeedDatabase(db)
@@ -34,8 +39,6 @@ func main() {
 
 	apiPort := getAPIPort()
 	startServer(mux, apiPort)
-
-	log.Println("Application started successfully...")
 }
 
 func startServer(mux *http.ServeMux, apiPort string) {
@@ -88,34 +91,35 @@ func mustConnectToDatabase() *gorm.DB {
 	return db
 }
 
-func initializeServices(db *gorm.DB) (*services.UserService, *services.RestaurantsService) {
-	userService := &services.UserService{DB: db}
-	restaurantsService := &services.RestaurantsService{DB: db}
-	return userService, restaurantsService
+func initializeServiceHandlers(db *gorm.DB) []ServiceRegistration {
+	return []ServiceRegistration{
+		func() ServiceRegistration {
+			svc := &services.UserService{DB: db}
+			path, handler := usersv1connect.NewUsersServiceHandler(svc)
+			return ServiceRegistration{Path: path, Handler: handler}
+		}(),
+		func() ServiceRegistration {
+			svc := &services.RestaurantsService{DB: db}
+			path, handler := restaurantsv1connect.NewRestaurantServiceHandler(svc)
+			return ServiceRegistration{Path: path, Handler: handler}
+		}(),
+	}
 }
 
-func setupHTTPHandlers(userService *services.UserService, restaurantsService *services.RestaurantsService) *http.ServeMux {
+func setupHTTPHandlers(registrations []ServiceRegistration) *http.ServeMux {
 	mux := http.NewServeMux()
 
-	// Register user service
-	userPath, userHandler := usersv1connect.NewUsersServiceHandler(userService)
-	mux.Handle(userPath, userHandler)
-
-	// Register restaurant service
-	restaurantPath, restaurantHandler := restaurantsv1connect.NewRestaurantServiceHandler(restaurantsService)
-	mux.Handle(restaurantPath, restaurantHandler)
-
-	log.Printf("User service available at: %s", userPath)
-	log.Printf("Restaurant service available at: %s", restaurantPath)
+	for _, reg := range registrations {
+		mux.Handle(reg.Path, reg.Handler)
+		log.Printf("Service available at: %s", reg.Path)
+	}
 
 	return mux
 }
 
 func optionallySetupGRPCReflection(mux *http.ServeMux) {
 	if os.Getenv("ENV") == "dev" {
-		log.Println("-------------------!!!-------------------")
-		log.Println("gRPC reflection support enabled. We are not in production, right?")
-		log.Println("-------------------!!!-------------------")
+		log.Println("!!! gRPC reflection support enabled. We are not in production, right?")
 
 		reflector := grpcreflect.NewStaticReflector(
 			usersv1connect.UsersServiceName,
