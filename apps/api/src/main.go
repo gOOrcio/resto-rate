@@ -105,11 +105,27 @@ func setupHTTPHandlers(registrations []ServiceRegistration) *http.ServeMux {
 	mux := http.NewServeMux()
 
 	for _, reg := range registrations {
-		mux.Handle(reg.Path, reg.Handler)
+		mux.Handle(reg.Path, corsMiddleware(reg.Handler))
 		log.Printf("Service available at: %s", reg.Path)
 	}
 
 	return mux
+}
+
+func corsMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Access-Control-Allow-Origin", "http://localhost:5173")
+		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
+		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization, Connect-Protocol-Version")
+		w.Header().Set("Access-Control-Allow-Credentials", "true")
+
+		if r.Method == "OPTIONS" {
+			w.WriteHeader(http.StatusOK)
+			return
+		}
+
+		next.ServeHTTP(w, r)
+	})
 }
 
 func optionallySetupGRPCReflection(mux *http.ServeMux) {
