@@ -51,6 +51,3 @@ yarn-error.log*
 .github/instructions/nx.instructions.md
 /packages/protos/go.sum
 
-# Generated protobuf files
-apps/api/src/generated/
-/apps/web/project.inlang/cache/
