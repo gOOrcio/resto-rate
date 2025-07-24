@@ -1,0 +1,73 @@
+{
+  "name": "web",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "projectType": "application",
+  "sourceRoot": "apps/web/src",
+  "targets": {
+    "build": {
+      "executor": "@nx/vite:build",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/apps/web"
+      }
+    },
+    "dev": {
+      "executor": "@nx/vite:dev-server",
+      "defaultConfiguration": "development",
+      "options": {
+        "buildTarget": "web:build"
+      }
+    },
+    "preview": {
+      "executor": "@nx/vite:preview-server",
+      "defaultConfiguration": "development",
+      "options": {
+        "buildTarget": "web:build"
+      }
+    },
+    "e2e": {
+      "executor": "@nx/playwright:playwright",
+      "outputs": ["{options.outputDir}"],
+      "options": {
+        "config": "apps/web/playwright.config.ts",
+        "outputDir": "dist/.playwright/apps/web"
+      }
+    },
+    "e2e-ci": {
+      "executor": "@nx/playwright:playwright",
+      "outputs": ["{options.outputDir}"],
+      "options": {
+        "config": "apps/web/playwright.config.ts",
+        "outputDir": "dist/.playwright/apps/web"
+      },
+      "configurations": {
+        "ci": {
+          "webServerCommand": "nx preview web",
+          "webServerUrl": "http://localhost:4173"
+        }
+      }
+    },
+    "check": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "svelte-check --tsconfig ./tsconfig.json",
+        "cwd": "apps/web"
+      }
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint",
+      "outputs": ["{options.outputFile}"],
+      "options": {
+        "lintFilePatterns": ["apps/web/**/*.{ts,js,svelte}"]
+      }
+    },
+    "test": {
+      "executor": "@nx/vite:test",
+      "outputs": ["{options.reportsDirectory}"],
+      "options": {
+        "passWithNoTests": true,
+        "reportsDirectory": "coverage/apps/web"
+      }
+    }
+  }
+}

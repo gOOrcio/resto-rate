@@ -53,3 +53,4 @@ yarn-error.log*
 
 # Generated protobuf files
 apps/api/src/generated/
+/apps/web/project.inlang/cache/
