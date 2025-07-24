@@ -1,31 +1,44 @@
 package services
 
 import (
-	userpb "api/src/generated/users/v1"
+	v1 "api/src/generated/users/v1"
+	"api/src/generated/users/v1/v1connect"
 	"api/src/services/models"
 	"api/src/services/utils"
 	"context"
 	"errors"
 	"fmt"
-	"google.golang.org/protobuf/types/known/emptypb"
+
 	"gorm.io/gorm"
+
+	"connectrpc.com/connect"
+	"google.golang.org/protobuf/types/known/emptypb"
 )
 
 type UserService struct {
-	userpb.UnimplementedUsersServiceServer
+	v1connect.UnimplementedUsersServiceHandler
 	DB *gorm.DB
 }
 
-func (u *UserService) CreateUser(ctx context.Context, request *userpb.CreateUserRequest) (*userpb.UserProto, error) {
-	return u.createUser(ctx, request, false)
+func (u *UserService) CreateUser(
+	ctx context.Context,
+	req *connect.Request[v1.CreateUserRequest],
+) (*connect.Response[v1.UserProto], error) {
+	return u.createUser(ctx, req, false)
 }
 
-func (u *UserService) CreateAdminUser(ctx context.Context, request *userpb.CreateUserRequest) (*userpb.UserProto, error) {
-	return u.createUser(ctx, request, true)
+func (u *UserService) CreateAdminUser(
+	ctx context.Context,
+	req *connect.Request[v1.CreateUserRequest],
+) (*connect.Response[v1.UserProto], error) {
+	return u.createUser(ctx, req, true)
 }
 
-func (u *UserService) GetUser(ctx context.Context, request *userpb.GetUserRequest) (*userpb.UserProto, error) {
-	user, err := u.findUserByIDWithContext(ctx, request.Id)
+func (u *UserService) GetUser(
+	ctx context.Context,
+	req *connect.Request[v1.GetUserRequest],
+) (*connect.Response[v1.UserProto], error) {
+	user, err := u.findUserByIDWithContext(ctx, req.Msg.Id)
 	if err != nil {
 		if ctx.Err() != nil {
 			return nil, ctx.Err()
@@ -33,11 +46,15 @@ func (u *UserService) GetUser(ctx context.Context, request *userpb.GetUserReques
 		return nil, err
 	}
 
-	return user.ToProto(), nil
+	res := connect.NewResponse(user.ToProto())
+	return res, nil
 }
 
-func (u *UserService) UpdateUser(ctx context.Context, request *userpb.UpdateUserRequest) (*userpb.UserProto, error) {
-	user, err := u.findUserByIDWithContext(ctx, request.User.Id)
+func (u *UserService) UpdateUser(
+	ctx context.Context,
+	req *connect.Request[v1.UpdateUserRequest],
+) (*connect.Response[v1.UserProto], error) {
+	user, err := u.findUserByIDWithContext(ctx, req.Msg.User.Id)
 	if err != nil {
 		if ctx.Err() != nil {
 			return nil, ctx.Err()
@@ -46,8 +63,8 @@ func (u *UserService) UpdateUser(ctx context.Context, request *userpb.UpdateUser
 	}
 
 	updates := map[string]interface{}{
-		"Name":  request.User.Name,
-		"Email": request.User.Email,
+		"Name":  req.Msg.User.Name,
+		"Email": req.Msg.User.Email,
 	}
 
 	if err := u.DB.WithContext(ctx).Model(user).Updates(updates).Error; err != nil {
@@ -57,11 +74,15 @@ func (u *UserService) UpdateUser(ctx context.Context, request *userpb.UpdateUser
 		return nil, err
 	}
 
-	return user.ToProto(), nil
+	res := connect.NewResponse(user.ToProto())
+	return res, nil
 }
 
-func (u *UserService) DeleteUser(ctx context.Context, request *userpb.DeleteUserRequest) (*emptypb.Empty, error) {
-	user, err := u.findUserByIDWithContext(ctx, request.Id)
+func (u *UserService) DeleteUser(
+	ctx context.Context,
+	req *connect.Request[v1.DeleteUserRequest],
+) (*connect.Response[emptypb.Empty], error) {
+	user, err := u.findUserByIDWithContext(ctx, req.Msg.Id)
 	if err != nil {
 		if ctx.Err() != nil {
 			return nil, ctx.Err()
@@ -76,12 +97,16 @@ func (u *UserService) DeleteUser(ctx context.Context, request *userpb.DeleteUser
 		return nil, err
 	}
 
-	return &emptypb.Empty{}, nil
+	res := connect.NewResponse(&emptypb.Empty{})
+	return res, nil
 }
 
-func (u *UserService) ListUsers(ctx context.Context, request *userpb.ListUsersRequest) (*userpb.ListUsersResponse, error) {
+func (u *UserService) ListUsers(
+	ctx context.Context,
+	req *connect.Request[v1.ListUsersRequest],
+) (*connect.Response[v1.ListUsersResponse], error) {
 	var users []*models.User
-	totalCount, err := utils.Paginate(u.DB.WithContext(ctx), &users, request.Page, request.PageSize)
+	totalCount, err := utils.Paginate(u.DB.WithContext(ctx), &users, req.Msg.Page, req.Msg.PageSize)
 	if err != nil {
 		if ctx.Err() != nil {
 			return nil, ctx.Err()
@@ -89,23 +114,26 @@ func (u *UserService) ListUsers(ctx context.Context, request *userpb.ListUsersRe
 		return nil, err
 	}
 
-	var userProtos []*userpb.UserProto
+	var userProtos []*v1.UserProto
 	for _, user := range users {
 		userProtos = append(userProtos, user.ToProto())
 	}
 
 	var nextPageToken string
-	if int64((request.Page-1)*request.PageSize+int32(len(users))) < totalCount {
-		nextPageToken = fmt.Sprintf("%d", request.Page+1)
+	if int64((req.Msg.Page-1)*req.Msg.PageSize+int32(len(users))) < totalCount {
+		nextPageToken = fmt.Sprintf("%d", req.Msg.Page+1)
 	}
 
-	return &userpb.ListUsersResponse{
+	response := &v1.ListUsersResponse{
 		Users:         userProtos,
 		TotalCount:    int32(totalCount),
-		Page:          request.Page,
-		PageSize:      request.PageSize,
+		Page:          req.Msg.Page,
+		PageSize:      req.Msg.PageSize,
 		NextPageToken: nextPageToken,
-	}, nil
+	}
+
+	res := connect.NewResponse(response)
+	return res, nil
 }
 
 func (u *UserService) findUserByIDWithContext(ctx context.Context, id string) (*models.User, error) {
@@ -127,11 +155,15 @@ func (u *UserService) findUserByIDWithContext(ctx context.Context, id string) (*
 	return &user, nil
 }
 
-func (u *UserService) createUser(ctx context.Context, request *userpb.CreateUserRequest, isAdmin bool) (*userpb.UserProto, error) {
+func (u *UserService) createUser(
+	ctx context.Context,
+	req *connect.Request[v1.CreateUserRequest],
+	isAdmin bool,
+) (*connect.Response[v1.UserProto], error) {
 	user := &models.User{
-		GoogleId: request.User.GoogleId,
-		Email:    request.User.Email,
-		Name:     request.User.Name,
+		GoogleId: req.Msg.User.GoogleId,
+		Email:    req.Msg.User.Email,
+		Name:     req.Msg.User.Name,
 		IsAdmin:  isAdmin,
 	}
 
@@ -142,5 +174,6 @@ func (u *UserService) createUser(ctx context.Context, request *userpb.CreateUser
 		return nil, err
 	}
 
-	return user.ToProto(), nil
+	res := connect.NewResponse(user.ToProto())
+	return res, nil
 }
