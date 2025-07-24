@@ -8,3 +8,4 @@ plugins:
     out: apps/web/src/lib/client/generated
     include_imports: true
     opt: target=ts
+ 

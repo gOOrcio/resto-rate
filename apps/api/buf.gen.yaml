@@ -9,4 +9,4 @@ plugins:
   - local: protoc-gen-connect-go
     out: apps/api/src/generated
     opt: paths=source_relative
-    
+ 
