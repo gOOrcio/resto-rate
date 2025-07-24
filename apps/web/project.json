@@ -17,7 +17,8 @@
         "command": "vite dev",
         "cwd": "apps/web"
       },
-      "dependsOn": ["protos:generate"]
+      "dependsOn": ["protos:generate"],
+      "continuous": true
     },
     "preview": {
       "executor": "@nx/vite:preview-server",

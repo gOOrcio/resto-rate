@@ -5,13 +5,30 @@
 	"sourceRoot": "packages/protos",
 	"tags": [],
 	"targets": {
-		"generate": {
+		"generate:api": {
 			"executor": "nx:run-commands",
 			"options": {
-				"command": "buf generate",
+				"command": "buf generate --template apps/api/buf.gen.yaml",
 				"cwd": "."
 			}
 		},
+		"generate:web": {
+			"executor": "nx:run-commands",
+			"options": {
+				"command": "buf generate --template apps/web/buf.gen.yaml",
+				"cwd": "."
+			}
+		},
+		"generate": {
+      		"executor": "nx:run-commands",
+      		"options": {
+        		"commands": [
+          			"nx run protos:generate:api",
+          			"nx run protos:generate:web"
+        		],
+        		"parallel": true
+      		}
+    	},
 		"clean": {
 			"executor": "nx:run-commands",
 			"options": {

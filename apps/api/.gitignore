@@ -10,3 +10,5 @@ go.work.sum
 .env
 vendor
 /src/generated/
+/watched_protos/
+/tmp

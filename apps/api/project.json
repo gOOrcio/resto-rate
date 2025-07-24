@@ -15,10 +15,11 @@
     "dev": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "go run ./src/main.go",
+        "command": "air",
         "cwd": "apps/api"
       },
-      "dependsOn": ["protos:generate"]
+      "dependsOn": ["protos:generate"],
+      "continuous": true
     },
     "lint": {
       "executor": "@nx-go/nx-go:lint",
