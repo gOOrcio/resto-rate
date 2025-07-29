@@ -13,7 +13,8 @@ type ULID struct {
 
 func (u *ULID) BeforeCreate(_ *gorm.DB) (err error) {
 	if u.ID == "" {
-		u.ID = ulid.MustNew(ulid.Timestamp(time.Now()), rand.New(rand.NewSource(time.Now().UnixNano()))).String()
+		entropy := ulid.Monotonic(rand.Reader, 0)
+		u.ID = ulid.MustNew(ulid.Timestamp(time.Now()), entropy).String()
 	}
 	return
 }
