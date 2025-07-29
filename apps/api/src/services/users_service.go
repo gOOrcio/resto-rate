@@ -38,6 +38,9 @@ func (u *UserService) GetUser(
 	ctx context.Context,
 	req *connect.Request[v1.GetUserRequest],
 ) (*connect.Response[v1.UserProto], error) {
+	if req.Msg.Id == "" {
+		return nil, errors.New("user ID cannot be empty")
+	}
 	user, err := u.findUserByIDWithContext(ctx, req.Msg.Id)
 	if err != nil {
 		if ctx.Err() != nil {
