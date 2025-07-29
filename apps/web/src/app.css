@@ -1,14 +1,7 @@
 @import "tailwindcss";
-
 @import "tw-animate-css";
+@import '@skeletonlabs/skeleton';
+@import '@skeletonlabs/skeleton/optional/presets';
+@import '@skeletonlabs/skeleton/themes/catppuccin';
 
-@custom-variant dark (&:is(.dark *));
-
-@layer base {
-  * {
-    @apply border-border;
-  }
-  body {
-    @apply bg-background text-foreground;
-  }
-}
+@source '../../node_modules/@skeletonlabs/skeleton-svelte/dist';

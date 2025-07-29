@@ -1,5 +1,4 @@
 <script lang="ts">
-	import { Button } from '$lib/components/ui/button';
 	import clients from '$lib/client/client';
 	import type { RestaurantProto } from '$lib/client/generated/restaurants/v1/restaurant_pb';
 
@@ -23,7 +22,7 @@
 
 <h1>Welcome to SvelteKit</h1>
 <p>Visit <a href="https://svelte.dev/docs/kit">svelte.dev/docs/kit</a> to read the documentation</p>
-<Button onclick={fetchRestaurants}>Load Restaurants</Button>
+<button type="button" class="btn preset-filled-primary-500" onclick={fetchRestaurants}>Load Restaurants</button>
 
 {#if loading}
 	<p>Loading...</p>
