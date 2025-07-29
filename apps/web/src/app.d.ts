@@ -1,10 +1,12 @@
+// See https://svelte.dev/docs/kit/types#app.d.ts
 // for information about these interfaces
 declare global {
 	namespace App {
-		interface Locals {
-			user: null; // Authentication is handled by the backend API
-			session: null; // Authentication is handled by the backend API
-		}
+		// interface Error {}
+		// interface Locals {}
+		// interface PageData {}
+		// interface PageState {}
+		// interface Platform {}
 	}
 }
 

@@ -53,7 +53,7 @@ NODE_ENV=development
 4. **Run database migrations**:
 
 ```bash
-# From web app (creates initial schema)
+# From web api (creates initial schema)
 cd apps/web && bun run db:push
 
 # From API (ensures schema is up to date)
@@ -67,7 +67,7 @@ cd apps/api && bun run db:push
 bun run dev
 
 # Or start individually:
-# Web app (http://localhost:5173)
+# Web api (http://localhost:5173)
 cd apps/web && bun run dev
 
 # API (http://localhost:3001)
@@ -105,25 +105,6 @@ cd apps/api && bun run dev
 - Efficient binary serialization between frontend and backend
 - Automatic encoding/decoding in API client
 - Smaller payload sizes compared to JSON
-
-### Database Schema
-
-```sql
--- Users table
-CREATE TABLE "user" (
-  "id" text PRIMARY KEY,
-  "age" integer,
-  "username" text NOT NULL UNIQUE,
-  "password_hash" text NOT NULL
-);
-
--- Sessions table
-CREATE TABLE "session" (
-  "id" text PRIMARY KEY,
-  "user_id" text NOT NULL REFERENCES "user"("id"),
-  "expires_at" timestamp with time zone NOT NULL
-);
-```
 
 ## Testing the Setup
 
