@@ -13,7 +13,13 @@
 			const response = await clients.restaurants.listRestaurants({ page: 1, pageSize: 20 });
 			restaurants = response.restaurants ?? [];
 		} catch (e: any) {
-			error = e.message ?? 'Failed to fetch restaurants';
+			if (e.code && e.details) {
+				error = `Error ${e.code}: ${e.details}`;
+			} else if (e.message) {
+				error = e.message;
+			} else {
+				error = 'Failed to fetch restaurants';
+			}
 		} finally {
 			loading = false;
 		}
