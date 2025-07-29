@@ -28,8 +28,10 @@ func (s *RestaurantsService) CreateRestaurant(
 	if req.Msg.Restaurant.Name == "" {
 		return nil, fmt.Errorf("restaurant name is required")
 	}
+	// GoogleId is optional; it can be provided if the restaurant is listed on Google.
+	// If not provided, the field will remain empty in the database.
 	if req.Msg.Restaurant.GoogleId == "" {
-		return nil, fmt.Errorf("restaurant Google ID is required")
+		fmt.Println("Note: Google ID is not provided. Proceeding without it.")
 	}
 	if req.Msg.Restaurant.Email == "" {
 		return nil, fmt.Errorf("restaurant email is required")
