@@ -24,6 +24,16 @@ func (s *RestaurantsService) CreateRestaurant(
 	ctx context.Context,
 	req *connect.Request[v1.CreateRestaurantRequest],
 ) (*connect.Response[v1.RestaurantProto], error) {
+	// Validate required fields
+	if req.Msg.Restaurant.Name == "" {
+		return nil, fmt.Errorf("restaurant name is required")
+	}
+	if req.Msg.Restaurant.GoogleId == "" {
+		return nil, fmt.Errorf("restaurant Google ID is required")
+	}
+	if req.Msg.Restaurant.Email == "" {
+		return nil, fmt.Errorf("restaurant email is required")
+	}
 	restaurant := &models.Restaurant{
 		GoogleID: req.Msg.Restaurant.GoogleId,
 		Email:    req.Msg.Restaurant.Email,
