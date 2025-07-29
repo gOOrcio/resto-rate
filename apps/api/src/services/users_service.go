@@ -122,12 +122,7 @@ func (u *UserService) ListUsers(
 		userProtos = append(userProtos, user.ToProto())
 	}
 
-	var nextPageToken string
-	// Cast all components to int64 to prevent integer overflow
-	currentItemsCount := int64(req.Msg.Page-1)*int64(req.Msg.PageSize) + int64(len(users))
-	if currentItemsCount < totalCount {
-		nextPageToken = fmt.Sprintf("%d", req.Msg.Page+1)
-	}
+	nextPageToken := utils.CalculateNextPageToken(req.Msg.Page, req.Msg.PageSize, len(users), totalCount)
 
 	response := &v1.ListUsersResponse{
 		Users:         userProtos,

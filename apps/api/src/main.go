@@ -5,19 +5,18 @@ import (
 	restaurantsv1connect "api/src/generated/restaurants/v1/v1connect"
 	usersv1connect "api/src/generated/users/v1/v1connect"
 	"api/src/services"
-	"connectrpc.com/grpcreflect"
 	"fmt"
+	"log"
+	"net/http"
+	"os"
+	"strings"
+
+	"connectrpc.com/grpcreflect"
 	"github.com/joho/godotenv"
 	"golang.org/x/net/http2"
 	"golang.org/x/net/http2/h2c"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
-	"log"
-	"net/http"
-	"os"
-	"path/filepath"
-	"runtime"
-	"strings"
 )
 
 type ServiceRegistration struct {
@@ -47,18 +46,29 @@ func startServer(mux *http.ServeMux, apiPort string) {
 }
 
 func mustLoadEnvironmentVariables() {
-	envFile := os.Getenv("ENV_FILE")
-	if envFile == "" {
-		_, filename, _, _ := runtime.Caller(0)
-		dir := filepath.Dir(filename)
-		envFile = filepath.Join(dir, "../.env")
+	// Try multiple locations for .env file in order of preference
+	envLocations := []string{
+		os.Getenv("ENV_FILE"), // Explicitly set ENV_FILE
+		".env",                // Current working directory
+		"../.env",             // Parent directory
+		"../../.env",          // Two levels up
 	}
 
-	if err := godotenv.Load(envFile); err != nil {
-		log.Fatalf("Failed to load environment from %s: %v", envFile, err)
+	for _, envFile := range envLocations {
+		if envFile == "" {
+			continue
+		}
+
+		if err := godotenv.Load(envFile); err == nil {
+			log.Printf("Environment variables loaded from: %s", envFile)
+			log.Println("ENV:", os.Getenv("ENV"))
+			return
+		}
 	}
 
-	log.Println("Environment variables loaded")
+	// If no .env file found, log a warning but don't fail
+	// This allows the application to run with environment variables set via other means
+	log.Println("Warning: No .env file found. Make sure environment variables are set via other means (e.g., system environment, Docker, etc.)")
 	log.Println("ENV:", os.Getenv("ENV"))
 }
 

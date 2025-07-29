@@ -8,6 +8,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log"
 
 	"gorm.io/gorm"
 
@@ -31,10 +32,11 @@ func (s *RestaurantsService) CreateRestaurant(
 	// GoogleId is optional; it can be provided if the restaurant is listed on Google.
 	// If not provided, the field will remain empty in the database.
 	if req.Msg.Restaurant.GoogleId == "" {
-		fmt.Println("Note: Google ID is not provided. Proceeding without it.")
+		log.Printf("Note: Google ID is not provided for restaurant '%s'. Proceeding without it.", req.Msg.Restaurant.Name)
 	}
+	// Email is optional for restaurants; not all restaurants have public email addresses
 	if req.Msg.Restaurant.Email == "" {
-		return nil, fmt.Errorf("restaurant email is required")
+		log.Printf("Note: Email is not provided for restaurant '%s'. Proceeding without it.", req.Msg.Restaurant.Name)
 	}
 	restaurant := &models.Restaurant{
 		GoogleID: req.Msg.Restaurant.GoogleId,
@@ -145,10 +147,7 @@ func (s *RestaurantsService) ListRestaurants(
 		restaurantProtos = append(restaurantProtos, restaurant.ToProto())
 	}
 
-	var nextPageToken string
-	if int64((req.Msg.Page-1)*req.Msg.PageSize+int32(len(restaurants))) < totalCount {
-		nextPageToken = fmt.Sprintf("%d", req.Msg.Page+1)
-	}
+	nextPageToken := utils.CalculateNextPageToken(req.Msg.Page, req.Msg.PageSize, len(restaurants), totalCount)
 
 	response := &v1.ListRestaurantsResponse{
 		Restaurants:   restaurantProtos,
