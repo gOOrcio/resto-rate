@@ -93,7 +93,7 @@ func (s *RestaurantsService) UpdateRestaurant(
 		"Email": req.Msg.Restaurant.Email,
 	}
 
-	if err := s.DB.WithContext(ctx).Model(&restaurant).Updates(updates).Error; err != nil {
+	if err := s.DB.WithContext(ctx).Model(restaurant).Updates(updates).Error; err != nil {
 		if ctx.Err() != nil {
 			return nil, ctx.Err()
 		}
