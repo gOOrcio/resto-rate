@@ -20,9 +20,7 @@ message CreateUserRequest {
   UserProto user = 1;
 }
 
-message CreateAdminUserRequest {
-  UserProto user = 1;
-}
+// Removed unused CreateAdminUserRequest message.
 
 message GetUserRequest {
   string id = 1;
