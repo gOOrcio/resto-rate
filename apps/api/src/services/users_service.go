@@ -123,7 +123,9 @@ func (u *UserService) ListUsers(
 	}
 
 	var nextPageToken string
-	if int64((req.Msg.Page-1)*req.Msg.PageSize+int32(len(users))) < totalCount {
+	// Cast all components to int64 to prevent integer overflow
+	currentItemsCount := int64(req.Msg.Page-1)*int64(req.Msg.PageSize) + int64(len(users))
+	if currentItemsCount < totalCount {
 		nextPageToken = fmt.Sprintf("%d", req.Msg.Page+1)
 	}
 
