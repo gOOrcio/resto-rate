@@ -3,7 +3,7 @@ package models
 import (
 	"github.com/oklog/ulid/v2"
 	"gorm.io/gorm"
-	"math/rand"
+	"crypto/rand"
 	"time"
 )
 
