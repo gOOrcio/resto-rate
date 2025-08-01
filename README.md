@@ -1,15 +1,35 @@
 # Resto Rate
 
-Restaurant rating and review application built with SvelteKit frontend and Fastify API backend.
+Restaurant rating and review application built with SvelteKit frontend and Go API backend.
 
 ## Architecture
 
-- **Frontend**: SvelteKit with TailwindCSS, Google OAuth authentication
-- **Backend**: Fastify API with MessagePack, Google OAuth integration
-- **Database**: PostgreSQL with shared schema
-- **Communication**: MessagePack for efficient binary serialization
-- **Authentication**: Google OAuth with secure session management
-- **Monorepo**: Turborepo with bun package manager
+- **Frontend**: SvelteKit with TailwindCSS, Skeleton UI, and Paraglide for i18n
+- **Backend**: Go API with Connect-RPC (gRPC-compatible), PostgreSQL database
+- **Database**: PostgreSQL with GORM ORM
+- **Communication**: Connect-RPC for type-safe API communication
+- **Monorepo**: Nx workspace with bun package manager
+- **Authentication**: Google OAuth (planned, not yet implemented)
+- **Internationalization**: Paraglide setup for multi-language support
+
+## Current Features
+
+### ✅ Implemented
+- **Basic CRUD Operations**: Full CRUD for restaurants and users
+- **Database Models**: User and Restaurant models with ULID primary keys
+- **API Services**: Connect-RPC services for restaurants and users
+- **Pagination**: Server-side pagination with page tokens
+- **Database Seeding**: Development data seeding
+- **CORS Support**: Cross-origin resource sharing configured
+- **gRPC Reflection**: Development API introspection
+- **Docker Support**: PostgreSQL container setup
+
+### 🚧 In Development
+- **Authentication System**: Google OAuth integration
+- **Google Places API**: Restaurant data integration
+- **User Reviews**: Rating and review system
+- **Search & Filtering**: Restaurant search functionality
+- **UI/UX**: Complete frontend implementation
 
 ## Quick Start
 
@@ -23,38 +43,16 @@ bun install
 
 ```bash
 cp env.template .env
-# Edit .env with your database credentials and Google OAuth settings
+# Edit .env with your database credentials
 ```
 
-3. **Set up Google OAuth** (required for authentication):
-
-   a. Go to [Google Cloud Console](https://console.cloud.google.com/)
-   b. Create a new project or select existing
-   c. Enable Google+ API
-   d. Create OAuth 2.0 credentials
-   e. Add authorized redirect URIs:
-
-   - Development: `http://localhost:3001/api/auth/google/callback`
-   - Production: `https://yourdomain.com/api/auth/google/callback`
-     f. Update your `.env` file with the credentials
-
-4. **Start database** (Docker recommended):
+3. **Start database** (Docker recommended):
 
 ```bash
-cd apps/web && bun run db:start
+docker-compose up -d postgres
 ```
 
-5. **Run migrations**:
-
-```bash
-# Run the Google OAuth migration
-cd apps/api && bun run db:migrate-google-oauth
-
-# Push schema changes
-cd apps/web && bun run db:push
-```
-
-6. **Start development**:
+4. **Start development**:
 
 ```bash
 bun run dev
@@ -62,14 +60,48 @@ bun run dev
 
 This starts both the web app (http://localhost:5173) and API (http://localhost:3001).
 
-## Authentication
+## API Endpoints
 
-The app uses Google OAuth for authentication:
+### Restaurants Service
+- `CreateRestaurant` - Create a new restaurant
+- `GetRestaurant` - Get restaurant by ID
+- `UpdateRestaurant` - Update restaurant details
+- `DeleteRestaurant` - Delete restaurant
+- `ListRestaurants` - List restaurants with pagination
 
-- **No manual user registration** - Users sign in with Google
-- **Secure sessions** - 30-day session duration with automatic expiry
-- **Protected routes** - Frontend guards for authenticated pages
-- **User data** - Only stores email and name from Google
+### Users Service
+- `CreateUser` - Create a regular user
+- `CreateAdminUser` - Create an admin user
+- `GetUser` - Get user by ID
+- `UpdateUser` - Update user details
+- `DeleteUser` - Delete user
+- `ListUsers` - List users with pagination
+
+## Database Schema
+
+### Users
+- `id` (ULID) - Primary key
+- `google_id` - Google OAuth ID (unique)
+- `email` - User email (unique)
+- `username` - Username (unique)
+- `name` - Display name
+- `is_admin` - Admin privileges
+- `created_at` / `updated_at` - Timestamps
+
+### Restaurants
+- `id` (ULID) - Primary key
+- `google_id` - Google Places ID (unique)
+- `email` - Restaurant email (unique)
+- `name` - Restaurant name
+- `created_at` / `updated_at` - Timestamps
+
+## Development
+
+- `bun run dev` - Start both apps
+- `bun run build` - Build all apps
+- `bun run lint` - Lint all packages
+- `bun run test` - Run tests
+- `bun run graph` - View project dependency graph
 
 ## Project Structure
 
@@ -77,23 +109,36 @@ The app uses Google OAuth for authentication:
 resto-rate/
 ├── apps/
 │   ├── web/          # SvelteKit frontend
-│   └── api/          # Fastify backend
+│   └── api/          # Go backend
 ├── packages/
-│   ├── config/       # Shared environment config
-│   ├── database/     # Database schema and types
-│   ├── constants/    # Shared constants and types
-│   └── logger/       # Logging utilities
+│   └── protos/       # Protocol Buffer definitions
 ├── .env              # Environment variables
 └── env.template      # Environment template
 ```
 
-## Development
+## Technology Stack
 
-- `bun run dev` - Start both apps
-- `bun run build` - Build all apps
-- `bun run lint` - Lint all packages
-- `cd apps/api && bun run db:migrate-google-oauth` - Run Google OAuth migration
+### Frontend
+- **SvelteKit** - Full-stack web framework
+- **TailwindCSS** - Utility-first CSS framework
+- **Skeleton UI** - SvelteKit UI toolkit
+- **Connect-RPC** - Type-safe API client
+- **Paraglide** - Internationalization
+- **TypeScript** - Type safety
+
+### Backend
+- **Go** - Programming language
+- **Connect-RPC** - gRPC-compatible RPC framework
+- **GORM** - Go ORM library
+- **PostgreSQL** - Database
+- **ULID** - Unique identifier generation
+
+### Infrastructure
+- **Nx** - Monorepo build system
+- **Bun** - Package manager and runtime
+- **Docker** - Containerization
+- **Protocol Buffers** - API contract definition
 
 ## Documentation
 
-See `SETUP.md` for detailed setup instructions and architecture overview.
+See `ROADMAP.md` for detailed development roadmap and `SETUP.md` for detailed setup instructions.
