@@ -3,7 +3,6 @@
 	let { children } = $props();
 </script>
 
-
-<main class="pt-14">
+<main class="justify-items-center pt-14">
 	{@render children()}
 </main>
