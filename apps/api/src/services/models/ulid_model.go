@@ -11,7 +11,11 @@ type UUIDv7 struct {
 
 func (u *UUIDv7) BeforeCreate(_ *gorm.DB) (err error) {
 	if u.ID == "" {
-		u.ID = uuid.New().String()
+		newUUID, err := uuid.NewV7()
+		if err != nil {
+			return err
+		}
+		u.ID = newUUID.String()
 	}
 	return
 }

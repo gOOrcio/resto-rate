@@ -180,30 +180,8 @@ func (u *UserService) createUser(
 	req *connect.Request[v1.CreateUserRequest],
 	isAdmin bool,
 ) (*connect.Response[v1.CreateUserResponse], error) {
-	if req.Msg.Email == "" {
-		return nil, fmt.Errorf("email is required")
-	}
-
-	if req.Msg.Name == "" {
-		return nil, fmt.Errorf("name is required")
-	}
-
-	if req.Msg.Username == "" {
-		return nil, fmt.Errorf("username is required")
-	}
-
-	user := &models.User{
-		GoogleId: req.Msg.GoogleId,
-		Email:    req.Msg.Email,
-		Username: req.Msg.Username,
-		Name:     req.Msg.Name,
-		IsAdmin:  isAdmin,
-	}
-
-	if err := u.DB.WithContext(ctx).Create(user).Error; err != nil {
-		if ctx.Err() != nil {
-			return nil, ctx.Err()
-		}
+	user, err := u.createUserInternal(ctx, req.Msg.GoogleId, req.Msg.Email, req.Msg.Username, req.Msg.Name, isAdmin)
+	if err != nil {
 		return nil, err
 	}
 
@@ -217,24 +195,40 @@ func (u *UserService) createAdminUser(
 	ctx context.Context,
 	req *connect.Request[v1.CreateAdminUserRequest],
 ) (*connect.Response[v1.CreateAdminUserResponse], error) {
-	if req.Msg.Email == "" {
+	user, err := u.createUserInternal(ctx, req.Msg.GoogleId, req.Msg.Email, req.Msg.Username, req.Msg.Name, true)
+	if err != nil {
+		return nil, err
+	}
+
+	res := connect.NewResponse(&v1.CreateAdminUserResponse{
+		User: user.ToProto(),
+	})
+	return res, nil
+}
+
+func (u *UserService) createUserInternal(
+	ctx context.Context,
+	googleId, email, username, name string,
+	isAdmin bool,
+) (*models.User, error) {
+	if email == "" {
 		return nil, fmt.Errorf("email is required")
 	}
 
-	if req.Msg.Name == "" {
+	if name == "" {
 		return nil, fmt.Errorf("name is required")
 	}
 
-	if req.Msg.Username == "" {
+	if username == "" {
 		return nil, fmt.Errorf("username is required")
 	}
 
 	user := &models.User{
-		GoogleId: req.Msg.GoogleId,
-		Email:    req.Msg.Email,
-		Username: req.Msg.Username,
-		Name:     req.Msg.Name,
-		IsAdmin:  true,
+		GoogleId: googleId,
+		Email:    email,
+		Username: username,
+		Name:     name,
+		IsAdmin:  isAdmin,
 	}
 
 	if err := u.DB.WithContext(ctx).Create(user).Error; err != nil {
@@ -244,8 +238,5 @@ func (u *UserService) createAdminUser(
 		return nil, err
 	}
 
-	res := connect.NewResponse(&v1.CreateAdminUserResponse{
-		User: user.ToProto(),
-	})
-	return res, nil
+	return user, nil
 }
