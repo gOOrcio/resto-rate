@@ -1,13 +1,24 @@
 <script lang="ts">
 	import clients from '$lib/client/client';
 	import type { RestaurantProto } from '$lib/client/generated/restaurants/v1/restaurant_pb';
+	import { ProgressRing } from '@skeletonlabs/skeleton-svelte';
+	import { onMount, onDestroy } from 'svelte';
 
 	let restaurants: RestaurantProto[] = [];
 	let loading = false;
+	let showLoader = false;
+	let loaderTimer: NodeJS.Timeout;
 	let error = '';
 
 	async function fetchRestaurants(): Promise<void> {
 		loading = true;
+		showLoader = false;
+		clearTimeout(loaderTimer);
+
+		loaderTimer = setTimeout(() => {
+			if (loading) showLoader = true;
+		}, 500);
+
 		error = '';
 		try {
 			const response = await clients.restaurants.listRestaurants({ page: 1, pageSize: 20 });
@@ -22,22 +33,27 @@
 			}
 		} finally {
 			loading = false;
+			clearTimeout(loaderTimer);
 		}
 	}
+
+	onMount(() => {
+		fetchRestaurants();
+	});
+
+	onDestroy(() => clearTimeout(loaderTimer));
 </script>
 
-<h1>Welcome to SvelteKit</h1>
-<p>Visit <a href="https://svelte.dev/docs/kit">svelte.dev/docs/kit</a> to read the documentation</p>
-<button type="button" class="btn preset-filled-primary-500" onclick={fetchRestaurants}>Load Restaurants</button>
-
-{#if loading}
-	<p>Loading...</p>
-{:else if error}
-	<p style="color: red;">{error}</p>
-{:else if restaurants.length}
-	<ul>
-		{#each restaurants as restaurant}
-			<li>{restaurant.name}</li>
-		{/each}
-	</ul>
-{/if}
+<div class="prose">
+	{#if loading && showLoader}
+		<ProgressRing value={null} />
+	{:else if error}
+		<p style="color: red;">{error}</p>
+	{:else if !loading && restaurants.length}
+		<ul>
+			{#each restaurants as restaurant}
+				<li>{restaurant.name}</li>
+			{/each}
+		</ul>
+	{/if}
+</div>

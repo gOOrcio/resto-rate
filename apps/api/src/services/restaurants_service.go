@@ -25,16 +25,14 @@ func (s *RestaurantsService) CreateRestaurant(
 	ctx context.Context,
 	req *connect.Request[v1.CreateRestaurantRequest],
 ) (*connect.Response[v1.RestaurantProto], error) {
-	// Validate required fields
 	if req.Msg.Restaurant.Name == "" {
 		return nil, fmt.Errorf("restaurant name is required")
 	}
-	// GoogleId is optional; it can be provided if the restaurant is listed on Google.
-	// If not provided, the field will remain empty in the database.
+
 	if req.Msg.Restaurant.GoogleId == "" {
 		log.Printf("Note: Google ID is not provided for restaurant '%s'. Proceeding without it.", req.Msg.Restaurant.Name)
 	}
-	// Email is optional for restaurants; not all restaurants have public email addresses
+
 	if req.Msg.Restaurant.Email == "" {
 		log.Printf("Note: Email is not provided for restaurant '%s'. Proceeding without it.", req.Msg.Restaurant.Name)
 	}
