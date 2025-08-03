@@ -19,7 +19,7 @@
 			<h3 class="heading-font-color-dark mb-3 text-lg font-semibold">Quick Links</h3>
 			<ul class="space-y-2 text-sm">
 				<li>
-					<a href="/restaurants" class="anchor-font-color-light) hover:underline"> Restaurants </a>
+					<a href="/restaurants" class="anchor-font-color-light hover:underline"> Restaurants </a>
 				</li>
 				<li>
 					<a href="/about" class="anchor-font-color-light hover:underline"> About Us </a>
