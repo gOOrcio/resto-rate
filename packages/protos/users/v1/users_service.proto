@@ -7,7 +7,7 @@ option go_package = "api/src/generated/users/v1";
 
 service UsersService {
   rpc CreateUser(CreateUserRequest) returns (CreateUserResponse);
-  rpc CreateAdminUser(CreateUserRequest) returns (CreateUserResponse);
+  rpc CreateAdminUser(CreateAdminUserRequest) returns (CreateAdminUserResponse);
   rpc GetUser(GetUserRequest) returns (GetUserResponse);
   rpc UpdateUser(UpdateUserRequest) returns (UpdateUserResponse);
   rpc DeleteUser(DeleteUserRequest) returns (DeleteUserResponse);
@@ -22,6 +22,17 @@ message CreateUserRequest {
 }
 
 message CreateUserResponse {
+  UserProto user = 1;
+}
+
+message CreateAdminUserRequest {
+  string google_id = 1;
+  string email = 2;
+  string username = 3;
+  string name = 4;
+}
+
+message CreateAdminUserResponse {
   UserProto user = 1;
 }
 
