@@ -39,9 +39,9 @@ yarn-error.log*
 
 **/*.log
 
-.idea
-.zed
-.vscode
+/.idea/
+/.zed/
+/.vscode/
 /pgdata
 .jj
 
