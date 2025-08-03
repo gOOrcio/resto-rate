@@ -3,7 +3,6 @@
 	import { AppBar } from '@skeletonlabs/skeleton-svelte';
 	import Footer from '$lib/ui/navigation/Footer.svelte';
 	import Header from '$lib/ui/navigation/Header.svelte';
-	import CircleUser from '@lucide/svelte/icons/circle-user';
 	let { children } = $props();
 
 	let iconSize = 26;
