@@ -2,7 +2,7 @@
 	import clients from '$lib/client/client';
 	import type { RestaurantProto } from '$lib/client/generated/restaurants/v1/restaurant_pb';
 	import { ProgressRing } from '@skeletonlabs/skeleton-svelte';
-	import { onDestroy } from 'svelte';
+	import { onMount, onDestroy } from 'svelte';
 
 	let restaurants: RestaurantProto[] = [];
 	let loading = false;
@@ -37,29 +37,23 @@
 		}
 	}
 
+	onMount(() => {
+		fetchRestaurants();
+	});
+
 	onDestroy(() => clearTimeout(loaderTimer));
 </script>
 
-<div>
-	<div>
-		<button
-			type="button"
-			class="btn preset-filled-primary-500"
-			onclick={fetchRestaurants}
-			data-qa="load-restaurants">Load Restaurants</button
-		>
-	</div>
-	<div class="prose">
-		{#if loading && showLoader}
-			<ProgressRing value={null} />
-		{:else if error}
-			<p style="color: red;">{error}</p>
-		{:else if !loading && restaurants.length}
-			<ul>
-				{#each restaurants as restaurant}
-					<li>{restaurant.name}</li>
-				{/each}
-			</ul>
-		{/if}
-	</div>
+<div class="prose">
+	{#if loading && showLoader}
+		<ProgressRing value={null} />
+	{:else if error}
+		<p style="color: red;">{error}</p>
+	{:else if !loading && restaurants.length}
+		<ul>
+			{#each restaurants as restaurant}
+				<li>{restaurant.name}</li>
+			{/each}
+		</ul>
+	{/if}
 </div>

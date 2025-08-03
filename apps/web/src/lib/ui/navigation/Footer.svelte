@@ -6,13 +6,7 @@
 	let iconSize = 26;
 </script>
 
-<footer
-	class="mt-10"
-	style="
-		background-color: var(--color-primary-900);
-		color: var(--color-primary-contrast-900);
-	"
->
+<footer class="mt-10 bg-[var(--color-primary-900)] text-[var(--color-primary-contrast-900)]">
 	<div class="mx-auto grid max-w-6xl gap-8 px-4 py-8 sm:grid-cols-3">
 		<div>
 			<h2 class="heading-font-color-dark heading-font-family text-2xl font-bold">Resto‑Rate</h2>

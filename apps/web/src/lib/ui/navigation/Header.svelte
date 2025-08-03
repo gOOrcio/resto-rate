@@ -1,11 +1,11 @@
 <script lang="ts">
 	import { AppBar } from '@skeletonlabs/skeleton-svelte';
-	import SquareMenu from '@lucide/svelte/icons/square-menu';
+	import ListFilterPlus from '@lucide/svelte/icons/list-filter-plus';
 	import Paperclip from '@lucide/svelte/icons/paperclip';
 	import Calendar from '@lucide/svelte/icons/calendar';
 	import CircleUser from '@lucide/svelte/icons/circle-user';
 
-	let iconSize = 26;
+	let iconSize = 24;
 </script>
 
 <header>
@@ -16,15 +16,15 @@
 		base="--color-primary-contrast-900"
 	>
 		{#snippet lead()}
-			<div class="space-x-4 sm:space-x-10">
-				<SquareMenu size={iconSize} />
-			</div>
+			<button class="btn space-x-4 sm:space-x-2">
+				<ListFilterPlus size={iconSize} />
+			</button>
 		{/snippet}
 		{#snippet trail()}
-			<div class="flex space-x-4 sm:space-x-10">
-				<Paperclip size={iconSize} />
-				<Calendar size={iconSize} />
-				<CircleUser size={iconSize} />
+			<div class="flex space-x-4 sm:space-x-2">
+				<button class="btn"><Paperclip size={iconSize} /></button>
+				<button class="btn"><Calendar size={iconSize} /></button>
+				<button class="btn"><CircleUser size={iconSize} /></button>
 			</div>
 		{/snippet}
 	</AppBar>
