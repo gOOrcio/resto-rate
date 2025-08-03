@@ -5,7 +5,6 @@
 	import Header from '$lib/ui/navigation/Header.svelte';
 	let { children } = $props();
 
-	let iconSize = 26;
 </script>
 
 <div class="flex min-h-screen flex-col">
