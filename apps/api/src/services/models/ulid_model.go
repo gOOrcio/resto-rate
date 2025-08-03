@@ -1,20 +1,17 @@
 package models
 
 import (
-	"github.com/oklog/ulid/v2"
+	"github.com/google/uuid"
 	"gorm.io/gorm"
-	"crypto/rand"
-	"time"
 )
 
-type ULID struct {
+type UUIDv7 struct {
 	ID string `gorm:"primaryKey" json:"id"`
 }
 
-func (u *ULID) BeforeCreate(_ *gorm.DB) (err error) {
+func (u *UUIDv7) BeforeCreate(_ *gorm.DB) (err error) {
 	if u.ID == "" {
-		entropy := ulid.Monotonic(rand.Reader, 0)
-		u.ID = ulid.MustNew(ulid.Timestamp(time.Now()), entropy).String()
+		u.ID = uuid.New().String()
 	}
 	return
 }

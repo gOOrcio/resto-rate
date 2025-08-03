@@ -5,7 +5,7 @@ package users.v1;
 option go_package = "api/src/generated/users/v1";
 
 message UserProto {
-  string id = 1;           // ULID as string
+  string id = 1;           // UUIDv7 as string
   string google_id = 2;
   string email = 3;        // Email
   string name = 4;

@@ -3,43 +3,62 @@ syntax = "proto3";
 package restaurants.v1;
 
 import "restaurants/v1/restaurant.proto";
-import "google/protobuf/empty.proto";
 
 option go_package = "api/src/generated/restaurants/v1";
 
-service RestaurantService {
-  rpc CreateRestaurant(CreateRestaurantRequest) returns (RestaurantProto);
-  rpc GetRestaurant(GetRestaurantRequest) returns (RestaurantProto);
-  rpc UpdateRestaurant(UpdateRestaurantRequest) returns (RestaurantProto);
-  rpc DeleteRestaurant(DeleteRestaurantRequest) returns (google.protobuf.Empty);
+service RestaurantsService {
+  rpc CreateRestaurant(CreateRestaurantRequest) returns (CreateRestaurantResponse);
+  rpc GetRestaurant(GetRestaurantRequest) returns (GetRestaurantResponse);
+  rpc UpdateRestaurant(UpdateRestaurantRequest) returns (UpdateRestaurantResponse);
+  rpc DeleteRestaurant(DeleteRestaurantRequest) returns (DeleteRestaurantResponse);
   rpc ListRestaurants(ListRestaurantsRequest) returns (ListRestaurantsResponse);
 }
 
 message CreateRestaurantRequest {
+  string google_id = 1;
+  string email = 2;
+  string name = 3;
+}
+
+message CreateRestaurantResponse {
   RestaurantProto restaurant = 1;
 }
 
 message GetRestaurantRequest {
-  string id = 1; // ULID as string
+  string id = 1; // UUIDv7 as string
+}
+
+message GetRestaurantResponse {
+  RestaurantProto restaurant = 1;
 }
 
 message UpdateRestaurantRequest {
+  string id = 1; // UUIDv7 as string
+  string google_id = 2;
+  string email = 3;
+  string name = 4;
+}
+
+message UpdateRestaurantResponse {
   RestaurantProto restaurant = 1;
 }
 
 message DeleteRestaurantRequest {
-  string id = 1; // ULID as string
+  string id = 1;
+}
+
+message DeleteRestaurantResponse {
+  bool success = 1;
 }
 
 message ListRestaurantsRequest {
-  int32 page = 1; // Page number for pagination
-  int32 page_size = 2; // Number of restaurants per page
+  int32 page = 1;
+  int32 page_size = 2;
 }
 
 message ListRestaurantsResponse {
-  repeated RestaurantProto restaurants = 1; // List of restaurants
-  int32 total_count = 2; // Total number of restaurants
-  int32 page = 3; // Current page number
-  int32 page_size = 4; // Number of restaurants per page
-  string next_page_token = 5; // Token for the next page, if available
+  repeated RestaurantProto restaurants = 1;
+  int32 total = 2;
+  int32 page = 3;
+  int32 page_size = 4;
 }

@@ -3,30 +3,45 @@ syntax = "proto3";
 package users.v1;
 
 import "users/v1/user.proto";
-import "google/protobuf/empty.proto";
-
 option go_package = "api/src/generated/users/v1";
 
 service UsersService {
-  rpc CreateUser(CreateUserRequest) returns (UserProto);
-  rpc CreateAdminUser(CreateUserRequest) returns (UserProto);
-  rpc GetUser(GetUserRequest) returns (UserProto);
-  rpc UpdateUser(UpdateUserRequest) returns (UserProto);
-  rpc DeleteUser(DeleteUserRequest) returns (google.protobuf.Empty);
+  rpc CreateUser(CreateUserRequest) returns (CreateUserResponse);
+  rpc CreateAdminUser(CreateUserRequest) returns (CreateUserResponse);
+  rpc GetUser(GetUserRequest) returns (GetUserResponse);
+  rpc UpdateUser(UpdateUserRequest) returns (UpdateUserResponse);
+  rpc DeleteUser(DeleteUserRequest) returns (DeleteUserResponse);
   rpc ListUsers(ListUsersRequest) returns (ListUsersResponse);
 }
 
 message CreateUserRequest {
+  string google_id = 1;
+  string email = 2;
+  string username = 3;
+  string name = 4;
+}
+
+message CreateUserResponse {
   UserProto user = 1;
 }
 
-// Removed unused CreateAdminUserRequest message.
-
 message GetUserRequest {
-  string id = 1;
+  string id = 1; // UUIDv7 as string
+}
+
+message GetUserResponse {
+  UserProto user = 1;
 }
 
 message UpdateUserRequest {
+  string id = 1; // UUIDv7 as string
+  string google_id = 2;
+  string email = 3;
+  string username = 4;
+  string name = 5;
+}
+
+message UpdateUserResponse {
   UserProto user = 1;
 }
 
@@ -34,15 +49,18 @@ message DeleteUserRequest {
   string id = 1;
 }
 
+message DeleteUserResponse {
+  bool success = 1;
+}
+
 message ListUsersRequest {
-  int32 page = 1; // Page number for pagination
-  int32 page_size = 2; // Number of users per page
+  int32 page = 1;
+  int32 page_size = 2;
 }
 
 message ListUsersResponse {
-  repeated UserProto users = 1; // List of users
-  int32 total_count = 2; // Total number of users
-  int32 page = 3; // Current page number
-  int32 page_size = 4; // Number of users per page
-  string next_page_token = 5; // Token for the next page, if available
+  repeated UserProto users = 1;
+  int32 total = 2;
+  int32 page = 3;
+  int32 page_size = 4;
 }

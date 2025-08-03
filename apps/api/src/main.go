@@ -105,7 +105,7 @@ func initializeServiceHandlers(db *gorm.DB) []ServiceRegistration {
 		}(),
 		func() ServiceRegistration {
 			svc := &services.RestaurantsService{DB: db}
-			path, handler := restaurantsv1connect.NewRestaurantServiceHandler(svc)
+			path, handler := restaurantsv1connect.NewRestaurantsServiceHandler(svc)
 			return ServiceRegistration{Path: path, Handler: handler}
 		}(),
 	}
@@ -144,7 +144,7 @@ func optionallySetupGRPCReflection(mux *http.ServeMux) {
 
 		reflector := grpcreflect.NewStaticReflector(
 			usersv1connect.UsersServiceName,
-			restaurantsv1connect.RestaurantServiceName,
+			restaurantsv1connect.RestaurantsServiceName,
 		)
 		mux.Handle(grpcreflect.NewHandlerV1(reflector))
 		mux.Handle(grpcreflect.NewHandlerV1Alpha(reflector))

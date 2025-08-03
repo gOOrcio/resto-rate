@@ -13,5 +13,8 @@ export default defineConfig({
 			project: './project.inlang',
 			outdir: './src/lib/paraglide'
 		})
-	]
+	],
+	build: {
+		outDir: '../../dist/apps/web'
+	}
 });

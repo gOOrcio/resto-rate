@@ -16,7 +16,7 @@ Restaurant rating and review application built with SvelteKit frontend and Go AP
 
 ### ✅ Implemented
 - **Basic CRUD Operations**: Full CRUD for restaurants and users
-- **Database Models**: User and Restaurant models with ULID primary keys
+- **Database Models**: User and Restaurant models with UUIDv7 primary keys
 - **API Services**: Connect-RPC services for restaurants and users
 - **Pagination**: Server-side pagination with page tokens
 - **Database Seeding**: Development data seeding
@@ -80,7 +80,7 @@ This starts both the web app (http://localhost:5173) and API (http://localhost:3
 ## Database Schema
 
 ### Users
-- `id` (ULID) - Primary key
+- `id` (UUIDv7) - Primary key
 - `google_id` - Google OAuth ID (unique)
 - `email` - User email (unique)
 - `username` - Username (unique)
@@ -89,7 +89,7 @@ This starts both the web app (http://localhost:5173) and API (http://localhost:3
 - `created_at` / `updated_at` - Timestamps
 
 ### Restaurants
-- `id` (ULID) - Primary key
+- `id` (UUIDv7) - Primary key
 - `google_id` - Google Places ID (unique)
 - `email` - Restaurant email (unique)
 - `name` - Restaurant name
@@ -131,7 +131,7 @@ resto-rate/
 - **Connect-RPC** - gRPC-compatible RPC framework
 - **GORM** - Go ORM library
 - **PostgreSQL** - Database
-- **ULID** - Unique identifier generation
+- **UUIDv7** - Unique identifier generation
 
 ### Infrastructure
 - **Nx** - Monorepo build system

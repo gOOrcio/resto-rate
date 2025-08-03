@@ -4,7 +4,6 @@ import (
 	v1 "api/src/generated/users/v1"
 	"api/src/generated/users/v1/v1connect"
 	"api/src/services/models"
-	"api/src/services/utils"
 	"context"
 	"errors"
 	"fmt"
@@ -12,7 +11,6 @@ import (
 	"gorm.io/gorm"
 
 	"connectrpc.com/connect"
-	"google.golang.org/protobuf/types/known/emptypb"
 )
 
 type UserService struct {
@@ -23,21 +21,21 @@ type UserService struct {
 func (u *UserService) CreateUser(
 	ctx context.Context,
 	req *connect.Request[v1.CreateUserRequest],
-) (*connect.Response[v1.UserProto], error) {
+) (*connect.Response[v1.CreateUserResponse], error) {
 	return u.createUser(ctx, req, false)
 }
 
 func (u *UserService) CreateAdminUser(
 	ctx context.Context,
 	req *connect.Request[v1.CreateUserRequest],
-) (*connect.Response[v1.UserProto], error) {
+) (*connect.Response[v1.CreateUserResponse], error) {
 	return u.createUser(ctx, req, true)
 }
 
 func (u *UserService) GetUser(
 	ctx context.Context,
 	req *connect.Request[v1.GetUserRequest],
-) (*connect.Response[v1.UserProto], error) {
+) (*connect.Response[v1.GetUserResponse], error) {
 	if req.Msg.Id == "" {
 		return nil, errors.New("user ID cannot be empty")
 	}
@@ -49,15 +47,17 @@ func (u *UserService) GetUser(
 		return nil, err
 	}
 
-	res := connect.NewResponse(user.ToProto())
+	res := connect.NewResponse(&v1.GetUserResponse{
+		User: user.ToProto(),
+	})
 	return res, nil
 }
 
 func (u *UserService) UpdateUser(
 	ctx context.Context,
 	req *connect.Request[v1.UpdateUserRequest],
-) (*connect.Response[v1.UserProto], error) {
-	user, err := u.findUserByIDWithContext(ctx, req.Msg.User.Id)
+) (*connect.Response[v1.UpdateUserResponse], error) {
+	user, err := u.findUserByIDWithContext(ctx, req.Msg.Id)
 	if err != nil {
 		if ctx.Err() != nil {
 			return nil, ctx.Err()
@@ -66,8 +66,9 @@ func (u *UserService) UpdateUser(
 	}
 
 	updates := map[string]interface{}{
-		"Name":  req.Msg.User.Name,
-		"Email": req.Msg.User.Email,
+		"Name":     req.Msg.Name,
+		"Email":    req.Msg.Email,
+		"Username": req.Msg.Username,
 	}
 
 	if err := u.DB.WithContext(ctx).Model(user).Updates(updates).Error; err != nil {
@@ -77,14 +78,16 @@ func (u *UserService) UpdateUser(
 		return nil, err
 	}
 
-	res := connect.NewResponse(user.ToProto())
+	res := connect.NewResponse(&v1.UpdateUserResponse{
+		User: user.ToProto(),
+	})
 	return res, nil
 }
 
 func (u *UserService) DeleteUser(
 	ctx context.Context,
 	req *connect.Request[v1.DeleteUserRequest],
-) (*connect.Response[emptypb.Empty], error) {
+) (*connect.Response[v1.DeleteUserResponse], error) {
 	user, err := u.findUserByIDWithContext(ctx, req.Msg.Id)
 	if err != nil {
 		if ctx.Err() != nil {
@@ -100,7 +103,9 @@ func (u *UserService) DeleteUser(
 		return nil, err
 	}
 
-	res := connect.NewResponse(&emptypb.Empty{})
+	res := connect.NewResponse(&v1.DeleteUserResponse{
+		Success: true,
+	})
 	return res, nil
 }
 
@@ -108,44 +113,59 @@ func (u *UserService) ListUsers(
 	ctx context.Context,
 	req *connect.Request[v1.ListUsersRequest],
 ) (*connect.Response[v1.ListUsersResponse], error) {
-	var users []*models.User
-	totalCount, err := utils.Paginate(u.DB.WithContext(ctx), &users, req.Msg.Page, req.Msg.PageSize)
-	if err != nil {
+	page := int(req.Msg.Page)
+	pageSize := int(req.Msg.PageSize)
+
+	if page < 1 {
+		page = 1
+	}
+	if pageSize < 1 {
+		pageSize = 10
+	}
+	if pageSize > 100 {
+		pageSize = 100
+	}
+
+	offset := (page - 1) * pageSize
+
+	var users []models.User
+	var total int64
+
+	if err := u.DB.WithContext(ctx).Model(&models.User{}).Count(&total).Error; err != nil {
 		if ctx.Err() != nil {
 			return nil, ctx.Err()
 		}
 		return nil, err
 	}
 
-	var userProtos []*v1.UserProto
-	for _, user := range users {
-		userProtos = append(userProtos, user.ToProto())
+	if err := u.DB.WithContext(ctx).Offset(offset).Limit(pageSize).Find(&users).Error; err != nil {
+		if ctx.Err() != nil {
+			return nil, ctx.Err()
+		}
+		return nil, err
 	}
 
-	nextPageToken := utils.CalculateNextPageToken(req.Msg.Page, req.Msg.PageSize, len(users), totalCount)
-
-	response := &v1.ListUsersResponse{
-		Users:         userProtos,
-		TotalCount:    int32(totalCount),
-		Page:          req.Msg.Page,
-		PageSize:      req.Msg.PageSize,
-		NextPageToken: nextPageToken,
+	userProtos := make([]*v1.UserProto, len(users))
+	for i, user := range users {
+		userProtos[i] = user.ToProto()
 	}
 
-	res := connect.NewResponse(response)
+	res := connect.NewResponse(&v1.ListUsersResponse{
+		Users:    userProtos,
+		Total:    int32(total),
+		Page:     int32(page),
+		PageSize: int32(pageSize),
+	})
 	return res, nil
 }
 
 func (u *UserService) findUserByIDWithContext(ctx context.Context, id string) (*models.User, error) {
 	if id == "" {
-		return nil, fmt.Errorf("invalid user id")
+		return nil, fmt.Errorf("user ID is required")
 	}
 
 	var user models.User
 	if err := u.DB.WithContext(ctx).First(&user, "id = ?", id).Error; err != nil {
-		if ctx.Err() != nil {
-			return nil, ctx.Err()
-		}
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, fmt.Errorf("user with ID %s not found", id)
 		}
@@ -159,11 +179,24 @@ func (u *UserService) createUser(
 	ctx context.Context,
 	req *connect.Request[v1.CreateUserRequest],
 	isAdmin bool,
-) (*connect.Response[v1.UserProto], error) {
+) (*connect.Response[v1.CreateUserResponse], error) {
+	if req.Msg.Email == "" {
+		return nil, fmt.Errorf("email is required")
+	}
+
+	if req.Msg.Name == "" {
+		return nil, fmt.Errorf("name is required")
+	}
+
+	if req.Msg.Username == "" {
+		return nil, fmt.Errorf("username is required")
+	}
+
 	user := &models.User{
-		GoogleId: req.Msg.User.GoogleId,
-		Email:    req.Msg.User.Email,
-		Name:     req.Msg.User.Name,
+		GoogleId: req.Msg.GoogleId,
+		Email:    req.Msg.Email,
+		Username: req.Msg.Username,
+		Name:     req.Msg.Name,
 		IsAdmin:  isAdmin,
 	}
 
@@ -174,6 +207,8 @@ func (u *UserService) createUser(
 		return nil, err
 	}
 
-	res := connect.NewResponse(user.ToProto())
+	res := connect.NewResponse(&v1.CreateUserResponse{
+		User: user.ToProto(),
+	})
 	return res, nil
 }

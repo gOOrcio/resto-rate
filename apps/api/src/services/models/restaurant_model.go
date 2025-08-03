@@ -2,12 +2,13 @@ package models
 
 import (
 	restaurantpb "api/src/generated/restaurants/v1"
-	"gorm.io/gorm"
 	"time"
+
+	"gorm.io/gorm"
 )
 
 type Restaurant struct {
-	ULID
+	UUIDv7
 	GoogleID  string    `gorm:"uniqueIndex" json:"googleId"`
 	Email     string    `gorm:"uniqueIndex" json:"email"`
 	Name      string    `gorm:"not null" json:"name"`
@@ -16,7 +17,7 @@ type Restaurant struct {
 }
 
 func (r *Restaurant) BeforeCreate(tx *gorm.DB) (err error) {
-	if err = r.ULID.BeforeCreate(tx); err != nil {
+	if err = r.UUIDv7.BeforeCreate(tx); err != nil {
 		return err
 	}
 	return nil
