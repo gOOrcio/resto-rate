@@ -7,7 +7,7 @@
 	let restaurants: RestaurantProto[] = [];
 	let loading = false;
 	let showLoader = false;
-	let loaderTimer: NodeJS.Timeout
+	let loaderTimer: NodeJS.Timeout;
 	let error = '';
 
 	async function fetchRestaurants(): Promise<void> {
@@ -21,7 +21,6 @@
 
 		error = '';
 		try {
-			await sleep(3000);
 			const response = await clients.restaurants.listRestaurants({ page: 1, pageSize: 20 });
 			restaurants = response.restaurants ?? [];
 		} catch (e: any) {
@@ -39,24 +38,28 @@
 	}
 
 	onDestroy(() => clearTimeout(loaderTimer));
-
-	function sleep(ms: number): Promise<void> {
-    return new Promise(resolve => setTimeout(resolve, ms));
-	}
 </script>
 
-<div class="animate-pulse">
-	<button type="button" class="btn preset-filled-primary-500" onclick={fetchRestaurants}>Load Restaurants</button>
+<div>
+	<div>
+		<button
+			type="button"
+			class="btn preset-filled-primary-500"
+			onclick={fetchRestaurants}
+			data-qa="load-restaurants">Load Restaurants</button
+		>
+	</div>
+	<div class="prose">
+		{#if loading && showLoader}
+			<ProgressRing value={null} />
+		{:else if error}
+			<p style="color: red;">{error}</p>
+		{:else if !loading && restaurants.length}
+			<ul>
+				{#each restaurants as restaurant}
+					<li>{restaurant.name}</li>
+				{/each}
+			</ul>
+		{/if}
+	</div>
 </div>
-
-{#if loading && showLoader}
-	<ProgressRing value={null} />
-{:else if error}
-	<p style="color: red;">{error}</p>
-{:else if !loading && restaurants.length}
-	<ul>
-		{#each restaurants as restaurant}
-			<li>{restaurant.name}</li>
-		{/each}
-	</ul>
-{/if}
