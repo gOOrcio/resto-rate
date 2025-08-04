@@ -5,10 +5,10 @@
   "sourceRoot": "apps/api/src",
   "targets": {
     "build": {
-      "executor": "@nx-go/nx-go:build",
+      "executor": "nx:run-commands",
       "options": {
-        "outputPath": "dist/apps/api",
-        "main": "apps/api/src/main.go"
+        "command": "go build -o ../../dist/apps/api src/main.go",
+        "cwd": "apps/api"
       },
       "dependsOn": ["protos:generate"]
     },

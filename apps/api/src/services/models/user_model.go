@@ -2,12 +2,13 @@ package models
 
 import (
 	userpb "api/src/generated/users/v1"
-	"gorm.io/gorm"
 	"time"
+
+	"gorm.io/gorm"
 )
 
 type User struct {
-	ULID
+	UUIDv7
 	GoogleId  string    `gorm:"uniqueIndex"`
 	Email     string    `gorm:"uniqueIndex"`
 	Username  string    `gorm:"uniqueIndex"`
@@ -18,7 +19,7 @@ type User struct {
 }
 
 func (u *User) BeforeCreate(tx *gorm.DB) (err error) {
-	if err = u.ULID.BeforeCreate(tx); err != nil {
+	if err = u.UUIDv7.BeforeCreate(tx); err != nil {
 		return err
 	}
 	return nil
