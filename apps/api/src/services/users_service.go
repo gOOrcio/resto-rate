@@ -65,10 +65,37 @@ func (u *UserService) UpdateUser(
 		return nil, err
 	}
 
+	if req.Msg.Username != "" && req.Msg.Username != user.Username {
+		var existingUser models.User
+		if err := u.DB.WithContext(ctx).Where("username = ? AND id != ?", req.Msg.Username, user.ID).First(&existingUser).Error; err == nil {
+			return nil, fmt.Errorf("username '%s' is already taken", req.Msg.Username)
+		} else if !errors.Is(err, gorm.ErrRecordNotFound) {
+			if ctx.Err() != nil {
+				return nil, ctx.Err()
+			}
+			return nil, err
+		}
+	}
+
+	if req.Msg.Email != "" && req.Msg.Email != user.Email {
+		var existingUser models.User
+		if err := u.DB.WithContext(ctx).Where("email = ? AND id != ?", req.Msg.Email, user.ID).First(&existingUser).Error; err == nil {
+			return nil, fmt.Errorf("email '%s' is already taken", req.Msg.Email)
+		} else if !errors.Is(err, gorm.ErrRecordNotFound) {
+			if ctx.Err() != nil {
+				return nil, ctx.Err()
+			}
+			return nil, err
+		}
+	}
+
 	updates := map[string]interface{}{
-		"Name":     req.Msg.Name,
-		"Email":    req.Msg.Email,
-		"Username": req.Msg.Username,
+		"Name":  req.Msg.Name,
+		"Email": req.Msg.Email,
+	}
+
+	if req.Msg.Username != "" {
+		updates["Username"] = req.Msg.Username
 	}
 
 	if err := u.DB.WithContext(ctx).Model(user).Updates(updates).Error; err != nil {
@@ -221,6 +248,25 @@ func (u *UserService) createUserInternal(
 
 	if username == "" {
 		return nil, fmt.Errorf("username is required")
+	}
+
+	var existingUser models.User
+	if err := u.DB.WithContext(ctx).Where("username = ?", username).First(&existingUser).Error; err == nil {
+		return nil, fmt.Errorf("username '%s' is already taken", username)
+	} else if !errors.Is(err, gorm.ErrRecordNotFound) {
+		if ctx.Err() != nil {
+			return nil, ctx.Err()
+		}
+		return nil, err
+	}
+
+	if err := u.DB.WithContext(ctx).Where("email = ?", email).First(&existingUser).Error; err == nil {
+		return nil, fmt.Errorf("email '%s' is already taken", email)
+	} else if !errors.Is(err, gorm.ErrRecordNotFound) {
+		if ctx.Err() != nil {
+			return nil, ctx.Err()
+		}
+		return nil, err
 	}
 
 	user := &models.User{
