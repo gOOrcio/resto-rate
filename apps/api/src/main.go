@@ -1,10 +1,13 @@
 package main
 
 import (
-	"api/src/database"
+	googlemapsv1connect "api/src/generated/google_maps/v1/v1connect"
 	restaurantsv1connect "api/src/generated/restaurants/v1/v1connect"
 	usersv1connect "api/src/generated/users/v1/v1connect"
 	"api/src/services"
+	environment "api/src/utils"
+	"api/src/utils/database"
+
 	"fmt"
 	"log"
 	"net/http"
@@ -12,7 +15,6 @@ import (
 	"strings"
 
 	"connectrpc.com/grpcreflect"
-	"github.com/joho/godotenv"
 	"golang.org/x/net/http2"
 	"golang.org/x/net/http2/h2c"
 	"gorm.io/driver/postgres"
@@ -26,7 +28,7 @@ type ServiceRegistration struct {
 
 func main() {
 	log.Println("Application starting...")
-	mustLoadEnvironmentVariables()
+	environment.MustLoadEnvironmentVariables()
 	db := mustConnectToDatabase()
 	mux := setupHTTPHandlers(initializeServiceHandlers(db))
 	setupDatabaseSchema(db)
@@ -43,33 +45,6 @@ func startServer(mux *http.ServeMux, apiPort string) {
 	); err != nil {
 		log.Fatal("Failed to run application: ", err)
 	}
-}
-
-func mustLoadEnvironmentVariables() {
-	// Try multiple locations for .env file in order of preference
-	envLocations := []string{
-		os.Getenv("ENV_FILE"), // Explicitly set ENV_FILE
-		".env",                // Current working directory
-		"../.env",             // Parent directory
-		"../../.env",          // Two levels up
-	}
-
-	for _, envFile := range envLocations {
-		if envFile == "" {
-			continue
-		}
-
-		if err := godotenv.Load(envFile); err == nil {
-			log.Printf("Environment variables loaded from: %s", envFile)
-			log.Println("ENV:", os.Getenv("ENV"))
-			return
-		}
-	}
-
-	// If no .env file found, log a warning but don't fail
-	// This allows the application to run with environment variables set via other means
-	log.Println("Warning: No .env file found. Make sure environment variables are set via other means (e.g., system environment, Docker, etc.)")
-	log.Println("ENV:", os.Getenv("ENV"))
 }
 
 func getDatabaseDSN() string {
@@ -106,6 +81,15 @@ func initializeServiceHandlers(db *gorm.DB) []ServiceRegistration {
 		func() ServiceRegistration {
 			svc := &services.RestaurantsService{DB: db}
 			path, handler := restaurantsv1connect.NewRestaurantsServiceHandler(svc)
+			return ServiceRegistration{Path: path, Handler: handler}
+		}(),
+		func() ServiceRegistration {
+			client, err := services.NewGooglePlacesAPIClient()
+			if err != nil {
+				log.Fatalf("Failed to create Google Places API client: %v", err)
+			}
+			svc := services.NewGooglePlacesAPIService(client)
+			path, handler := googlemapsv1connect.NewGoogleMapsServiceHandler(svc)
 			return ServiceRegistration{Path: path, Handler: handler}
 		}(),
 	}
@@ -145,6 +129,7 @@ func optionallySetupGRPCReflection(mux *http.ServeMux) {
 		reflector := grpcreflect.NewStaticReflector(
 			usersv1connect.UsersServiceName,
 			restaurantsv1connect.RestaurantsServiceName,
+			googlemapsv1connect.GoogleMapsServiceName,
 		)
 		mux.Handle(grpcreflect.NewHandlerV1(reflector))
 		mux.Handle(grpcreflect.NewHandlerV1Alpha(reflector))
