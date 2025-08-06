@@ -64,11 +64,11 @@ message PlacesSearchResult {
   string icon = 4;
   string place_id = 5;
   float rating = 6;
-  int64 users_rating_total = 7;
+  int32 users_rating_total = 7;
   repeated string types = 8;
   OpeningHours opening_hours = 9;
   repeated Photo photos = 10;
-  int64 price_level = 11;
+  int32 price_level = 11;
   string vicinity = 12;
   bool permanently_closed = 13;
   string business_status = 14;
@@ -77,8 +77,8 @@ message PlacesSearchResult {
 
 message Photo {
   string photo_reference = 1;
-  int64 height = 2;
-  int64 width = 3;
+  int32 height = 2;
+  int32 width = 3;
   repeated string html_attributions = 4;
 }
 

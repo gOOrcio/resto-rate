@@ -1,6 +1,7 @@
 package main
 
 import (
+	googlemapsv1connect "api/src/generated/google_maps/v1/v1connect"
 	restaurantsv1connect "api/src/generated/restaurants/v1/v1connect"
 	usersv1connect "api/src/generated/users/v1/v1connect"
 	"api/src/services"
@@ -46,8 +47,6 @@ func startServer(mux *http.ServeMux, apiPort string) {
 	}
 }
 
-
-
 func getDatabaseDSN() string {
 	return fmt.Sprintf(
 		"host=%s user=%s password=%s dbname=%s port=%s sslmode=disable",
@@ -82,6 +81,15 @@ func initializeServiceHandlers(db *gorm.DB) []ServiceRegistration {
 		func() ServiceRegistration {
 			svc := &services.RestaurantsService{DB: db}
 			path, handler := restaurantsv1connect.NewRestaurantsServiceHandler(svc)
+			return ServiceRegistration{Path: path, Handler: handler}
+		}(),
+		func() ServiceRegistration {
+			client, err := services.NewGooglePlacesAPIClient()
+			if err != nil {
+				log.Fatalf("Failed to create Google Places API client: %v", err)
+			}
+			svc := services.NewGooglePlacesAPIService(client)
+			path, handler := googlemapsv1connect.NewGoogleMapsServiceHandler(svc)
 			return ServiceRegistration{Path: path, Handler: handler}
 		}(),
 	}
@@ -121,6 +129,7 @@ func optionallySetupGRPCReflection(mux *http.ServeMux) {
 		reflector := grpcreflect.NewStaticReflector(
 			usersv1connect.UsersServiceName,
 			restaurantsv1connect.RestaurantsServiceName,
+			googlemapsv1connect.GoogleMapsServiceName,
 		)
 		mux.Handle(grpcreflect.NewHandlerV1(reflector))
 		mux.Handle(grpcreflect.NewHandlerV1Alpha(reflector))
