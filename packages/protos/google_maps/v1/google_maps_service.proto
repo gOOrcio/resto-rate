@@ -1,0 +1,129 @@
+syntax = "proto3";
+
+package google_maps.v1;
+
+option go_package = "api/src/generated/google_maps/v1";
+
+service GoogleMapsService {
+  rpc FindPlaceFromText(FindPlaceFromTextRequest) returns (FindPlaceFromTextResponse);
+}
+
+message FindPlaceFromTextRequest {
+  string input = 1;
+  InputType input_type = 2;
+  repeated PlaceSearchFieldMask fields = 3;
+  string language = 4;
+}
+
+enum InputType {
+    INPUT_TYPE_UNSPECIFIED = 0;
+    INPUT_TYPE_TEXT_QUERY = 1;
+    INPUT_TYPE_PHONE_NUMBER = 2;
+}
+
+enum PlaceSearchFieldMask {
+    PLACE_SEARCH_FIELD_MASK_UNSPECIFIED = 0;
+    PLACE_SEARCH_FIELD_MASK_BUSINESS_STATUS = 1;
+    PLACE_SEARCH_FIELD_MASK_FORMATTED_ADDRESS = 2;
+    PLACE_SEARCH_FIELD_MASK_GEOMETRY = 3;
+    PLACE_SEARCH_FIELD_MASK_GEOMETRY_LOCATION = 4;
+    PLACE_SEARCH_FIELD_MASK_GEOMETRY_LOCATION_LAT = 5;
+    PLACE_SEARCH_FIELD_MASK_GEOMETRY_LOCATION_LNG = 6;
+    PLACE_SEARCH_FIELD_MASK_GEOMETRY_VIEWPORT = 7;
+    PLACE_SEARCH_FIELD_MASK_GEOMETRY_VIEWPORT_NORTHEAST = 8;
+    PLACE_SEARCH_FIELD_MASK_GEOMETRY_VIEWPORT_NORTHEAST_LAT = 9;
+    PLACE_SEARCH_FIELD_MASK_GEOMETRY_VIEWPORT_NORTHEAST_LNG = 10;
+    PLACE_SEARCH_FIELD_MASK_GEOMETRY_VIEWPORT_SOUTHWEST = 11;
+    PLACE_SEARCH_FIELD_MASK_GEOMETRY_VIEWPORT_SOUTHWEST_LAT = 12;
+    PLACE_SEARCH_FIELD_MASK_GEOMETRY_VIEWPORT_SOUTHWEST_LNG = 13;
+    PLACE_SEARCH_FIELD_MASK_ICON = 14;
+    PLACE_SEARCH_FIELD_MASK_ID = 15;
+    PLACE_SEARCH_FIELD_MASK_NAME = 16;
+    PLACE_SEARCH_FIELD_MASK_OPENING_HOURS = 17;
+    PLACE_SEARCH_FIELD_MASK_OPENING_HOURS_OPEN_NOW = 18;
+    PLACE_SEARCH_FIELD_MASK_PERMANENTLY_CLOSED = 19;
+    PLACE_SEARCH_FIELD_MASK_PHOTOS = 20;
+    PLACE_SEARCH_FIELD_MASK_PLACE_ID = 21;
+    PLACE_SEARCH_FIELD_MASK_PRICE_LEVEL = 22;
+    PLACE_SEARCH_FIELD_MASK_RATING = 23;
+    PLACE_SEARCH_FIELD_MASK_USER_RATINGS_TOTAL = 24;
+    PLACE_SEARCH_FIELD_MASK_REFERENCE = 25;
+    PLACE_SEARCH_FIELD_MASK_TYPES = 26;
+    PLACE_SEARCH_FIELD_MASK_VICINITY = 27;
+}
+
+message FindPlaceFromTextResponse {
+ repeated PlacesSearchResult candidates = 1;
+ repeated string html_attributions = 2;
+}
+
+message PlacesSearchResult {
+  string formatted_address = 1;
+  AddressGeometry geometry = 2;
+  string name = 3;
+  string icon = 4;
+  string place_id = 5;
+  float rating = 6;
+  int64 users_rating_total = 7;
+  repeated string types = 8;
+  OpeningHours opening_hours = 9;
+  repeated Photo photos = 10;
+  int64 price_level = 11;
+  string vicinity = 12;
+  bool permanently_closed = 13;
+  string business_status = 14;
+  string id = 15;
+}
+
+message Photo {
+  string photo_reference = 1;
+  int64 height = 2;
+  int64 width = 3;
+  repeated string html_attributions = 4;
+}
+
+message OpeningHours {
+  bool open_now = 1;
+  repeated OpeningHoursPeriod periods = 2;
+  repeated string weekday_text = 3;
+  bool permanently_closed = 4;
+}
+
+message OpeningHoursPeriod {
+    OpeningHoursOpenClose open = 1;
+    OpeningHoursOpenClose close = 2;
+}
+
+message OpeningHoursOpenClose {
+  Weekday day = 1;
+  string time = 2;
+}
+
+enum Weekday {
+  WEEKDAY_UNSPECIFIED = 0;
+  WEEKDAY_SUNDAY = 1;
+  WEEKDAY_MONDAY = 2;
+  WEEKDAY_TUESDAY = 3;
+  WEEKDAY_WEDNESDAY = 4;
+  WEEKDAY_THURSDAY = 5;
+  WEEKDAY_FRIDAY = 6;
+  WEEKDAY_SATURDAY = 7;
+}
+
+message AddressGeometry {
+  LatLng location = 1;
+  string location_type = 2;
+  LatLngBounds bounds = 3;
+  LatLngBounds viewport = 4;
+  repeated string types = 5;
+}
+
+message LatLng {
+  float lat = 1;
+  float lng = 2;
+}
+
+message LatLngBounds {
+    LatLng north_east = 1;
+    LatLng south_west = 2;
+}
