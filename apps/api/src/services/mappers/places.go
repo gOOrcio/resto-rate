@@ -181,8 +181,6 @@ func mapPlacesSearchResultToProto(c *maps.PlacesSearchResult) *v1.PlacesSearchRe
 		return nil
 	}
 	
-	
-	
 	return &v1.PlacesSearchResult{
 		FormattedAddress:  c.FormattedAddress,
 		Geometry:          mapAddressGeometryToProto(&c.Geometry),
@@ -270,7 +268,7 @@ func mapOpeningHoursOpenCloseToProto(t *maps.OpeningHoursOpenClose) *v1.OpeningH
 }
 
 func mapAddressGeometryToProto(g *maps.AddressGeometry) *v1.AddressGeometry {
-	if g == nil || g.Location.Lat == 0 || g.Location.Lng == 0 || g.LocationType == ""{
+	if g == nil || g.LocationType == "" {
 		return nil
 	}
 	return &v1.AddressGeometry{
