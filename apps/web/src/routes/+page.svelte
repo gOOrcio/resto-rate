@@ -3,6 +3,7 @@
 	import type { RestaurantProto } from '$lib/client/generated/restaurants/v1/restaurant_pb';
 	import type { Place } from '$lib/client/generated/google_maps/v1/google_maps_service_pb';
 	import { ProgressRing } from '@skeletonlabs/skeleton-svelte';
+	import { Button, Card, Input, Badge } from '$lib/ui/components';
 	import { onMount, onDestroy } from 'svelte';
 
 	let restaurants: RestaurantProto[] = [];
@@ -11,35 +12,7 @@
 	let showLoader = false;
 	let loaderTimer: NodeJS.Timeout;
 	let error = '';
-	let searchQuery = 'Provide restaurant name';
-	let requestedFields = ['name', 'displayName', 'rating', 'formattedAddress'];
-
-	async function fetchRestaurants(): Promise<void> {
-		loading = true;
-		showLoader = false;
-		clearTimeout(loaderTimer);
-
-		loaderTimer = setTimeout(() => {
-			if (loading) showLoader = true;
-		}, 500);
-
-		error = '';
-		try {
-			const response = await clients.restaurants.listRestaurants({ page: 1, pageSize: 20 });
-			restaurants = response.restaurants ?? [];
-		} catch (e: any) {
-			if (e.code && e.details) {
-				error = `Error ${e.code}: ${e.details}`;
-			} else if (e.message) {
-				error = e.message;
-			} else {
-				error = 'Failed to fetch restaurants';
-			}
-		} finally {
-			loading = false;
-			clearTimeout(loaderTimer);
-		}
-	}
+	let searchQuery = '';
 
 	async function searchPlaces(): Promise<void> {
 		loading = true;
@@ -52,12 +25,10 @@
 
 		error = '';
 		try {
-			const response = await clients.googleMaps.searchText({
+			const response = await clients.googleMaps.searchRestaurants({
 				textQuery: searchQuery,
-				includedType: 'restaurant',
-				strictTypeFiltering: true,
-				maxResultCount: 10,
-				requestedFields: requestedFields
+				languageCode: 'pl',
+				regionCode: 'pl'
 			});
 			places = response.places ?? [];
 		} catch (e: any) {
@@ -74,71 +45,78 @@
 		}
 	}
 
-	onMount(() => {
-		fetchRestaurants();
-	});
-
 	onDestroy(() => clearTimeout(loaderTimer));
 </script>
 
-<div class="prose">
-	<h1>Resto Rate</h1>
+<div class="container mx-auto max-w-6xl space-y-8 p-6">
+	<header class="space-y-4 text-center">
+		<h1 class="text-primary-900 dark:text-primary-100 text-4xl font-bold">Resto Rate</h1>
+		<p class="text-surface-600 dark:text-surface-400 text-lg">
+			Discover, rate, and review the best restaurants around you
+		</p>
+	</header>
 
-	<h2>Restaurants from Database</h2>
-	{#if loading && showLoader}
-		<ProgressRing value={null} />
-	{:else if error}
-		<p style="color: red;">{error}</p>
-	{:else if !loading && restaurants.length}
-		<ul>
-			{#each restaurants as restaurant}
-				<li>{restaurant.name}</li>
-			{/each}
-		</ul>
-	{/if}
+	<section class="space-y-6">
+		<h2 class="text-primary-800 dark:text-primary-200 text-2xl font-semibold">
+			Google Places API Search
+		</h2>
 
-	<h2>Google Places API with Dynamic Field Selection</h2>
-	<div class="mb-4">
-		<label for="searchQuery" class="mb-2 block text-sm font-medium">Search Query:</label>
-		<input
-			id="searchQuery"
-			type="text"
-			bind:value={searchQuery}
-			class="w-full rounded border p-2"
-		/>
-	</div>
+		<Card variant="outlined" color="surface" class="space-y-4">
+			<div>
+				<label
+					for="searchQuery"
+					class="text-surface-700 dark:text-surface-300 mb-2 block text-sm font-medium"
+				>
+					Search restauran by name:
+				</label>
+				<input
+					id="searchQuery"
+					type="text"
+					bind:value={searchQuery}
+					class="input preset-outlined-surface-200-800 w-full"
+				/>
+			</div>
 
-	<button
-		on:click={searchPlaces}
-		disabled={loading}
-		class="rounded bg-blue-500 px-4 py-2 text-white hover:bg-blue-600 disabled:opacity-50"
-	>
-		{loading ? 'Searching...' : 'Search Places'}
-	</button>
+			<Button
+				onclick={searchPlaces}
+				disabled={loading}
+				variant="filled"
+				color="primary"
+				size="md"
+				class="w-full sm:w-auto"
+			>
+				{loading ? 'Searching...' : 'Search Places'}
+			</Button>
+		</Card>
 
-	{#if places.length > 0}
-		<h3>Search Results:</h3>
-		<div class="space-y-4">
-			{#each places as place}
-				<div class="rounded border p-4">
-					<h4 class="font-bold">{place.displayName?.text || place.name}</h4>
-					{#if place.rating}
-						<p>Rating: {place.rating}/5</p>
-					{/if}
-					{#if place.formattedAddress}
-						<p>Address: {place.formattedAddress}</p>
-					{/if}
-					{#if place.priceLevel}
-						<p>Price Level: {place.priceLevel}</p>
-					{/if}
-					{#if place.businessStatus}
-						<p>Status: {place.businessStatus}</p>
-					{/if}
-					{#if place.photos && place.photos.length > 0}
-						<p>Photos: {place.photos.length} available</p>
-					{/if}
+		{#if places.length > 0}
+			<div class="space-y-4">
+				<h3 class="text-primary-800 dark:text-primary-200 text-xl font-semibold">
+					Search Results:
+				</h3>
+				<div class="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+					{#each places as place}
+						<Card variant="outlined" color="surface" class="space-y-3">
+							<h4 class="text-primary-800 dark:text-primary-200 font-bold">
+								{place.displayName?.text || place.name}
+							</h4>
+							{#if place.rating}
+								<div>
+									<Badge variant="filled" color="primary" size="sm">
+										Rating: {place.rating}/5
+									</Badge>
+								</div>
+							{/if}
+							{#if place.formattedAddress}
+								<p class="text-surface-600 dark:text-surface-400 text-sm">
+									<strong>Address:</strong>
+									{place.formattedAddress}
+								</p>
+							{/if}
+						</Card>
+					{/each}
 				</div>
-			{/each}
-		</div>
-	{/if}
+			</div>
+		{/if}
+	</section>
 </div>

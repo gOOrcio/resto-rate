@@ -4,6 +4,7 @@
 	import Paperclip from '@lucide/svelte/icons/paperclip';
 	import Calendar from '@lucide/svelte/icons/calendar';
 	import CircleUser from '@lucide/svelte/icons/circle-user';
+	import { Button } from '$lib/ui/components';
 
 	let iconSize = 24;
 </script>
@@ -13,18 +14,24 @@
 		headlineClasses="sm:hidden"
 		centerClasses="hidden sm:block"
 		background="bg-primary-900"
-		base="--color-primary-contrast-900"
+		base="text-primary-contrast-900"
 	>
 		{#snippet lead()}
-			<button class="btn space-x-4 sm:space-x-2">
+			<Button variant="tonal" color="primary" size="md" class="space-x-4 sm:space-x-2">
 				<ListFilterPlus size={iconSize} />
-			</button>
+			</Button>
 		{/snippet}
 		{#snippet trail()}
 			<div class="flex space-x-4 sm:space-x-2">
-				<button class="btn"><Paperclip size={iconSize} /></button>
-				<button class="btn"><Calendar size={iconSize} /></button>
-				<button class="btn"><CircleUser size={iconSize} /></button>
+				<Button variant="tonal" color="primary" size="md">
+					<Paperclip size={iconSize} />
+				</Button>
+				<Button variant="tonal" color="primary" size="md">
+					<Calendar size={iconSize} />
+				</Button>
+				<Button variant="tonal" color="primary" size="md">
+					<CircleUser size={iconSize} />
+				</Button>
 			</div>
 		{/snippet}
 	</AppBar>
