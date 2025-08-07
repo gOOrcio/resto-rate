@@ -10,25 +10,28 @@ import (
 	"strings"
 	"testing"
 
+	placespb "cloud.google.com/go/maps/places/apiv1/placespb"
 	"connectrpc.com/connect"
-	sdk "googlemaps.github.io/maps"
+	"google.golang.org/genproto/googleapis/type/localized_text"
 )
 
-// MockGoogleMapsClient is a mock implementation of the Google Maps client
+// MockGooglePlacesClient is a mock implementation of the Google Places client
 // This is kept for future use when mocking is needed
-type MockGoogleMapsClient struct{}
+type MockGooglePlacesClient struct{}
 
-func (m *MockGoogleMapsClient) FindPlaceFromText(ctx context.Context, req *sdk.FindPlaceFromTextRequest) (sdk.FindPlaceFromTextResponse, error) {
-	// Return a mock response for "Banjaluka"
-	return sdk.FindPlaceFromTextResponse{
-		Candidates: []sdk.PlacesSearchResult{
+func (m *MockGooglePlacesClient) SearchText(ctx context.Context, req *placespb.SearchTextRequest, opts ...interface{}) (*placespb.SearchTextResponse, error) {
+	// Return a mock response for "Banja Luka"
+	return &placespb.SearchTextResponse{
+		Places: []*placespb.Place{
 			{
+				Id:               "mock_place_id",
 				FormattedAddress: "Banja Luka, Bosnia and Herzegovina",
-				PlaceID:          "mock_place_id",
-				Name:             "Banja Luka",
+				DisplayName: &localized_text.LocalizedText{
+					Text:         "Banja Luka",
+					LanguageCode: "en",
+				},
 			},
 		},
-		HTMLAttributions: []string{},
 	}, nil
 }
 
@@ -36,45 +39,44 @@ func TestGooglePlacesApi(t *testing.T) {
 	ctx := context.Background()
 	environment.MustLoadEnvironmentVariables()
 
-	apiKey := os.Getenv("GOOGLE_PLACES_API_KEY")
-	if apiKey == "" {
-		t.Skip("Skipping test: GOOGLE_PLACES_API_KEY is not set")
+	// Note: The new Google Cloud Maps API uses Application Default Credentials
+	// or service account keys, not API keys like the old Places API
+	// You'll need to set up authentication differently
+	projectID := os.Getenv("GOOGLE_CLOUD_PROJECT")
+	if projectID == "" {
+		t.Skip("Skipping test: GOOGLE_CLOUD_PROJECT is not set")
 	}
-	log.Printf("Using API Key: %s...", apiKey[:8])
+	log.Printf("Using Project ID: %s", projectID)
 
 	// Create real Google Places API client
 	client, err := service.NewGooglePlacesAPIClient()
 	if err != nil {
 		t.Fatalf("Failed to create Google Places API client: %v", err)
 	}
+	defer client.Close()
+	
 	placesService := service.NewGooglePlacesAPIService(client)
 
-	protoRequest := &v1.FindPlaceFromTextRequest{
-		Input:     "Banja Luka",
-		InputType: v1.InputType_INPUT_TYPE_TEXT_QUERY,
-		Fields: []v1.PlaceSearchFieldMask{
-			v1.PlaceSearchFieldMask_PLACE_SEARCH_FIELD_MASK_FORMATTED_ADDRESS,
-			v1.PlaceSearchFieldMask_PLACE_SEARCH_FIELD_MASK_NAME,
-			v1.PlaceSearchFieldMask_PLACE_SEARCH_FIELD_MASK_PLACE_ID,
-			v1.PlaceSearchFieldMask_PLACE_SEARCH_FIELD_MASK_RATING,
-			v1.PlaceSearchFieldMask_PLACE_SEARCH_FIELD_MASK_TYPES,
-			v1.PlaceSearchFieldMask_PLACE_SEARCH_FIELD_MASK_BUSINESS_STATUS,
-			v1.PlaceSearchFieldMask_PLACE_SEARCH_FIELD_MASK_ICON,
-		},
+	protoRequest := &v1.SearchTextRequest{
+		TextQuery:           "Banja Luka",
+		IncludedType:        "restaurant",
+		StrictTypeFiltering: true,
+		RankPreference:      v1.RankPreference_RANK_PREFERENCE_RELEVANCE,
+		MaxResultCount:      20,
 	}
 
 	connectRequest := connect.NewRequest(protoRequest)
 
-	response, err := placesService.FindPlaceFromText(ctx, connectRequest)
+	response, err := placesService.SearchText(ctx, connectRequest)
 	if err != nil {
 		t.Fatalf("Service call failed: %v", err)
 	}
 
-	if len(response.Msg.Candidates) == 0 {
-		t.Fatalf("Expected at least one candidate, got 0")
+	if len(response.Msg.Places) == 0 {
+		t.Fatalf("Expected at least one place, got 0")
 	}
 
-	actualAddress := response.Msg.Candidates[0].FormattedAddress
+	actualAddress := response.Msg.Places[0].FormattedAddress
 	expectedCity := "Banja Luka"
 
 	if !strings.Contains(actualAddress, expectedCity) {
@@ -82,6 +84,62 @@ func TestGooglePlacesApi(t *testing.T) {
 	}
 
 	t.Logf("Test passed. Found address: %s", actualAddress)
+}
+
+func TestDynamicFieldMask(t *testing.T) {
+	ctx := context.Background()
+	environment.MustLoadEnvironmentVariables()
+
+	projectID := os.Getenv("GOOGLE_CLOUD_PROJECT")
+	if projectID == "" {
+		t.Skip("Skipping test: GOOGLE_CLOUD_PROJECT is not set")
+	}
+
+	client, err := service.NewGooglePlacesAPIClient()
+	if err != nil {
+		t.Fatalf("Failed to create Google Places API client: %v", err)
+	}
+	defer client.Close()
+	
+	placesService := service.NewGooglePlacesAPIService(client)
+
+	// Test with specific requested fields
+	protoRequest := &v1.SearchTextRequest{
+		TextQuery:           "Banja Luka",
+		IncludedType:        "restaurant",
+		StrictTypeFiltering: true,
+		RankPreference:      v1.RankPreference_RANK_PREFERENCE_RELEVANCE,
+		MaxResultCount:      5,
+		RequestedFields:     []string{"name", "displayName", "rating", "formattedAddress"},
+	}
+
+	connectRequest := connect.NewRequest(protoRequest)
+
+	response, err := placesService.SearchText(ctx, connectRequest)
+	if err != nil {
+		t.Fatalf("Service call with dynamic fields failed: %v", err)
+	}
+
+	if len(response.Msg.Places) == 0 {
+		t.Fatalf("Expected at least one place, got 0")
+	}
+
+	place := response.Msg.Places[0]
+	
+	// Verify that we got the requested fields
+	if place.Name == "" {
+		t.Error("Expected name field to be populated")
+	}
+	
+	if place.DisplayName == nil || place.DisplayName.Text == "" {
+		t.Error("Expected displayName field to be populated")
+	}
+	
+	if place.FormattedAddress == "" {
+		t.Error("Expected formattedAddress field to be populated")
+	}
+
+	t.Logf("Dynamic FieldMask test passed. Place: %s", place.DisplayName.Text)
 }
 
 

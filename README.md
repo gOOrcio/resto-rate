@@ -70,12 +70,54 @@ This starts both the web app (http://localhost:5173) and API (http://localhost:3
 - `ListRestaurants` - List restaurants with pagination
 
 ### Users Service
-- `CreateUser` - Create a regular user
-- `CreateAdminUser` - Create an admin user
+- `CreateUser` - Create a new user
 - `GetUser` - Get user by ID
 - `UpdateUser` - Update user details
 - `DeleteUser` - Delete user
 - `ListUsers` - List users with pagination
+
+### Google Maps Service
+- `SearchText` - Search for places using text query with dynamic field selection
+
+#### Dynamic Field Selection
+The Google Maps service supports dynamic field selection to optimize API calls and reduce response size. You can specify which fields to return in the response:
+
+```typescript
+// Example: Request only specific fields
+const response = await client.searchText({
+  textQuery: "restaurants in Banja Luka",
+  includedType: "restaurant",
+  maxResultCount: 10,
+  requestedFields: [
+    "name",
+    "displayName", 
+    "rating",
+    "formattedAddress",
+    "photos",
+    "priceLevel"
+  ]
+});
+
+// Example: Request all fields (default behavior)
+const response = await client.searchText({
+  textQuery: "restaurants in Banja Luka",
+  includedType: "restaurant",
+  maxResultCount: 10
+  // requestedFields not specified - returns all available fields
+});
+```
+
+**Available Fields:**
+- Basic info: `name`, `displayName`, `id`, `types`, `primaryType`, `primaryTypeDisplayName`
+- Contact: `nationalPhoneNumber`, `internationalPhoneNumber`, `formattedAddress`, `shortFormattedAddress`
+- Ratings: `rating`, `userRatingCount`
+- Business: `businessStatus`, `priceLevel`, `websiteUri`, `googleMapsUri`
+- Services: `takeout`, `delivery`, `dineIn`, `curbsidePickup`, `reservable`
+- Food options: `servesBreakfast`, `servesLunch`, `servesDinner`, `servesBeer`, `servesWine`, `servesBrunch`, `servesVegetarianFood`
+- Amenities: `outdoorSeating`, `liveMusic`, `menuForChildren`, `servesCocktails`, `servesDessert`, `servesCoffee`
+- Accessibility: `goodForChildren`, `allowsDogs`, `restroom`, `goodForGroups`, `goodForWatchingSports`
+- Media: `photos`, `attributions`
+- Other: `utcOffsetMinutes`, `pureServiceAreaBusiness`
 
 ## Database Schema
 
