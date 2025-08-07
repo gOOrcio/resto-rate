@@ -11,7 +11,7 @@
 	let showLoader = false;
 	let loaderTimer: NodeJS.Timeout;
 	let error = '';
-	let searchQuery = 'restaurants in Banja Luka';
+	let searchQuery = 'Provide restaurant name';
 	let requestedFields = ['name', 'displayName', 'rating', 'formattedAddress'];
 
 	async function fetchRestaurants(): Promise<void> {
@@ -106,30 +106,6 @@
 			bind:value={searchQuery}
 			class="w-full rounded border p-2"
 		/>
-	</div>
-
-	<div class="mb-4">
-		<label class="mb-2 block text-sm font-medium">Requested Fields:</label>
-		<div class="space-y-2">
-			{#each ['name', 'displayName', 'rating', 'formattedAddress', 'photos', 'priceLevel', 'businessStatus'] as field}
-				<label class="flex items-center">
-					<input
-						type="checkbox"
-						value={field}
-						checked={requestedFields.includes(field)}
-						on:change={(e) => {
-							if (e.target.checked) {
-								requestedFields = [...requestedFields, field];
-							} else {
-								requestedFields = requestedFields.filter((f) => f !== field);
-							}
-						}}
-						class="mr-2"
-					/>
-					{field}
-				</label>
-			{/each}
-		</div>
 	</div>
 
 	<button

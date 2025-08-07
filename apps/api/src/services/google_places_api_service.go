@@ -33,6 +33,48 @@ func NewGooglePlacesAPIService(client *places.Client) *GooglePlacesAPIService {
 	}
 }
 
+func (s *GooglePlacesAPIService) SearchRestaurants(ctx context.Context, req *connect.Request[v1.SearchRestaurantsRequest]) (
+	*connect.Response[v1.SearchTextResponse], error) {
+		if req.Msg.TextQuery == "" {
+		return nil, fmt.Errorf("text_query is required")
+	}
+
+	searchReq := &placespb.SearchTextRequest{
+		TextQuery: req.Msg.TextQuery,
+		LanguageCode: req.Msg.LanguageCode,
+		RegionCode: req.Msg.RegionCode,
+		RankPreference: placespb.SearchTextRequest_RELEVANCE,
+		IncludedType: "restaurant",
+		StrictTypeFiltering: true,
+		IncludePureServiceAreaBusinesses: false,
+	}
+
+	var fieldMask string
+	if len(req.Msg.RequestedFields) > 0 {
+		fields := make([]string, len(req.Msg.RequestedFields))
+		for i, field := range req.Msg.RequestedFields {
+			fields[i] = "places." + field
+		}
+		fieldMask = strings.Join(fields, ",")
+	} else {
+		fieldMask = "*"
+	}
+
+	md := metadata.New(map[string]string{
+		"X-Goog-FieldMask": fieldMask,
+	})
+
+	ctxWithMetadata := metadata.NewOutgoingContext(ctx, md)
+
+	resp, err := s.client.SearchText(ctxWithMetadata, searchReq) 	
+	if err != nil {
+		return nil, fmt.Errorf("search text failed: %v", err)
+	}
+
+	protoResp := convertSearchResponseToProto(resp)
+	return connect.NewResponse(protoResp), nil
+}
+
 func (s *GooglePlacesAPIService) SearchText(ctx context.Context, req *connect.Request[v1.SearchTextRequest]) (
 	*connect.Response[v1.SearchTextResponse], error) {
 	if req.Msg.TextQuery == "" {
@@ -53,7 +95,6 @@ func (s *GooglePlacesAPIService) SearchText(ctx context.Context, req *connect.Re
 		IncludePureServiceAreaBusinesses: req.Msg.IncludePureServiceAreaBusinesses,
 	}
 
-	// Build FieldMask from requested fields
 	var fieldMask string
 	if len(req.Msg.RequestedFields) > 0 {
 		fields := make([]string, len(req.Msg.RequestedFields))
@@ -62,7 +103,6 @@ func (s *GooglePlacesAPIService) SearchText(ctx context.Context, req *connect.Re
 		}
 		fieldMask = strings.Join(fields, ",")
 	} else {
-		// If no fields specified, use all available fields
 		fieldMask = "*"
 	}
 
@@ -80,7 +120,6 @@ func (s *GooglePlacesAPIService) SearchText(ctx context.Context, req *connect.Re
 	return connect.NewResponse(protoResp), nil
 }
 
-// Convert price levels from our proto to Google's proto
 func convertPriceLevels(levels []v1.PriceLevel) []placespb.PriceLevel {
 	result := make([]placespb.PriceLevel, len(levels))
 	for i, level := range levels {
@@ -89,7 +128,6 @@ func convertPriceLevels(levels []v1.PriceLevel) []placespb.PriceLevel {
 	return result
 }
 
-// Convert the Google API response to our protobuf format
 func convertSearchResponseToProto(resp *placespb.SearchTextResponse) *v1.SearchTextResponse {
 	if resp == nil {
 		return nil
@@ -111,7 +149,6 @@ func convertSearchResponseToProto(resp *placespb.SearchTextResponse) *v1.SearchT
 	}
 }
 
-// Convert a place from Google's API to our protobuf format
 func convertPlaceToProto(place *placespb.Place) *v1.Place {
 	if place == nil {
 		return nil
@@ -136,7 +173,6 @@ func convertPlaceToProto(place *placespb.Place) *v1.Place {
 		IconBackgroundColor: place.IconBackgroundColor,
 	}
 
-	// Handle pointer types
 	if place.UserRatingCount != nil {
 		result.UserRatingCount = *place.UserRatingCount
 	}
@@ -213,7 +249,6 @@ func convertPlaceToProto(place *placespb.Place) *v1.Place {
 		result.PureServiceAreaBusiness = *place.PureServiceAreaBusiness
 	}
 
-	// Convert display name
 	if place.DisplayName != nil {
 		result.DisplayName = &v1.LocalizedText{
 			Text:         place.DisplayName.Text,
@@ -221,7 +256,6 @@ func convertPlaceToProto(place *placespb.Place) *v1.Place {
 		}
 	}
 
-	// Convert primary type display name
 	if place.PrimaryTypeDisplayName != nil {
 		result.PrimaryTypeDisplayName = &v1.LocalizedText{
 			Text:         place.PrimaryTypeDisplayName.Text,
@@ -229,7 +263,6 @@ func convertPlaceToProto(place *placespb.Place) *v1.Place {
 		}
 	}
 
-	// Convert photos
 	photos := make([]*v1.Photo, 0, len(place.Photos))
 	for _, photo := range place.Photos {
 		authorAttributions := make([]string, 0, len(photo.AuthorAttributions))
@@ -246,7 +279,6 @@ func convertPlaceToProto(place *placespb.Place) *v1.Place {
 	}
 	result.Photos = photos
 
-	// Convert attributions
 	attributions := make([]*v1.Attribution, 0, len(place.Attributions))
 	for _, attr := range place.Attributions {
 		attributions = append(attributions, &v1.Attribution{
@@ -256,7 +288,6 @@ func convertPlaceToProto(place *placespb.Place) *v1.Place {
 	}
 	result.Attributions = attributions
 
-	// Convert UTC offset
 	if place.UtcOffsetMinutes != nil {
 		result.UtcOffsetMinutes = *place.UtcOffsetMinutes
 	}

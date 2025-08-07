@@ -6,65 +6,33 @@ option go_package = "api/src/generated/google_maps/v1";
 
 service GoogleMapsService {
   rpc SearchText(SearchTextRequest) returns (SearchTextResponse);
+  rpc SearchRestaurants(SearchRestaurantsRequest) returns (SearchTextResponse);
+}
+
+message SearchRestaurantsRequest {
+  string text_query = 1;
+  string language_code = 2;
+  string region_code = 3;
+  repeated string requested_fields = 21;
 }
 
 message SearchTextRequest {
-  // Required. The text query for textual search.
   string text_query = 1;
-  
-  // Place details will be displayed with the preferred language if available.
   string language_code = 2;
-  
-  // The Unicode country/region code (CLDR) of the location where the request is coming from.
   string region_code = 3;
-  
-  // How results will be ranked in the response.
   RankPreference rank_preference = 4;
-  
-  // The requested place type. Only support one included type.
   string included_type = 6;
-  
-  // Used to restrict the search to places that are currently open.
   bool open_now = 7;
-  
-  // Filter out results whose average user rating is strictly less than this limit.
   double min_rating = 9;
-  
-  // Maximum number of results to return. It must be between 1 and 20, inclusively.
   int32 max_result_count = 10;
-  
-  // Used to restrict the search to places that are marked as certain price levels.
   repeated PriceLevel price_levels = 11;
-  
-  // Used to set strict type filtering for included_type.
   bool strict_type_filtering = 12;
-  
-  // The region to search. This location serves as a bias.
   LocationBias location_bias = 13;
-  
-  // The region to search. This location serves as a restriction.
   LocationRestriction location_restriction = 14;
-  
-  // Optional. Set the searchable EV options of a place search request.
   EVOptions ev_options = 15;
-  
-  // Optional. Additional parameters for routing to results.
   RoutingParameters routing_parameters = 16;
-  
-  // Optional. Additional parameters proto for searching along a route.
   SearchAlongRouteParameters search_along_route_parameters = 17;
-  
-  // Optional. Include pure service area businesses if the field is set to true.
   bool include_pure_service_area_businesses = 20;
-  
-  // Optional. List of fields to return in the response. If not specified, all available fields will be returned.
-  // Valid field names: name, displayName, id, types, primaryType, primaryTypeDisplayName, nationalPhoneNumber,
-  // internationalPhoneNumber, formattedAddress, shortFormattedAddress, rating, googleMapsUri, websiteUri,
-  // adrFormatAddress, businessStatus, priceLevel, iconMaskBaseUri, iconBackgroundColor, userRatingCount,
-  // takeout, delivery, dineIn, curbsidePickup, reservable, servesBreakfast, servesLunch, servesDinner,
-  // servesBeer, servesWine, servesBrunch, servesVegetarianFood, outdoorSeating, liveMusic, menuForChildren,
-  // servesCocktails, servesDessert, servesCoffee, goodForChildren, allowsDogs, restroom, goodForGroups,
-  // goodForWatchingSports, pureServiceAreaBusiness, photos, attributions, utcOffsetMinutes
   repeated string requested_fields = 21;
 }
 
