@@ -1,10 +1,16 @@
 <script lang="ts">
 	import type { HTMLAttributes } from 'svelte/elements';
+	import clsx from 'clsx';
+	import { twMerge } from 'tailwind-merge';
+
+	type Variant = 'filled' | 'outlined' | 'tonal';
+	type Color = 'primary' | 'secondary' | 'tertiary' | 'success' | 'warning' | 'error' | 'surface';
+	type Padding = 'none' | 'sm' | 'md' | 'lg';
 
 	interface $$Props extends HTMLAttributes<HTMLDivElement> {
-		variant?: 'filled' | 'outlined' | 'tonal';
-		color?: 'primary' | 'secondary' | 'tertiary' | 'success' | 'warning' | 'error' | 'surface';
-		padding?: 'none' | 'sm' | 'md' | 'lg';
+		variant?: Variant;
+		color?: Color;
+		padding?: Padding;
 		class?: string;
 		children?: any;
 	}
@@ -15,19 +21,16 @@
 		padding = 'md',
 		class: className = '',
 		children,
-		...props
+		...rest
 	}: $$Props = $props();
 
-	const paddingClasses = $derived(
-		{
-			none: '',
-			sm: 'p-2',
-			md: 'p-4',
-			lg: 'p-6'
-		}[padding]
+	const paddingClasses = $derived({ none: '', sm: 'p-2', md: 'p-4', lg: 'p-6' }[padding] ?? '');
+
+	const classes = $derived(
+		twMerge(clsx('card', `preset-${variant}-${color}-200-800`, paddingClasses, className))
 	);
 </script>
 
-<div class="card preset-{variant}-{color}-200-800 {paddingClasses} {className}" {...props}>
+<div class={classes} {...rest}>
 	{@render children()}
 </div>
