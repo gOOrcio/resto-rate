@@ -14,6 +14,11 @@ export default defineConfig({
 			outdir: './src/lib/paraglide'
 		})
 	],
+	server: {
+		port: parseInt(process.env.VITE_PORT || '5173'),
+		strictPort: true,
+		host: true 
+	},
 	build: {
 		outDir: '../../dist/apps/web'
 	}

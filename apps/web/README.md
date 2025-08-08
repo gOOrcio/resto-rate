@@ -1,38 +1,74 @@
-# sv
+# Web App
 
-Everything you need to build a Svelte project, powered by [`sv`](https://github.com/sveltejs/cli).
+This is the SvelteKit frontend for the Resto Rate application.
 
-## Creating a project
+## Development
 
-If you're seeing this, you've probably already done this step. Congrats!
+### Environment Configuration
+
+The application uses environment variables for configuration. Copy the example file and customize it:
 
 ```bash
-# create a new project in the current directory
-npx sv create
-
-# create a new project in my-app
-npx sv create my-app
+cp .env.example .env
 ```
 
-## Developing
+#### Available Environment Variables
 
-Once you've created a project and installed dependencies with `npm install` (or `pnpm install` or `yarn`), start a development server:
+- `VITE_PORT` - Development server port (default: 5173)
+- `VITE_API_URL` - API base URL (default: http://localhost:3001)
+
+#### Example `.env` file
+
+```env
+# Development server port (default: 5173)
+VITE_PORT=5173
+
+# API base URL (default: http://localhost:3001)
+VITE_API_URL=http://localhost:3001
+```
+
+### Starting the Development Server
 
 ```bash
 npm run dev
-
-# or start the server and open the app in a new browser tab
-npm run dev -- --open
 ```
 
-## Building
+The server will:
+- Use the port specified in `VITE_PORT` (defaults to 5173)
+- Fail to start if the port is occupied (`strictPort: true`)
+- Allow external connections (`host: true`)
 
-To create a production version of your app:
+### Port Conflicts
+
+If you encounter a port conflict, you can:
+
+1. **Change the port in your `.env` file:**
+   ```env
+   VITE_PORT=3000
+   ```
+
+2. **Check what's using the current port:**
+   ```bash
+   lsof -i :5173
+   ```
+
+3. **Stop the conflicting process:**
+   ```bash
+   # If it's another Vite process
+   pkill -f "vite"
+   
+   # Or kill by PID (replace XXXX with actual PID)
+   kill -9 XXXX
+   ```
+
+## Building
 
 ```bash
 npm run build
 ```
 
-You can preview the production build with `npm run preview`.
+## Testing
 
-> To deploy your app, you may need to install an [adapter](https://svelte.dev/docs/kit/adapters) for your target environment.
+```bash
+npm run test
+```

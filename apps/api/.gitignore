@@ -12,3 +12,4 @@ vendor
 /src/generated/
 /watched_protos/
 /tmp
+api

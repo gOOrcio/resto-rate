@@ -5,125 +5,474 @@ package google_maps.v1;
 option go_package = "api/src/generated/google_maps/v1";
 
 service GoogleMapsService {
-  rpc FindPlaceFromText(FindPlaceFromTextRequest) returns (FindPlaceFromTextResponse);
+  rpc SearchText(SearchTextRequest) returns (SearchTextResponse);
+  rpc SearchRestaurants(SearchRestaurantsRequest) returns (SearchTextResponse);
 }
 
-message FindPlaceFromTextRequest {
-  string input = 1;
-  InputType input_type = 2;
-  repeated PlaceSearchFieldMask fields = 3;
-  string language = 4;
+message SearchRestaurantsRequest {
+  string text_query = 1;
+  string language_code = 2;
+  string region_code = 3;
+  repeated string requested_fields = 21;
 }
 
-enum InputType {
-    INPUT_TYPE_UNSPECIFIED = 0;
-    INPUT_TYPE_TEXT_QUERY = 1;
-    INPUT_TYPE_PHONE_NUMBER = 2;
+message SearchTextRequest {
+  string text_query = 1;
+  string language_code = 2;
+  string region_code = 3;
+  RankPreference rank_preference = 4;
+  string included_type = 6;
+  bool open_now = 7;
+  double min_rating = 9;
+  int32 max_result_count = 10;
+  repeated PriceLevel price_levels = 11;
+  bool strict_type_filtering = 12;
+  LocationBias location_bias = 13;
+  LocationRestriction location_restriction = 14;
+  EVOptions ev_options = 15;
+  RoutingParameters routing_parameters = 16;
+  SearchAlongRouteParameters search_along_route_parameters = 17;
+  bool include_pure_service_area_businesses = 20;
+  repeated string requested_fields = 21;
 }
 
-enum PlaceSearchFieldMask {
-    PLACE_SEARCH_FIELD_MASK_UNSPECIFIED = 0;
-    PLACE_SEARCH_FIELD_MASK_BUSINESS_STATUS = 1;
-    PLACE_SEARCH_FIELD_MASK_FORMATTED_ADDRESS = 2;
-    PLACE_SEARCH_FIELD_MASK_GEOMETRY = 3;
-    PLACE_SEARCH_FIELD_MASK_GEOMETRY_LOCATION = 4;
-    PLACE_SEARCH_FIELD_MASK_GEOMETRY_LOCATION_LAT = 5;
-    PLACE_SEARCH_FIELD_MASK_GEOMETRY_LOCATION_LNG = 6;
-    PLACE_SEARCH_FIELD_MASK_GEOMETRY_VIEWPORT = 7;
-    PLACE_SEARCH_FIELD_MASK_GEOMETRY_VIEWPORT_NORTHEAST = 8;
-    PLACE_SEARCH_FIELD_MASK_GEOMETRY_VIEWPORT_NORTHEAST_LAT = 9;
-    PLACE_SEARCH_FIELD_MASK_GEOMETRY_VIEWPORT_NORTHEAST_LNG = 10;
-    PLACE_SEARCH_FIELD_MASK_GEOMETRY_VIEWPORT_SOUTHWEST = 11;
-    PLACE_SEARCH_FIELD_MASK_GEOMETRY_VIEWPORT_SOUTHWEST_LAT = 12;
-    PLACE_SEARCH_FIELD_MASK_GEOMETRY_VIEWPORT_SOUTHWEST_LNG = 13;
-    PLACE_SEARCH_FIELD_MASK_ICON = 14;
-    PLACE_SEARCH_FIELD_MASK_ID = 15;
-    PLACE_SEARCH_FIELD_MASK_NAME = 16;
-    PLACE_SEARCH_FIELD_MASK_OPENING_HOURS = 17;
-    PLACE_SEARCH_FIELD_MASK_OPENING_HOURS_OPEN_NOW = 18;
-    PLACE_SEARCH_FIELD_MASK_PERMANENTLY_CLOSED = 19;
-    PLACE_SEARCH_FIELD_MASK_PHOTOS = 20;
-    PLACE_SEARCH_FIELD_MASK_PLACE_ID = 21;
-    PLACE_SEARCH_FIELD_MASK_PRICE_LEVEL = 22;
-    PLACE_SEARCH_FIELD_MASK_RATING = 23;
-    PLACE_SEARCH_FIELD_MASK_USER_RATINGS_TOTAL = 24;
-    PLACE_SEARCH_FIELD_MASK_REFERENCE = 25;
-    PLACE_SEARCH_FIELD_MASK_TYPES = 26;
-    PLACE_SEARCH_FIELD_MASK_VICINITY = 27;
+enum RankPreference {
+  RANK_PREFERENCE_UNSPECIFIED = 0;
+  RANK_PREFERENCE_DISTANCE = 1;
+  RANK_PREFERENCE_RELEVANCE = 2;
 }
 
-message FindPlaceFromTextResponse {
- repeated PlacesSearchResult candidates = 1;
- repeated string html_attributions = 2;
+enum PriceLevel {
+  PRICE_LEVEL_UNSPECIFIED = 0;
+  PRICE_LEVEL_FREE = 1;
+  PRICE_LEVEL_INEXPENSIVE = 2;
+  PRICE_LEVEL_MODERATE = 3;
+  PRICE_LEVEL_EXPENSIVE = 4;
+  PRICE_LEVEL_VERY_EXPENSIVE = 5;
 }
 
-message PlacesSearchResult {
-  string formatted_address = 1;
-  AddressGeometry geometry = 2;
-  string name = 3;
-  string icon = 4;
-  string place_id = 5;
-  float rating = 6;
-  int32 users_rating_total = 7;
-  repeated string types = 8;
-  OpeningHours opening_hours = 9;
-  repeated Photo photos = 10;
-  int32 price_level = 11;
-  string vicinity = 12;
-  bool permanently_closed = 13;
-  string business_status = 14;
-  string id = 15;
+message LocationBias {
+  oneof type {
+    Circle circle = 1;
+    Rectangle rectangle = 2;
+  }
 }
 
-message Photo {
-  string photo_reference = 1;
-  int32 height = 2;
-  int32 width = 3;
-  repeated string html_attributions = 4;
+message LocationRestriction {
+  oneof type {
+    Circle circle = 1;
+    Rectangle rectangle = 2;
+  }
 }
 
-message OpeningHours {
-  bool open_now = 1;
-  repeated OpeningHoursPeriod periods = 2;
-  repeated string weekday_text = 3;
-  bool permanently_closed = 4;
+message Circle {
+  LatLng center = 1;
+  double radius = 2;
 }
 
-message OpeningHoursPeriod {
-    OpeningHoursOpenClose open = 1;
-    OpeningHoursOpenClose close = 2;
-}
-
-message OpeningHoursOpenClose {
-  Weekday day = 1;
-  string time = 2;
-}
-
-enum Weekday {
-  WEEKDAY_UNSPECIFIED = 0;
-  WEEKDAY_SUNDAY = 1;
-  WEEKDAY_MONDAY = 2;
-  WEEKDAY_TUESDAY = 3;
-  WEEKDAY_WEDNESDAY = 4;
-  WEEKDAY_THURSDAY = 5;
-  WEEKDAY_FRIDAY = 6;
-  WEEKDAY_SATURDAY = 7;
-}
-
-message AddressGeometry {
-  LatLng location = 1;
-  string location_type = 2;
-  LatLngBounds bounds = 3;
-  LatLngBounds viewport = 4;
-  repeated string types = 5;
+message Rectangle {
+  LatLng low = 1;
+  LatLng high = 2;
 }
 
 message LatLng {
-  float lat = 1;
-  float lng = 2;
+  double lat = 1;
+  double lng = 2;
 }
 
-message LatLngBounds {
-    LatLng north_east = 1;
-    LatLng south_west = 2;
+message EVOptions {
+  // EV charging options
+  bool include_ev_charging = 1;
+}
+
+message RoutingParameters {
+  // Routing parameters
+  string origin = 1;
+  string destination = 2;
+}
+
+message SearchAlongRouteParameters {
+  // Search along route parameters
+  string route = 1;
+}
+
+message SearchTextResponse {
+  // A list of places that meet the user's text search criteria.
+  repeated Place places = 1;
+  
+  // A list of routing summaries where each entry associates to the corresponding place.
+  repeated RoutingSummary routing_summaries = 2;
+  
+  // A list of contextual contents where each entry associates to the corresponding place.
+  repeated ContextualContent contextual_contents = 3;
+}
+
+message Place {
+  // This Place's resource name, in `places/{place_id}` format.
+  string name = 1;
+  
+  // The unique identifier of a place.
+  string id = 2;
+  
+  // The localized name of the place, suitable as a short human-readable description.
+  LocalizedText display_name = 31;
+  
+  // A set of type tags for this result.
+  repeated string types = 5;
+  
+  // The primary type of the given result.
+  string primary_type = 50;
+  
+  // The display name of the primary type, localized to the request language if applicable.
+  LocalizedText primary_type_display_name = 32;
+  
+  // A human-readable phone number for the place, in national format.
+  string national_phone_number = 7;
+  
+  // A human-readable phone number for the place, in international format.
+  string international_phone_number = 8;
+  
+  // A full, human-readable address for this place.
+  string formatted_address = 9;
+  
+  // A short, human-readable address for this place.
+  string short_formatted_address = 51;
+  
+  // The address in postal address format.
+  PostalAddress postal_address = 90;
+  
+  // The position of this place.
+  LatLng location = 12;
+  
+  // A viewport suitable for displaying the place on an average-sized map.
+  Viewport viewport = 13;
+  
+  // A rating between 1.0 and 5.0, based on user reviews of this place.
+  double rating = 14;
+  
+  // A URL providing more information about this place.
+  string google_maps_uri = 15;
+  
+  // The authoritative website for this place.
+  string website_uri = 16;
+  
+  // List of reviews about this place, sorted by relevance.
+  repeated Review reviews = 53;
+  
+  // The regular hours of operation.
+  OpeningHours regular_opening_hours = 21;
+  
+  // Number of minutes this place's timezone is currently offset from UTC.
+  int32 utc_offset_minutes = 22;
+  
+  // IANA Time Zone Database time zone.
+  TimeZone time_zone = 88;
+  
+  // Information about photos of this place.
+  repeated Photo photos = 54;
+  
+  // The place's address in adr microformat.
+  string adr_format_address = 24;
+  
+  // The business status for the place.
+  BusinessStatus business_status = 25;
+  
+  // Price level of the place.
+  PriceLevel price_level = 26;
+  
+  // A set of data provider that must be shown with this result.
+  repeated Attribution attributions = 27;
+  
+  // The total number of reviews for this place.
+  int32 user_rating_count = 28;
+  
+  // A truncated URL to an icon mask.
+  string icon_mask_base_uri = 29;
+  
+  // Background color for icon_mask in hex format.
+  string icon_background_color = 30;
+  
+  // Specifies if the business supports takeout.
+  bool takeout = 33;
+  
+  // Specifies if the business supports delivery.
+  bool delivery = 34;
+  
+  // Specifies if the business supports indoor or outdoor seating options.
+  bool dine_in = 35;
+  
+  // Specifies if the business supports curbside pickup.
+  bool curbside_pickup = 36;
+  
+  // Specifies if the place supports reservations.
+  bool reservable = 38;
+  
+  // Specifies if the place serves breakfast.
+  bool serves_breakfast = 39;
+  
+  // Specifies if the place serves lunch.
+  bool serves_lunch = 40;
+  
+  // Specifies if the place serves dinner.
+  bool serves_dinner = 41;
+  
+  // Specifies if the place serves beer.
+  bool serves_beer = 42;
+  
+  // Specifies if the place serves wine.
+  bool serves_wine = 43;
+  
+  // Specifies if the place serves brunch.
+  bool serves_brunch = 44;
+  
+  // Specifies if the place serves vegetarian food.
+  bool serves_vegetarian_food = 45;
+  
+  // The hours of operation for the next seven days.
+  OpeningHours current_opening_hours = 46;
+  
+  // Contains an array of entries for the next seven days including information about secondary hours.
+  repeated OpeningHours current_secondary_opening_hours = 47;
+  
+  // Contains an array of entries for information about regular secondary hours.
+  repeated OpeningHours regular_secondary_opening_hours = 49;
+  
+  // Contains a summary of the place.
+  LocalizedText editorial_summary = 52;
+  
+  // Place provides outdoor seating.
+  bool outdoor_seating = 55;
+  
+  // Place provides live music.
+  bool live_music = 56;
+  
+  // Place has a children's menu.
+  bool menu_for_children = 57;
+  
+  // Place serves cocktails.
+  bool serves_cocktails = 58;
+  
+  // Place serves dessert.
+  bool serves_dessert = 59;
+  
+  // Place serves coffee.
+  bool serves_coffee = 60;
+  
+  // Place is good for children.
+  bool good_for_children = 62;
+  
+  // Place allows dogs.
+  bool allows_dogs = 63;
+  
+  // Place has restroom.
+  bool restroom = 64;
+  
+  // Place accommodates groups.
+  bool good_for_groups = 65;
+  
+  // Place is suitable for watching sports.
+  bool good_for_watching_sports = 66;
+  
+  // Payment options the place accepts.
+  PaymentOptions payment_options = 67;
+  
+  // Options of parking provided by the place.
+  ParkingOptions parking_options = 70;
+  
+  // A list of sub-destinations related to the place.
+  repeated SubDestination sub_destinations = 71;
+  
+  // Information about the accessibility options a place offers.
+  AccessibilityOptions accessibility_options = 72;
+  
+  // The most recent information about fuel options in a gas station.
+  FuelOptions fuel_options = 78;
+  
+  // Information of ev charging options.
+  EVChargeOptions ev_charge_options = 79;
+  
+  // AI-generated summary of the place.
+  GenerativeSummary generative_summary = 80;
+  
+  // List of places in which the current place is located.
+  repeated ContainingPlace containing_places = 82;
+  
+  // Indicates whether the place is a pure service area business.
+  bool pure_service_area_business = 83;
+  
+  // The address descriptor of the place.
+  AddressDescriptor address_descriptor = 84;
+  
+  // The price range associated with a Place.
+  PriceRange price_range = 86;
+  
+  // AI-generated summary of the place using user reviews.
+  ReviewSummary review_summary = 87;
+  
+  // The summary of amenities near the EV charging station.
+  EvChargeAmenitySummary ev_charge_amenity_summary = 89;
+  
+  // A summary of points of interest near the place.
+  NeighborhoodSummary neighborhood_summary = 91;
+}
+
+enum BusinessStatus {
+  BUSINESS_STATUS_UNSPECIFIED = 0;
+  BUSINESS_STATUS_OPERATIONAL = 1;
+  BUSINESS_STATUS_CLOSED_TEMPORARILY = 2;
+  BUSINESS_STATUS_CLOSED_PERMANENTLY = 3;
+}
+
+message LocalizedText {
+  string text = 1;
+  string language_code = 2;
+}
+
+message PostalAddress {
+  // Postal address fields
+  repeated string address_lines = 1;
+  string locality = 2;
+  string administrative_area = 3;
+  string postal_code = 4;
+  string country = 5;
+}
+
+message Viewport {
+  LatLng north_east = 1;
+  LatLng south_west = 2;
+}
+
+message Review {
+  // Review fields
+  string author = 1;
+  double rating = 2;
+  string text = 3;
+  int64 time = 4;
+}
+
+message OpeningHours {
+  repeated OpeningHoursPeriod periods = 1;
+  repeated string weekday_text = 2;
+}
+
+message OpeningHoursPeriod {
+  OpeningHoursOpenClose open = 1;
+  OpeningHoursOpenClose close = 2;
+}
+
+message OpeningHoursOpenClose {
+  int32 day = 1;
+  string time = 2;
+}
+
+message TimeZone {
+  string id = 1;
+  string name = 2;
+}
+
+message Photo {
+  string name = 1;
+  int32 width_px = 2;
+  int32 height_px = 3;
+  repeated string author_attributions = 4;
+}
+
+message Attribution {
+  string provider = 1;
+  string provider_uri = 2;
+}
+
+message PaymentOptions {
+  // Payment options fields
+  bool accepts_credit_cards = 1;
+  bool accepts_debit_cards = 2;
+  bool accepts_cash_only = 3;
+}
+
+message ParkingOptions {
+  // Parking options fields
+  bool free_parking = 1;
+  bool paid_parking = 2;
+  bool street_parking = 3;
+}
+
+message SubDestination {
+  string name = 1;
+  string id = 2;
+}
+
+message AccessibilityOptions {
+  // Accessibility options fields
+  bool wheelchair_accessible_entrance = 1;
+  bool wheelchair_accessible_parking = 2;
+}
+
+message FuelOptions {
+  // Fuel options fields
+  repeated FuelType fuel_types = 1;
+}
+
+enum FuelType {
+  FUEL_TYPE_UNSPECIFIED = 0;
+  FUEL_TYPE_REGULAR = 1;
+  FUEL_TYPE_PREMIUM = 2;
+  FUEL_TYPE_DIESEL = 3;
+  FUEL_TYPE_ELECTRIC = 4;
+}
+
+message EVChargeOptions {
+  // EV charge options fields
+  repeated EVConnector connectors = 1;
+}
+
+message EVConnector {
+  string type = 1;
+  double max_charge_rate_kw = 2;
+}
+
+message GenerativeSummary {
+  // Generative summary fields
+  LocalizedText text = 1;
+}
+
+message ContainingPlace {
+  string name = 1;
+  string id = 2;
+}
+
+message AddressDescriptor {
+  // Address descriptor fields
+  repeated string terms = 1;
+}
+
+message PriceRange {
+  int32 price_range = 1;
+}
+
+message ReviewSummary {
+  // Review summary fields
+  double average_rating = 1;
+  int32 total_review_count = 2;
+}
+
+message EvChargeAmenitySummary {
+  // EV charge amenity summary fields
+  repeated string amenities = 1;
+}
+
+message NeighborhoodSummary {
+  // Neighborhood summary fields
+  repeated string points_of_interest = 1;
+}
+
+message RoutingSummary {
+  // Routing summary fields
+  string distance_meters = 1;
+  string duration = 2;
+}
+
+message ContextualContent {
+  // Contextual content fields
+  string text = 1;
+  string language_code = 2;
 }
