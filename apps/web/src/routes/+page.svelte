@@ -69,11 +69,11 @@
 				>
 					Search restaurant by name:
 				</label>
-				<input
+				<Input
 					id="searchQuery"
 					type="text"
 					bind:value={searchQuery}
-					class="input preset-outlined-surface-200-800 w-full"
+					class="preset-outlined-surface-200-800 w-full"
 				/>
 			</div>
 
