@@ -2,8 +2,8 @@ package test
 
 import (
 	v1 "api/src/generated/google_maps/v1"
+	environment "api/src/internal/utils"
 	service "api/src/services"
-	environment "api/src/utils"
 	"context"
 	"log"
 	"os"

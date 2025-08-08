@@ -4,9 +4,9 @@ import (
 	googlemapsv1connect "api/src/generated/google_maps/v1/v1connect"
 	restaurantsv1connect "api/src/generated/restaurants/v1/v1connect"
 	usersv1connect "api/src/generated/users/v1/v1connect"
+	environment "api/src/internal/utils"
+	"api/src/internal/utils/database"
 	"api/src/services"
-	environment "api/src/utils"
-	"api/src/utils/database"
 
 	"fmt"
 	"log"

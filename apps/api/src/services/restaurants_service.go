@@ -3,7 +3,7 @@ package services
 import (
 	v1 "api/src/generated/restaurants/v1"
 	"api/src/generated/restaurants/v1/v1connect"
-	"api/src/services/models"
+	"api/src/internal/models"
 	"context"
 	"errors"
 	"fmt"
