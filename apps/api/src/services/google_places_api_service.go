@@ -6,7 +6,6 @@ import (
 	"api/src/internal/mappers"
 	"context"
 	"fmt"
-	"strings"
 
 	places "cloud.google.com/go/maps/places/apiv1"
 	placespb "cloud.google.com/go/maps/places/apiv1/placespb"
@@ -50,17 +49,7 @@ func (s *GooglePlacesAPIService) SearchRestaurants(ctx context.Context, req *con
 		IncludePureServiceAreaBusinesses: false,
 	}
 
-	var fieldMask string
-	if len(req.Msg.RequestedFields) > 0 {
-		fields := make([]string, len(req.Msg.RequestedFields))
-		for i, field := range req.Msg.RequestedFields {
-			fields[i] = "places." + field
-		}
-		fieldMask = strings.Join(fields, ",")
-	} else {
-		fieldMask = "*"
-	}
-
+	var fieldMask = mappers.BuildFieldMask(req.Msg.RequestedFields)
 	md := metadata.New(map[string]string{
 		"X-Goog-FieldMask": fieldMask,
 	})
@@ -72,7 +61,7 @@ func (s *GooglePlacesAPIService) SearchRestaurants(ctx context.Context, req *con
 		return nil, fmt.Errorf("search text failed: %v", err)
 	}
 
-	protoResp := mappers.MapSearchResponseToProto(resp)
+	protoResp := mappers.SearchTextResponseToProto(resp)
 	return connect.NewResponse(protoResp), nil
 }
 
@@ -91,22 +80,13 @@ func (s *GooglePlacesAPIService) SearchText(ctx context.Context, req *connect.Re
 		OpenNow:      req.Msg.OpenNow,
 		MinRating:    req.Msg.MinRating,
 		MaxResultCount: req.Msg.MaxResultCount,
-		PriceLevels:  mappers.MapPriceLevels(req.Msg.PriceLevels),
+		PriceLevels:  mappers.PriceLevelsToSDK(req.Msg.PriceLevels),
 		StrictTypeFiltering: req.Msg.StrictTypeFiltering,
 		IncludePureServiceAreaBusinesses: req.Msg.IncludePureServiceAreaBusinesses,
 	}
 
-	var fieldMask string
-	if len(req.Msg.RequestedFields) > 0 {
-		fields := make([]string, len(req.Msg.RequestedFields))
-		for i, field := range req.Msg.RequestedFields {
-			fields[i] = "places." + field
-		}
-		fieldMask = strings.Join(fields, ",")
-	} else {
-		fieldMask = "*"
-	}
-
+	var fieldMask = mappers.BuildFieldMask(req.Msg.RequestedFields)
+	
 	md := metadata.New(map[string]string{
 		"X-Goog-FieldMask": fieldMask,
 	})
@@ -117,7 +97,7 @@ func (s *GooglePlacesAPIService) SearchText(ctx context.Context, req *connect.Re
 		return nil, fmt.Errorf("search text failed: %v", err)
 	}
 
-	protoResp := mappers.MapSearchResponseToProto(resp)
+	protoResp := mappers.SearchTextResponseToProto(resp)
 	return connect.NewResponse(protoResp), nil
 }
 
