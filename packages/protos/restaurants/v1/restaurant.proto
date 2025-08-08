@@ -2,13 +2,60 @@ syntax = "proto3";
 
 package restaurants.v1;
 
+import "google_maps/v1/google_maps_service.proto";
+
 option go_package = "api/src/generated/restaurants/v1";
 
 message RestaurantProto {
-  string id = 1;           // UUIDv7 as string
-  string google_id = 2;    // GoogleID
-  string email = 3;        // Email
-  string name = 4;         // Name
-  int64 created_at = 5;  // Unix timestamp
-  int64 updated_at = 6;  // Unix timestamp
+  string id = 1;           
+  string email = 2;
+  string name = 3;
+  string address = 4;
+  string website_uri = 5;
+  double rating = 6;
+  int64 created_at = 7;
+  int64 updated_at = 8;
+  string review_comment = 9;
+  repeated string tags = 10;
+
+  // google related fields 
+  string google_id = 11;   
+  string google_name = 12;
+  google_maps.v1.LocalizedText google_display_name = 13;
+  string google_formatted_address = 14;
+  string google_short_formatted_address = 15;
+  double google_rating = 16;
+  string google_maps_uri = 17;
+  string google_website_uri = 18;
+  google_maps.v1.PriceLevel google_price_level = 19;
+  int32 google_user_rating_count = 20;
+  google_maps.v1.OpeningHours google_current_opening_hours = 21;
+
+  // for the icons
+  bool google_dine_in = 22;
+  bool google_curbside_pickup = 23;
+  bool google_reservable = 24;
+  bool google_servers_breakfast = 25;
+  bool google_serves_lunch = 26;
+  bool google_serves_dinner = 27;
+  bool google_serves_beer = 28;
+  bool google_serves_wine = 29;
+  bool google_serves_brunch = 30;
+  bool google_serves_vegetarian_food = 31;
+  bool google_outdoor_seating = 32;
+  bool google_live_music = 33;
+  bool google_menu_for_children = 34;
+  bool google_serves_cocktails = 35;
+  bool google_serves_dessert = 36;
+  bool google_serves_coffee = 37;
+  bool google_good_for_children = 38;
+  bool google_allows_dogs = 39;
+  bool google_restroom = 40;
+  bool google_good_for_groups = 41;
+  bool google_good_for_watching_sports = 42;
+  bool google_takeout = 43;
+
+  // AI generated
+  google_maps.v1.GenerativeSummary generative_summary = 44;
+  google_maps.v1.ReviewSummary review_summary = 45;
 }

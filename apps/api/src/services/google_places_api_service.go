@@ -33,6 +33,27 @@ func NewGooglePlacesAPIService(client *places.Client) *GooglePlacesAPIService {
 	}
 }
 
+func (s *GooglePlacesAPIService) GetPlace(ctx context.Context, req *connect.Request[v1.GetPlaceRequest]) (
+	*connect.Response[v1.Place], error) {
+		if req.Msg.Name == "" {
+			return nil, fmt.Errorf("name is required")
+		} 
+		
+		placeReq := &placespb.GetPlaceRequest{
+			Name: req.Msg.Name,
+			LanguageCode: req.Msg.LanguageCode,
+			RegionCode: req.Msg.RegionCode,
+			SessionToken: req.Msg.SessionToken,
+		}
+
+		resp, err := s.client.GetPlace(ctx, placeReq)
+		if err != nil {
+			return nil, fmt.Errorf("get place failed: %v", err)
+		}
+		protoResp := mappers.PlaceToProto(resp)
+		return connect.NewResponse(protoResp), nil
+	}
+
 func (s *GooglePlacesAPIService) SearchRestaurants(ctx context.Context, req *connect.Request[v1.SearchRestaurantsRequest]) (
 	*connect.Response[v1.SearchTextResponse], error) {
 		if req.Msg.TextQuery == "" {

@@ -7,6 +7,14 @@ option go_package = "api/src/generated/google_maps/v1";
 service GoogleMapsService {
   rpc SearchText(SearchTextRequest) returns (SearchTextResponse);
   rpc SearchRestaurants(SearchRestaurantsRequest) returns (SearchTextResponse);
+  rpc GetPlace(GetPlaceRequest) returns (Place);
+}
+
+message GetPlaceRequest {
+  string name = 1;
+  string language_code = 2;
+  string region_code = 3;
+  string session_token = 4;
 }
 
 message SearchRestaurantsRequest {
@@ -296,24 +304,10 @@ message Place {
   
   // List of places in which the current place is located.
   repeated ContainingPlace containing_places = 82;
-  
   // Indicates whether the place is a pure service area business.
   bool pure_service_area_business = 83;
-  
-  // The address descriptor of the place.
-  AddressDescriptor address_descriptor = 84;
-  
-  // The price range associated with a Place.
-  PriceRange price_range = 86;
-  
   // AI-generated summary of the place using user reviews.
   ReviewSummary review_summary = 87;
-  
-  // The summary of amenities near the EV charging station.
-  EvChargeAmenitySummary ev_charge_amenity_summary = 89;
-  
-  // A summary of points of interest near the place.
-  NeighborhoodSummary neighborhood_summary = 91;
 }
 
 enum BusinessStatus {
@@ -433,6 +427,7 @@ message EVConnector {
 message GenerativeSummary {
   // Generative summary fields
   LocalizedText text = 1;
+  LocalizedText disclosure_text = 2;
 }
 
 message ContainingPlace {
@@ -440,19 +435,10 @@ message ContainingPlace {
   string id = 2;
 }
 
-message AddressDescriptor {
-  // Address descriptor fields
-  repeated string terms = 1;
-}
-
-message PriceRange {
-  int32 price_range = 1;
-}
-
 message ReviewSummary {
   // Review summary fields
-  double average_rating = 1;
-  int32 total_review_count = 2;
+  LocalizedText text = 1;
+  LocalizedText disclosure_text = 2;
 }
 
 message EvChargeAmenitySummary {
