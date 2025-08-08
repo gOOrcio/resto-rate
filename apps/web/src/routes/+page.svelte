@@ -67,7 +67,7 @@
 					for="searchQuery"
 					class="text-surface-700 dark:text-surface-300 mb-2 block text-sm font-medium"
 				>
-					Search restauran by name:
+					Search restaurant by name:
 				</label>
 				<input
 					id="searchQuery"
