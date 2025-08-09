@@ -5,13 +5,14 @@ import (
 	"api/src/internal/ports"
 	"context"
 	"fmt"
-	"log"
 	"sort"
 	"strconv"
 	"strings"
 	"time"
 
 	"crypto/sha256"
+
+	"log/slog"
 
 	"github.com/valkey-io/valkey-go"
 	"golang.org/x/sync/singleflight"
@@ -26,7 +27,7 @@ type CachedPlacesClient struct {
 	prefix string
 }
 
-func NewCachedPlaces(inner ports.PlacesClient, kv valkey.Client, ttl time.Duration, _ *log.Logger) *CachedPlacesClient {
+func NewCachedPlaces(inner ports.PlacesClient, kv valkey.Client, ttl time.Duration) *CachedPlacesClient {
 	return &CachedPlacesClient{inner: inner, kv: kv, ttl: ttl, prefix: "gplaces:v1:"}
 }
 
@@ -35,28 +36,28 @@ var _ ports.PlacesClient = (*CachedPlacesClient)(nil)
 func (c *CachedPlacesClient) get(ctx context.Context, key string, dst proto.Message) (bool, error) {
 	r := c.kv.Do(ctx, c.kv.B().Get().Key(key).Build())
 	if err := r.Error(); err != nil {
-		log.Printf("[DEBUG] Cache get error - key: %s, error: %v", key, err)
+		slog.Debug("Cache get error", slog.String("key", key), slog.Any("error", err))
 		return false, nil
 	}
 	raw, err := r.AsBytes()
 	if err != nil || len(raw) == 0 {
 		if err != nil {
-			log.Printf("[DEBUG] Cache value decode error - key: %s, error: %v", key, err)
+			slog.Debug("Cache value decode error", slog.String("key", key), slog.Any("error", err))
 		}
 		return false, nil
 	}
 	if err := proto.Unmarshal(raw, dst); err != nil {
-		log.Printf("[DEBUG] Cache proto unmarshal error - key: %s, error: %v", key, err)
+		slog.Debug("Cache proto unmarshal error", slog.String("key", key), slog.Any("error", err))
 		return false, nil
 	}
-	log.Printf("[DEBUG] Cache hit - key: %s", key)
+	slog.Debug("Cache hit", slog.String("key", key))
 	return true, nil
 }
 
 func (c *CachedPlacesClient) set(ctx context.Context, key string, msg proto.Message) {
 	raw, err := proto.MarshalOptions{Deterministic: true}.Marshal(msg)
 	if err != nil {
-		log.Printf("[DEBUG] Cache marshal error - key: %s, error: %v", key, err)
+		slog.Debug("Cache marshal error", slog.String("key", key), slog.Any("error", err))
 		return
 	}
 
@@ -65,19 +66,19 @@ func (c *CachedPlacesClient) set(ctx context.Context, key string, msg proto.Mess
 			Key(key).Value(string(raw)).
 			Ex(c.ttl).
 			Build()).Error(); err != nil {
-			log.Printf("[DEBUG] Cache set error - key: %s, error: %v", key, err)
+			slog.Debug("Cache set error", slog.String("key", key), slog.Any("error", err))
 			return
 		}
 	} else {
 		if err := c.kv.Do(ctx, c.kv.B().Set().
 			Key(key).Value(string(raw)).
 			Build()).Error(); err != nil {
-			log.Printf("[DEBUG] Cache set error - key: %s, error: %v", key, err)
+			slog.Debug("Cache set error", slog.String("key", key), slog.Any("error", err))
 			return
 		}
 	}
 
-	log.Printf("[DEBUG] Cache set - key: %s", key)
+	slog.Debug("Cache set", slog.String("key", key))
 }
 
 func (c *CachedPlacesClient) cachedFetchPlace(ctx context.Context, key string, fetchFn func() (*v1.Place, error)) (*v1.Place, error) {

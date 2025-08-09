@@ -7,7 +7,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"log"
+	"log/slog"
 
 	"gorm.io/gorm"
 
@@ -19,6 +19,10 @@ type RestaurantsService struct {
 	DB *gorm.DB
 }
 
+func NewRestaurantsService(db *gorm.DB) *RestaurantsService {
+	return &RestaurantsService{DB: db}
+}
+
 func (s *RestaurantsService) CreateRestaurant(
 	ctx context.Context,
 	req *connect.Request[v1.CreateRestaurantRequest],
@@ -28,11 +32,11 @@ func (s *RestaurantsService) CreateRestaurant(
 	}
 
 	if req.Msg.GoogleId == "" {
-		log.Printf("Note: Google ID is not provided for restaurant '%s'. Proceeding without it.", req.Msg.Name)
+		slog.Debug("Google ID is not provided for restaurant", slog.String("name", req.Msg.Name))
 	}
 
 	if req.Msg.Email == "" {
-		log.Printf("Note: Email is not provided for restaurant '%s'. Proceeding without it.", req.Msg.Name)
+		slog.Debug("Email is not provided for restaurant", slog.String("name", req.Msg.Name))
 	}
 	restaurant := &models.Restaurant{
 		GoogleID: req.Msg.GoogleId,
@@ -82,7 +86,7 @@ func (s *RestaurantsService) UpdateRestaurant(
 	ctx context.Context,
 	req *connect.Request[v1.UpdateRestaurantRequest],
 ) (*connect.Response[v1.UpdateRestaurantResponse], error) {
-	
+
 	restaurant, err := s.findRestaurantByIDWithContext(ctx, req.Msg.Id)
 	if err != nil {
 		if ctx.Err() != nil {

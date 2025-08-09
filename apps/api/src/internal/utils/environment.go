@@ -1,7 +1,7 @@
 package utils
 
 import (
-	"log"
+	"log/slog"
 	"os"
 
 	"github.com/joho/godotenv"
@@ -22,14 +22,14 @@ func MustLoadEnvironmentVariables() {
 		}
 
 		if err := godotenv.Load(envFile); err == nil {
-			log.Printf("Environment variables loaded from: %s", envFile)
-			log.Println("ENV:", os.Getenv("ENV"))
+			slog.Info("Environment variables loaded", slog.String("file", envFile))
+			slog.Debug("ENV", slog.String("env", os.Getenv("ENV")))
 			return
 		}
 	}
 
 	// If no .env file found, log a warning but don't fail
 	// This allows the application to run with environment variables set via other means
-	log.Println("Warning: No .env file found. Make sure environment variables are set via other means (e.g., system environment, Docker, etc.)")
-	log.Println("ENV:", os.Getenv("ENV"))
+	slog.Warn("No .env file found. Make sure environment variables are set via other means (e.g., system environment, Docker, etc.)")
+	slog.Debug("ENV", slog.String("env", os.Getenv("ENV")))
 }

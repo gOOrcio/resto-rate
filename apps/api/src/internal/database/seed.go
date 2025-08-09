@@ -2,13 +2,15 @@ package database
 
 import (
 	"api/src/internal/models"
-	"log"
+	"log/slog"
+	"os"
+	"strings"
 
 	"gorm.io/gorm"
 )
 
 func CreateSchema(db *gorm.DB) error {
-	log.Println("Creating database schema...")
+	slog.Info("Creating database schema...")
 
 	if err := db.AutoMigrate(&models.Restaurant{}); err != nil {
 		return err
@@ -18,7 +20,7 @@ func CreateSchema(db *gorm.DB) error {
 		return err
 	}
 
-	log.Println("Database schema created successfully")
+	slog.Info("Database schema created successfully")
 	return nil
 }
 
@@ -29,7 +31,7 @@ func seedRestaurants(db *gorm.DB) error {
 	}
 
 	if count == 0 {
-		log.Println("Seeding restaurants...")
+		slog.Info("Seeding restaurants...")
 		seedRestaurants := []models.Restaurant{
 			{GoogleID: "g1", Email: "a@b.com", Name: "Testaurant"},
 			{GoogleID: "g2", Email: "c@d.com", Name: "Food Place"},
@@ -37,9 +39,9 @@ func seedRestaurants(db *gorm.DB) error {
 		if err := db.Create(&seedRestaurants).Error; err != nil {
 			return err
 		}
-		log.Println("Restaurants seeded successfully")
+		slog.Info("Restaurants seeded successfully")
 	} else {
-		log.Println("Restaurants already present, skipping seed")
+		slog.Info("Restaurants already present, skipping seed")
 	}
 	return nil
 }
@@ -51,7 +53,7 @@ func seedUsers(db *gorm.DB) error {
 	}
 
 	if count == 0 {
-		log.Println("Seeding users...")
+		slog.Info("Seeding users...")
 		seedUsers := []models.User{
 			{GoogleId: "1", Email: "user1@example.com", Name: "User One", Username: "username-a", IsAdmin: true},
 			{GoogleId: "2", Email: "user2@example.com", Name: "User Two", Username: "username-b", IsAdmin: false},
@@ -59,20 +61,23 @@ func seedUsers(db *gorm.DB) error {
 		if err := db.Create(&seedUsers).Error; err != nil {
 			return err
 		}
-		log.Println("Users seeded successfully")
+		slog.Info("Users seeded successfully")
 	} else {
-		log.Println("Users already present, skipping seed")
+		slog.Info("Users already present, skipping seed")
 	}
 	return nil
 }
 
 func SeedDatabase(db *gorm.DB) error {
-	if err := seedRestaurants(db); err != nil {
-		return err
+	if os.Getenv("ENV") == "dev" && strings.EqualFold(os.Getenv("SEED"), "true") {
+		slog.Info("Development environment detected with SEED=true, seeding database...")
+		if err := seedRestaurants(db); err != nil {
+			return err
+		}
+		if err := seedUsers(db); err != nil {
+			return err
+		}
+		slog.Info("Database seeding completed")
 	}
-	if err := seedUsers(db); err != nil {
-		return err
-	}
-	log.Println("Database seeding completed")
 	return nil
 }

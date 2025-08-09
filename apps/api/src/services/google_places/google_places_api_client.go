@@ -7,8 +7,10 @@ import (
 	"context"
 	"fmt"
 
+	"log/slog"
+
 	places "cloud.google.com/go/maps/places/apiv1"
-	placespb "cloud.google.com/go/maps/places/apiv1/placespb"
+	"cloud.google.com/go/maps/places/apiv1/placespb"
 	"google.golang.org/grpc/metadata"
 )
 
@@ -28,6 +30,7 @@ var _ ports.PlacesClient = (*DirectPlacesClient)(nil)
 
 func (s *DirectPlacesClient) GetPlace(ctx context.Context, req *v1.GetPlaceRequest) (*v1.Place, error) {
 	if req.Name == "" {
+		slog.Debug("GetPlace: name is required")
 		return nil, fmt.Errorf("name is required")
 	}
 
@@ -43,6 +46,7 @@ func (s *DirectPlacesClient) GetPlace(ctx context.Context, req *v1.GetPlaceReque
 
 	resp, err := s.gapic.GetPlace(ctx, pbReq)
 	if err != nil {
+		slog.Debug("GetPlace: get place failed", slog.Any("error", err))
 		return nil, fmt.Errorf("get place failed: %w", err)
 	}
 	return mappers.PlaceToProto(resp), nil
@@ -50,6 +54,7 @@ func (s *DirectPlacesClient) GetPlace(ctx context.Context, req *v1.GetPlaceReque
 
 func (s *DirectPlacesClient) GetRestaurantDetails(ctx context.Context, req *v1.GetRestaurantDetailsRequest) (*v1.Place, error) {
 	if req.Name == "" {
+		slog.Debug("GetRestaurantDetails: name is required")
 		return nil, fmt.Errorf("name is required")
 	}
 
@@ -65,6 +70,7 @@ func (s *DirectPlacesClient) GetRestaurantDetails(ctx context.Context, req *v1.G
 
 	resp, err := s.gapic.GetPlace(ctx, pbReq)
 	if err != nil {
+		slog.Debug("GetRestaurantDetails: get place failed", slog.Any("error", err))
 		return nil, fmt.Errorf("get place failed: %w", err)
 	}
 	return mappers.PlaceToProto(resp), nil
