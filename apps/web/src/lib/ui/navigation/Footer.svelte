@@ -11,7 +11,7 @@
 	}
 </script>
 
-<footer class="bg-primary-900 text-primary-contrast-900 mt-10">
+<footer class="bg-primary-400 text-primary-contrast-900 mt-10">
 	<div class="mx-auto grid max-w-6xl gap-8 px-4 py-8 sm:grid-cols-3">
 		<div>
 			<h2 class="text-primary-contrast-900 text-2xl font-bold">Resto‑Rate</h2>

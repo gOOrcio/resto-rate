@@ -5,7 +5,7 @@ import (
 
 	v1 "api/src/generated/google_maps/v1"
 
-	placespb "cloud.google.com/go/maps/places/apiv1/placespb"
+	"cloud.google.com/go/maps/places/apiv1/placespb"
 )
 
 func boolPtr(b *bool) bool {
@@ -102,6 +102,29 @@ func SearchTextResponseToProto(resp *placespb.SearchTextResponse) *v1.SearchText
 		RoutingSummaries:   routingSummaries,
 		ContextualContents: contextualContents,
 	}
+}
+
+func AutocompletePlacesResponseToProto(resp *placespb.AutocompletePlacesResponse) *v1.AutocompletePlacesResponse {
+	if resp == nil {
+		return nil
+	}
+	result := &v1.AutocompletePlacesResponse{Suggestions: suggestionsToProto(resp.Suggestions)}
+	return result
+}
+
+func suggestionsToProto(suggestions []*placespb.AutocompletePlacesResponse_Suggestion) []*v1.Suggestion {
+	if len(suggestions) == 0 {
+		return nil
+	}
+
+	result := make([]*v1.Suggestion, 0, len(suggestions))
+	for _, suggestion := range suggestions {
+		if suggestion == nil {
+			continue
+		}
+		result = append(result, &v1.Suggestion{})
+	}
+	return result
 }
 
 func PlaceToProto(place *placespb.Place) *v1.Place {

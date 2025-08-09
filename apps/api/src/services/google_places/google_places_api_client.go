@@ -28,6 +28,28 @@ func NewDirectPlacesClient(gapic *places.Client) *DirectPlacesClient {
 
 var _ ports.PlacesClient = (*DirectPlacesClient)(nil)
 
+func (s *DirectPlacesClient) Autocomplete(ctx context.Context, req *v1.AutocompletePlacesRequest) (*v1.AutocompletePlacesResponse, error) {
+	if req.Input == "" {
+		return nil, fmt.Errorf("input is required")
+	}
+
+	autoReq := &placespb.AutocompletePlacesRequest{
+		Input:                   req.Input,
+		IncludedPrimaryTypes:    []string{"restaurant"},
+		IncludedRegionCodes:     req.IncludedRegionCodes,
+		LanguageCode:            req.LanguageCode,
+		IncludeQueryPredictions: true,
+		SessionToken:            req.SessionToken,
+	}
+
+	resp, err := s.gapic.AutocompletePlaces(ctx, autoReq)
+	if err != nil {
+		slog.Debug("GetPlace: get place failed", slog.Any("error", err))
+		return nil, fmt.Errorf("get place failed: %w", err)
+	}
+	return mappers.AutocompletePlacesResponseToProto(resp), nil
+}
+
 func (s *DirectPlacesClient) GetPlace(ctx context.Context, req *v1.GetPlaceRequest) (*v1.Place, error) {
 	if req.Name == "" {
 		slog.Debug("GetPlace: name is required")
