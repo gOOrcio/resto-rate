@@ -146,7 +146,6 @@ func PlaceToProto(place *placespb.Place) *v1.Place {
 		UtcOffsetMinutes:            int32Ptr(place.UtcOffsetMinutes),
 	}
 
-	// Handle localized text fields
 	if place.DisplayName != nil {
 		result.DisplayName = &v1.LocalizedText{
 			Text:         place.DisplayName.Text,

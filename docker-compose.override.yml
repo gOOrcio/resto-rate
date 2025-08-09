@@ -3,3 +3,9 @@ services:
     volumes:
       - ./pgdata:/var/lib/postgresql/data
     user: "${UID:-0}:${GID:-0}"
+
+  valkey:
+    volumes:
+      - valkeydata:/data
+      - ./valkey.conf:/etc/valkey/valkey.conf:ro
+    user: "${UID:-0}:${GID:-0}"

@@ -2,7 +2,6 @@ package adapters
 
 import (
 	gmv1 "api/src/generated/google_maps/v1"
-	"api/src/services"
 	gm "api/src/services"
 	"context"
 
@@ -13,7 +12,7 @@ type PlacesSvcAdapter struct {
 	svc *gm.GooglePlacesAPIService
 }
 
-func NewPlacesSvcAdapter(s *services.GooglePlacesAPIService) *PlacesSvcAdapter {
+func NewPlacesSvcAdapter(s *gm.GooglePlacesAPIService) *PlacesSvcAdapter {
 	return &PlacesSvcAdapter{svc: s}
 }
 

@@ -4,9 +4,12 @@ import (
 	googlemapsv1connect "api/src/generated/google_maps/v1/v1connect"
 	restaurantsv1connect "api/src/generated/restaurants/v1/v1connect"
 	usersv1connect "api/src/generated/users/v1/v1connect"
+	cache "api/src/internal/cache"
+	"api/src/internal/database"
 	environment "api/src/internal/utils"
-	"api/src/internal/utils/database"
 	"api/src/services"
+
+	"github.com/valkey-io/valkey-go"
 
 	"fmt"
 	"log"
@@ -69,6 +72,18 @@ func mustConnectToDatabase() *gorm.DB {
 
 	log.Println("Database connected")
 	return db
+}
+
+func mustConnectCache() valkey.Client {
+	uri := os.Getenv("VALKEY_URI")
+	username := "default" // for dev only!
+	password := os.Getenv("VALKEY_PASSWORD")
+	client, err := cache.NewValkey(uri, username, password)
+	if err != nil {
+		log.Fatalf("Failed to connect to cache: %v", err)
+	}
+	log.Println("Cache connected")
+	return client
 }
 
 func initializeServiceHandlers(db *gorm.DB) []ServiceRegistration {

@@ -146,7 +146,7 @@ func (s *GooglePlacesAPIService) SearchText(ctx context.Context, req *connect.Re
 	md := metadata.New(map[string]string{
 		"X-Goog-FieldMask": fieldMask,
 	})
-	
+
 	ctxWithMetadata := metadata.NewOutgoingContext(ctx, md)
 
 	resp, err := s.client.SearchText(ctxWithMetadata, searchReq)
@@ -166,6 +166,7 @@ func predefinedRestaurantDetails() []string {
     		"formatted_address",
     		"short_formatted_address",
     		"rating",
+			"business_status",
     		"google_maps_uri",
     		"website_uri",
     		"price_level",
@@ -195,6 +196,7 @@ func predefinedRestaurantDetails() []string {
     		"takeout",
     		"generative_summary",
     		"review_summary",
+			"editorial_summary",
 		}
 }
 
