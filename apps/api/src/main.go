@@ -18,7 +18,10 @@ import (
 	"net/http"
 	"os"
 
+	"connectrpc.com/connect"
 	"connectrpc.com/grpcreflect"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/valkey-io/valkey-go"
 	"golang.org/x/net/http2"
 	"golang.org/x/net/http2/h2c"
@@ -53,6 +56,12 @@ func main() {
 
 	optionallySetupGRPCReflection(mux)
 	startServer(mux, getAPIPort())
+}
+
+func connectPrometheusInterceptor() connect.Interceptor {
+	reg := prometheus.DefaultRegisterer
+	rpcm := utils.NewRPCMetrics(reg)
+	return rpcm.ConnectInterceptor()
 }
 
 func startServer(mux *http.ServeMux, apiPort string) {
@@ -92,6 +101,7 @@ func mustConnectToDatabase() *gorm.DB {
 }
 
 func mustConnectCache() valkey.Client {
+	slog.Info("Connecting to cache...")
 	uri := os.Getenv("VALKEY_URI")
 	username := "default" // for dev only!
 	password := os.Getenv("VALKEY_PASSWORD")
@@ -105,15 +115,17 @@ func mustConnectCache() valkey.Client {
 }
 
 func initializeServiceHandlers(db *gorm.DB) []ServiceRegistration {
+	prometheusInterceptor := connectPrometheusInterceptor()
+
 	return []ServiceRegistration{
 		func() ServiceRegistration {
 			svc := services.NewUserService(db)
-			path, handler := usersv1connect.NewUsersServiceHandler(svc)
+			path, handler := usersv1connect.NewUsersServiceHandler(svc, connect.WithInterceptors(prometheusInterceptor))
 			return ServiceRegistration{Path: path, Handler: handler}
 		}(),
 		func() ServiceRegistration {
 			svc := services.NewRestaurantsService(db)
-			path, handler := restaurantsv1connect.NewRestaurantsServiceHandler(svc)
+			path, handler := restaurantsv1connect.NewRestaurantsServiceHandler(svc, connect.WithInterceptors(prometheusInterceptor))
 			return ServiceRegistration{Path: path, Handler: handler}
 		}(),
 		func() ServiceRegistration {
@@ -128,18 +140,23 @@ func initializeServiceHandlers(db *gorm.DB) []ServiceRegistration {
 			cached := google_places.NewCachedPlaces(base, kv, ttl)
 
 			svc := google_places.NewGooglePlacesAPIService(cached)
-			path, h := googlemapsv1connect.NewGoogleMapsServiceHandler(svc)
+			path, h := googlemapsv1connect.NewGoogleMapsServiceHandler(svc, connect.WithInterceptors(prometheusInterceptor))
 			return ServiceRegistration{Path: path, Handler: h}
 		}(),
 	}
 }
 
 func setupHTTPHandlers(registrations []ServiceRegistration) *http.ServeMux {
+	slog.Info("Registering services...")
+	metricsPath := "/metrics"
+
 	mux := http.NewServeMux()
 	for _, reg := range registrations {
 		mux.Handle(reg.Path, corsMiddleware(reg.Handler))
 		slog.Info("Service available", slog.String("path", reg.Path))
 	}
+	mux.Handle(metricsPath, promhttp.Handler())
+	slog.Info("Metrics available", slog.String("path", metricsPath))
 	return mux
 }
 
