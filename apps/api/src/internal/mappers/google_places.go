@@ -31,10 +31,10 @@ func stringPtr(s *string) string {
 
 // Enum maps for type safety
 var businessStatusMap = map[placespb.Place_BusinessStatus]v1.BusinessStatus{
-	placespb.Place_BUSINESS_STATUS_UNSPECIFIED:        v1.BusinessStatus_BUSINESS_STATUS_UNSPECIFIED,
-	placespb.Place_OPERATIONAL:                        v1.BusinessStatus_BUSINESS_STATUS_OPERATIONAL,
-	placespb.Place_CLOSED_TEMPORARILY:                 v1.BusinessStatus_BUSINESS_STATUS_CLOSED_TEMPORARILY,
-	placespb.Place_CLOSED_PERMANENTLY:                 v1.BusinessStatus_BUSINESS_STATUS_CLOSED_PERMANENTLY,
+	placespb.Place_BUSINESS_STATUS_UNSPECIFIED: v1.BusinessStatus_BUSINESS_STATUS_UNSPECIFIED,
+	placespb.Place_OPERATIONAL:                 v1.BusinessStatus_BUSINESS_STATUS_OPERATIONAL,
+	placespb.Place_CLOSED_TEMPORARILY:          v1.BusinessStatus_BUSINESS_STATUS_CLOSED_TEMPORARILY,
+	placespb.Place_CLOSED_PERMANENTLY:          v1.BusinessStatus_BUSINESS_STATUS_CLOSED_PERMANENTLY,
 }
 
 var priceLevelMap = map[placespb.PriceLevel]v1.PriceLevel{
@@ -46,11 +46,20 @@ var priceLevelMap = map[placespb.PriceLevel]v1.PriceLevel{
 	placespb.PriceLevel_PRICE_LEVEL_VERY_EXPENSIVE: v1.PriceLevel_PRICE_LEVEL_VERY_EXPENSIVE,
 }
 
+var priceLevelReverseMap = map[v1.PriceLevel]placespb.PriceLevel{
+	v1.PriceLevel_PRICE_LEVEL_UNSPECIFIED:    placespb.PriceLevel_PRICE_LEVEL_UNSPECIFIED,
+	v1.PriceLevel_PRICE_LEVEL_FREE:           placespb.PriceLevel_PRICE_LEVEL_FREE,
+	v1.PriceLevel_PRICE_LEVEL_INEXPENSIVE:    placespb.PriceLevel_PRICE_LEVEL_INEXPENSIVE,
+	v1.PriceLevel_PRICE_LEVEL_MODERATE:       placespb.PriceLevel_PRICE_LEVEL_MODERATE,
+	v1.PriceLevel_PRICE_LEVEL_EXPENSIVE:      placespb.PriceLevel_PRICE_LEVEL_EXPENSIVE,
+	v1.PriceLevel_PRICE_LEVEL_VERY_EXPENSIVE: placespb.PriceLevel_PRICE_LEVEL_VERY_EXPENSIVE,
+}
+
 func BuildFieldMask(requestedFields []string) string {
 	if len(requestedFields) == 0 {
 		return "*"
 	}
-	
+
 	fields := make([]string, len(requestedFields))
 	for i, field := range requestedFields {
 		fields[i] = "places." + field
@@ -61,11 +70,10 @@ func BuildFieldMask(requestedFields []string) string {
 func PriceLevelsToSDK(levels []v1.PriceLevel) []placespb.PriceLevel {
 	result := make([]placespb.PriceLevel, len(levels))
 	for i, level := range levels {
-		// Use enum map for safety
-		if sdkLevel, exists := priceLevelMap[placespb.PriceLevel(level)]; exists {
-			result[i] = placespb.PriceLevel(sdkLevel)
+		if sdkLevel, exists := priceLevelReverseMap[level]; exists {
+			result[i] = sdkLevel
 		} else {
-			// Fallback to direct conversion for unknown values
+			// Fallback for unknown values
 			result[i] = placespb.PriceLevel(level)
 		}
 	}
@@ -85,13 +93,13 @@ func SearchTextResponseToProto(resp *placespb.SearchTextResponse) *v1.SearchText
 
 	// TODO: Implement routing summaries mapping when needed
 	routingSummaries := make([]*v1.RoutingSummary, 0)
-	
+
 	// TODO: Implement contextual contents mapping when needed
 	contextualContents := make([]*v1.ContextualContent, 0)
 
 	return &v1.SearchTextResponse{
-		Places:            places,
-		RoutingSummaries:  routingSummaries,
+		Places:             places,
+		RoutingSummaries:   routingSummaries,
 		ContextualContents: contextualContents,
 	}
 }
@@ -102,48 +110,48 @@ func PlaceToProto(place *placespb.Place) *v1.Place {
 	}
 
 	result := &v1.Place{
-		Name:                        place.Name,
-		Id:                          place.Id,
-		Types:                       place.Types,
-		PrimaryType:                 place.PrimaryType,
-		NationalPhoneNumber:         place.NationalPhoneNumber,
-		InternationalPhoneNumber:    place.InternationalPhoneNumber,
-		FormattedAddress:            place.FormattedAddress,
-		ShortFormattedAddress:       place.ShortFormattedAddress,
-		Rating:                      place.Rating,
-		GoogleMapsUri:               place.GoogleMapsUri,
-		WebsiteUri:                  place.WebsiteUri,
-		AdrFormatAddress:            place.AdrFormatAddress,
-		BusinessStatus:              mapBusinessStatus(place.BusinessStatus),
-		PriceLevel:                  mapPriceLevel(place.PriceLevel),
-		IconMaskBaseUri:             place.IconMaskBaseUri,
-		IconBackgroundColor:         place.IconBackgroundColor,
-		UserRatingCount:             int32Ptr(place.UserRatingCount),
-		Takeout:                     boolPtr(place.Takeout),
-		Delivery:                    boolPtr(place.Delivery),
-		DineIn:                      boolPtr(place.DineIn),
-		CurbsidePickup:              boolPtr(place.CurbsidePickup),
-		Reservable:                  boolPtr(place.Reservable),
-		ServesBreakfast:             boolPtr(place.ServesBreakfast),
-		ServesLunch:                 boolPtr(place.ServesLunch),
-		ServesDinner:                boolPtr(place.ServesDinner),
-		ServesBeer:                  boolPtr(place.ServesBeer),
-		ServesWine:                  boolPtr(place.ServesWine),
-		ServesBrunch:                boolPtr(place.ServesBrunch),
-		ServesVegetarianFood:        boolPtr(place.ServesVegetarianFood),
-		OutdoorSeating:              boolPtr(place.OutdoorSeating),
-		LiveMusic:                   boolPtr(place.LiveMusic),
-		MenuForChildren:             boolPtr(place.MenuForChildren),
-		ServesCocktails:             boolPtr(place.ServesCocktails),
-		ServesDessert:               boolPtr(place.ServesDessert),
-		ServesCoffee:                boolPtr(place.ServesCoffee),
-		GoodForChildren:             boolPtr(place.GoodForChildren),
-		AllowsDogs:                  boolPtr(place.AllowsDogs),
-		Restroom:                    boolPtr(place.Restroom),
-		GoodForGroups:               boolPtr(place.GoodForGroups),
-		GoodForWatchingSports:       boolPtr(place.GoodForWatchingSports),
-		PureServiceAreaBusiness:     boolPtr(place.PureServiceAreaBusiness),
-		UtcOffsetMinutes:            int32Ptr(place.UtcOffsetMinutes),
+		Name:                     place.Name,
+		Id:                       place.Id,
+		Types:                    place.Types,
+		PrimaryType:              place.PrimaryType,
+		NationalPhoneNumber:      place.NationalPhoneNumber,
+		InternationalPhoneNumber: place.InternationalPhoneNumber,
+		FormattedAddress:         place.FormattedAddress,
+		ShortFormattedAddress:    place.ShortFormattedAddress,
+		Rating:                   place.Rating,
+		GoogleMapsUri:            place.GoogleMapsUri,
+		WebsiteUri:               place.WebsiteUri,
+		AdrFormatAddress:         place.AdrFormatAddress,
+		BusinessStatus:           mapBusinessStatus(place.BusinessStatus),
+		PriceLevel:               mapPriceLevel(place.PriceLevel),
+		IconMaskBaseUri:          place.IconMaskBaseUri,
+		IconBackgroundColor:      place.IconBackgroundColor,
+		UserRatingCount:          int32Ptr(place.UserRatingCount),
+		Takeout:                  boolPtr(place.Takeout),
+		Delivery:                 boolPtr(place.Delivery),
+		DineIn:                   boolPtr(place.DineIn),
+		CurbsidePickup:           boolPtr(place.CurbsidePickup),
+		Reservable:               boolPtr(place.Reservable),
+		ServesBreakfast:          boolPtr(place.ServesBreakfast),
+		ServesLunch:              boolPtr(place.ServesLunch),
+		ServesDinner:             boolPtr(place.ServesDinner),
+		ServesBeer:               boolPtr(place.ServesBeer),
+		ServesWine:               boolPtr(place.ServesWine),
+		ServesBrunch:             boolPtr(place.ServesBrunch),
+		ServesVegetarianFood:     boolPtr(place.ServesVegetarianFood),
+		OutdoorSeating:           boolPtr(place.OutdoorSeating),
+		LiveMusic:                boolPtr(place.LiveMusic),
+		MenuForChildren:          boolPtr(place.MenuForChildren),
+		ServesCocktails:          boolPtr(place.ServesCocktails),
+		ServesDessert:            boolPtr(place.ServesDessert),
+		ServesCoffee:             boolPtr(place.ServesCoffee),
+		GoodForChildren:          boolPtr(place.GoodForChildren),
+		AllowsDogs:               boolPtr(place.AllowsDogs),
+		Restroom:                 boolPtr(place.Restroom),
+		GoodForGroups:            boolPtr(place.GoodForGroups),
+		GoodForWatchingSports:    boolPtr(place.GoodForWatchingSports),
+		PureServiceAreaBusiness:  boolPtr(place.PureServiceAreaBusiness),
+		UtcOffsetMinutes:         int32Ptr(place.UtcOffsetMinutes),
 	}
 
 	if place.DisplayName != nil {
@@ -217,9 +225,9 @@ func photosToProto(photos []*placespb.Photo) []*v1.Photo {
 				authorAttributions = append(authorAttributions, attr.Uri)
 			}
 		}
-		
+
 		result = append(result, &v1.Photo{
-			Name:                photo.Name,
+			Name:               photo.Name,
 			WidthPx:            photo.WidthPx,
 			HeightPx:           photo.HeightPx,
 			AuthorAttributions: authorAttributions,
@@ -244,4 +252,4 @@ func attributionsToProto(attributions []*placespb.Place_Attribution) []*v1.Attri
 		})
 	}
 	return result
-} 
+}

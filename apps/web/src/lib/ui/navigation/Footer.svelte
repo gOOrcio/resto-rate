@@ -2,7 +2,7 @@
 	import XIcon from '$lib/ui/icons/XIcon.svelte';
 	import Instagram from '@lucide/svelte/icons/instagram';
 	import Slack from '@lucide/svelte/icons/slack';
-	import { Input, Button } from '$lib/ui/components';
+	import { InputSv, ButtonSv } from '$lib/ui/components';
 
 	let iconSize = 26;
 
@@ -61,7 +61,7 @@
 		<div>
 			<h3 class="text-primary-contrast-900 mb-3 text-lg font-semibold">Stay Updated</h3>
 			<form class="flex space-x-2">
-				<Input
+				<InputSv
 					type="email"
 					placeholder="Your email"
 					variant="outlined"
@@ -70,10 +70,10 @@
 					bgColor="bg-surface-50 dark:bg-surface-950"
 					class="text-primary-900 dark:text-primary-100 flex-1"
 				/>
-				<Button variant="filled" color="primary" size="md">Subscribe</Button>
+				<ButtonSv variant="filled" color="primary" size="md">Subscribe</ButtonSv>
 			</form>
 			<div class="mt-4 flex space-x-4">
-				<Button
+				<ButtonSv
 					variant="tonal"
 					color="primary"
 					size="md"
@@ -81,8 +81,8 @@
 					onclick={() => openUrl('https://x.com')}
 				>
 					<XIcon size={iconSize} />
-				</Button>
-				<Button
+				</ButtonSv>
+				<ButtonSv
 					variant="tonal"
 					color="primary"
 					size="md"
@@ -90,8 +90,8 @@
 					onclick={() => openUrl('https://instagram.com')}
 				>
 					<Instagram size={iconSize} />
-				</Button>
-				<Button
+				</ButtonSv>
+				<ButtonSv
 					variant="tonal"
 					color="primary"
 					size="md"
@@ -99,7 +99,7 @@
 					onclick={() => openUrl('https://slack.com')}
 				>
 					<Slack size={iconSize} />
-				</Button>
+				</ButtonSv>
 			</div>
 		</div>
 	</div>

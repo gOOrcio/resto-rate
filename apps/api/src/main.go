@@ -182,7 +182,6 @@ func getAPIPort() string {
 
 func envLogLevel() slog.Level {
 	raw := strings.TrimSpace(os.Getenv("LOG_LEVEL"))
-	println(raw)
 	if raw == "" {
 		slog.Info("LOG_LEVEL defaulting to INFO")
 		return slog.LevelInfo

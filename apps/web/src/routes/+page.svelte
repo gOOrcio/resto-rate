@@ -2,15 +2,14 @@
 	import clients from '$lib/client/client';
 	import type { RestaurantProto } from '$lib/client/generated/restaurants/v1/restaurant_pb';
 	import type { Place } from '$lib/client/generated/google_maps/v1/google_maps_service_pb';
-	import { ProgressRing } from '@skeletonlabs/skeleton-svelte';
-	import { Button, Card, Input, Badge } from '$lib/ui/components';
-	import { onMount, onDestroy } from 'svelte';
+	import { ButtonSv, CardSv, InputSv, BadgeSv } from '$lib/ui/components';
+	import { onDestroy } from 'svelte';
 
 	let restaurants: RestaurantProto[] = [];
 	let places: Place[] = [];
 	let loading = false;
 	let showLoader = false;
-	let loaderTimer: NodeJS.Timeout;
+	let loaderTimer: number;
 	let error = '';
 	let searchQuery = '';
 
@@ -61,7 +60,7 @@
 			Google Places API Search
 		</h2>
 
-		<Card variant="outlined" color="surface" class="space-y-4">
+		<CardSv variant="outlined" color="surface" class="space-y-4">
 			<div>
 				<label
 					for="searchQuery"
@@ -69,7 +68,7 @@
 				>
 					Search restaurant by name:
 				</label>
-				<Input
+				<InputSv
 					id="searchQuery"
 					type="text"
 					bind:value={searchQuery}
@@ -77,7 +76,7 @@
 				/>
 			</div>
 
-			<Button
+			<ButtonSv
 				onclick={searchPlaces}
 				disabled={loading}
 				variant="filled"
@@ -86,8 +85,8 @@
 				class="w-full sm:w-auto"
 			>
 				{loading ? 'Searching...' : 'Search Places'}
-			</Button>
-		</Card>
+			</ButtonSv>
+		</CardSv>
 
 		{#if places.length > 0}
 			<div class="space-y-4">
@@ -96,15 +95,15 @@
 				</h3>
 				<div class="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
 					{#each places as place}
-						<Card variant="outlined" color="surface" class="space-y-3">
+						<CardSv variant="outlined" color="surface" class="space-y-3">
 							<h4 class="text-primary-800 dark:text-primary-200 font-bold">
 								{place.displayName?.text || place.name}
 							</h4>
 							{#if place.rating}
 								<div>
-									<Badge variant="filled" color="primary" size="sm">
+									<BadgeSv variant="filled" color="primary" size="sm">
 										Rating: {place.rating}/5
-									</Badge>
+									</BadgeSv>
 								</div>
 							{/if}
 							{#if place.formattedAddress}
@@ -113,7 +112,7 @@
 									{place.formattedAddress}
 								</p>
 							{/if}
-						</Card>
+						</CardSv>
 					{/each}
 				</div>
 			</div>
