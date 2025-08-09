@@ -46,7 +46,42 @@ func (s *GooglePlacesAPIService) GetPlace(ctx context.Context, req *connect.Requ
 			SessionToken: req.Msg.SessionToken,
 		}
 
-		resp, err := s.client.GetPlace(ctx, placeReq)
+		var fieldMask = mappers.BuildFieldMask(req.Msg.RequestedFields)
+		md := metadata.New(map[string]string{
+			"X-Goog-FieldMask": fieldMask,
+		})
+
+		ctxWithMetadata := metadata.NewOutgoingContext(ctx, md)
+
+		resp, err := s.client.GetPlace(ctxWithMetadata, placeReq)
+		if err != nil {
+			return nil, fmt.Errorf("get place failed: %v", err)
+		}
+		protoResp := mappers.PlaceToProto(resp)
+		return connect.NewResponse(protoResp), nil
+	}
+
+func (s *GooglePlacesAPIService) GetRestaurantDetails(ctx context.Context, req *connect.Request[v1.GetRestaurantDetailsRequest]) (
+	*connect.Response[v1.Place], error) {
+		if req.Msg.Name == "" {
+			return nil, fmt.Errorf("name is required")
+		} 
+		
+		placeReq := &placespb.GetPlaceRequest{
+			Name: req.Msg.Name,
+			LanguageCode: req.Msg.LanguageCode,
+			RegionCode: req.Msg.RegionCode,
+			SessionToken: req.Msg.SessionToken,
+		}
+
+		var fieldMask = mappers.BuildFieldMask(predefinedRestaurantDetails())
+		md := metadata.New(map[string]string{
+			"X-Goog-FieldMask": fieldMask,
+		})
+
+		ctxWithMetadata := metadata.NewOutgoingContext(ctx, md)
+
+		resp, err := s.client.GetPlace(ctxWithMetadata, placeReq)
 		if err != nil {
 			return nil, fmt.Errorf("get place failed: %v", err)
 		}
@@ -70,7 +105,7 @@ func (s *GooglePlacesAPIService) SearchRestaurants(ctx context.Context, req *con
 		IncludePureServiceAreaBusinesses: false,
 	}
 
-	var fieldMask = mappers.BuildFieldMask(req.Msg.RequestedFields)
+	var fieldMask = mappers.BuildFieldMask(predefinedRestaurantDetails())
 	md := metadata.New(map[string]string{
 		"X-Goog-FieldMask": fieldMask,
 	})
@@ -111,6 +146,7 @@ func (s *GooglePlacesAPIService) SearchText(ctx context.Context, req *connect.Re
 	md := metadata.New(map[string]string{
 		"X-Goog-FieldMask": fieldMask,
 	})
+	
 	ctxWithMetadata := metadata.NewOutgoingContext(ctx, md)
 
 	resp, err := s.client.SearchText(ctxWithMetadata, searchReq)
@@ -122,4 +158,43 @@ func (s *GooglePlacesAPIService) SearchText(ctx context.Context, req *connect.Re
 	return connect.NewResponse(protoResp), nil
 }
 
+func predefinedRestaurantDetails() []string {
+	return []string{
+    		"id",
+    		"name",
+    		"display_name",
+    		"formatted_address",
+    		"short_formatted_address",
+    		"rating",
+    		"google_maps_uri",
+    		"website_uri",
+    		"price_level",
+    		"user_rating_count",
+    		"current_opening_hours",
+    		"dine_in",
+    		"curbside_pickup",
+    		"reservable",
+    		"serves_breakfast",
+    		"serves_lunch",
+    		"serves_dinner",
+    		"serves_beer",
+	    	"serves_wine",
+    		"serves_brunch",
+    		"serves_vegetarian_food",
+    		"outdoor_seating",
+    		"live_music",
+    		"menu_for_children",
+    		"serves_cocktails",
+    		"serves_dessert",
+    		"serves_coffee",
+    		"good_for_children",
+    		"allows_dogs",
+    		"restroom",
+    		"good_for_groups",
+    		"good_for_watching_sports",
+    		"takeout",
+    		"generative_summary",
+    		"review_summary",
+		}
+}
 

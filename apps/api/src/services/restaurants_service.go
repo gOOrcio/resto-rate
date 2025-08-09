@@ -82,6 +82,7 @@ func (s *RestaurantsService) UpdateRestaurant(
 	ctx context.Context,
 	req *connect.Request[v1.UpdateRestaurantRequest],
 ) (*connect.Response[v1.UpdateRestaurantResponse], error) {
+	
 	restaurant, err := s.findRestaurantByIDWithContext(ctx, req.Msg.Id)
 	if err != nil {
 		if ctx.Err() != nil {
