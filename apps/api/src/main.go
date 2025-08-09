@@ -8,6 +8,8 @@ import (
 	"api/src/internal/database"
 	environment "api/src/internal/utils"
 	"api/src/services"
+	"api/src/services/google_places"
+	"time"
 
 	"github.com/valkey-io/valkey-go"
 
@@ -67,7 +69,7 @@ func mustConnectToDatabase() *gorm.DB {
 
 	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
 	if err != nil {
-		log.Fatalf("Failed to connect to database: %v", err)
+		log.Panicf("Failed to connect to database: %v", err)
 	}
 
 	log.Println("Database connected")
@@ -80,7 +82,7 @@ func mustConnectCache() valkey.Client {
 	password := os.Getenv("VALKEY_PASSWORD")
 	client, err := cache.NewValkey(uri, username, password)
 	if err != nil {
-		log.Fatalf("Failed to connect to cache: %v", err)
+		log.Panicf("Failed to connect to cache: %v", err)
 	}
 	log.Println("Cache connected")
 	return client
@@ -99,13 +101,18 @@ func initializeServiceHandlers(db *gorm.DB) []ServiceRegistration {
 			return ServiceRegistration{Path: path, Handler: handler}
 		}(),
 		func() ServiceRegistration {
-			client, err := services.NewGooglePlacesAPIClient()
+			gapic, err := google_places.NewGooglePlacesAPIClient()
 			if err != nil {
-				log.Fatalf("Failed to create Google Places API client: %v", err)
+				log.Fatalf("places client: %v", err)
 			}
-			svc := services.NewGooglePlacesAPIService(client)
-			path, handler := googlemapsv1connect.NewGoogleMapsServiceHandler(svc)
-			return ServiceRegistration{Path: path, Handler: handler}
+			base := google_places.NewDirectPlacesClient(gapic)
+			kv := mustConnectCache()
+			ttl := 30 * time.Minute
+			cached := google_places.NewCachedPlaces(base, kv, ttl, log.Default())
+
+			svc := google_places.NewGooglePlacesAPIService(cached)
+			path, h := googlemapsv1connect.NewGoogleMapsServiceHandler(svc)
+			return ServiceRegistration{Path: path, Handler: h}
 		}(),
 	}
 }

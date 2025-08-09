@@ -6,6 +6,6 @@ services:
 
   valkey:
     volumes:
-      - valkeydata:/data
+      - ./valkeydata:/data
       - ./valkey.conf:/etc/valkey/valkey.conf:ro
     user: "${UID:-0}:${GID:-0}"

@@ -3,7 +3,7 @@ package test
 import (
 	v1 "api/src/generated/google_maps/v1"
 	environment "api/src/internal/utils"
-	service "api/src/services"
+	"api/src/services/google_places"
 	"context"
 	"log"
 	"os"
@@ -49,13 +49,13 @@ func TestGooglePlacesApi(t *testing.T) {
 	log.Printf("Using Project ID: %s", projectID)
 
 	// Create real Google Places API client
-	client, err := service.NewGooglePlacesAPIClient()
+	client, err := google_places.NewGooglePlacesAPIClient()
 	if err != nil {
 		t.Fatalf("Failed to create Google Places API client: %v", err)
 	}
 	defer client.Close()
-	
-	placesService := service.NewGooglePlacesAPIService(client)
+
+	placesService := google_places.NewGooglePlacesAPIService(client)
 
 	protoRequest := &v1.SearchTextRequest{
 		TextQuery:           "Banja Luka",
@@ -95,13 +95,13 @@ func TestDynamicFieldMask(t *testing.T) {
 		t.Skip("Skipping test: GOOGLE_CLOUD_PROJECT is not set")
 	}
 
-	client, err := service.NewGooglePlacesAPIClient()
+	client, err := google_places.NewGooglePlacesAPIClient()
 	if err != nil {
 		t.Fatalf("Failed to create Google Places API client: %v", err)
 	}
 	defer client.Close()
-	
-	placesService := service.NewGooglePlacesAPIService(client)
+
+	placesService := google_places.NewGooglePlacesAPIService(client)
 
 	// Test with specific requested fields
 	protoRequest := &v1.SearchTextRequest{
@@ -125,21 +125,19 @@ func TestDynamicFieldMask(t *testing.T) {
 	}
 
 	place := response.Msg.Places[0]
-	
+
 	// Verify that we got the requested fields
 	if place.Name == "" {
 		t.Error("Expected name field to be populated")
 	}
-	
+
 	if place.DisplayName == nil || place.DisplayName.Text == "" {
 		t.Error("Expected displayName field to be populated")
 	}
-	
+
 	if place.FormattedAddress == "" {
 		t.Error("Expected formattedAddress field to be populated")
 	}
 
 	t.Logf("Dynamic FieldMask test passed. Place: %s", place.DisplayName.Text)
 }
-
-

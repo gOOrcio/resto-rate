@@ -19,11 +19,12 @@ services:
     image: valkey/valkey:8.0-alpine
     container_name: valkey
     environment:
+      VALKEY_URI: ${VALKEY_URI:-127.0.0.1:6379}
       VALKEY_PASSWORD: ${VALKEY_PASSWORD:-valkey}
     ports:
       - "127.0.0.1:6379:6379"
     volumes:
-      - valkeydata:/data
+      - ./valkeydata:/data
       - ./valkey.conf:/etc/valkey/valkey.conf:ro
     command: ["valkey-server", "/etc/valkey/valkey.conf"]
     healthcheck:

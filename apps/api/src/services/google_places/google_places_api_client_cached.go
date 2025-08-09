@@ -1,7 +1,8 @@
-package ports
+package google_places
 
 import (
 	v1 "api/src/generated/google_maps/v1"
+	"api/src/internal/ports"
 	"context"
 	"fmt"
 	"log"
@@ -17,32 +18,21 @@ import (
 	"google.golang.org/protobuf/proto"
 )
 
-type CachedPlaces struct {
-	inner  PlacesClient
+type CachedPlacesClient struct {
+	inner  ports.PlacesClient // <— the interface from step 1
 	kv     valkey.Client
 	ttl    time.Duration
 	sf     singleflight.Group
 	prefix string
 }
 
-type PlacesClient interface {
-	SearchText(ctx context.Context, req *v1.SearchTextRequest) (*v1.SearchTextResponse, error)
-	SearchRestaurants(ctx context.Context, req *v1.SearchRestaurantsRequest) (*v1.SearchTextResponse, error)
-	GetPlace(ctx context.Context, req *v1.GetPlaceRequest) (*v1.Place, error)
-	GetRestaurantDetails(ctx context.Context, req *v1.GetRestaurantDetailsRequest) (*v1.Place, error)
+func NewCachedPlaces(inner ports.PlacesClient, kv valkey.Client, ttl time.Duration, _ *log.Logger) *CachedPlacesClient {
+	return &CachedPlacesClient{inner: inner, kv: kv, ttl: ttl, prefix: "gplaces:v1:"}
 }
 
-func NewCachedPlaces(inner PlacesClient, kv valkey.Client, ttl time.Duration, logger *log.Logger) *CachedPlaces {
-	return &CachedPlaces{
-		inner:  inner,
-		kv:     kv,
-		ttl:    ttl,
-		prefix: "gplaces:v1:",
-	}
-}
+var _ ports.PlacesClient = (*CachedPlacesClient)(nil)
 
-
-func (c *CachedPlaces) get(ctx context.Context, key string, dst proto.Message) (bool, error) {
+func (c *CachedPlacesClient) get(ctx context.Context, key string, dst proto.Message) (bool, error) {
 	r := c.kv.Do(ctx, c.kv.B().Get().Key(key).Build())
 	if err := r.Error(); err != nil {
 		log.Printf("[DEBUG] Cache get error - key: %s, error: %v", key, err)
@@ -63,13 +53,13 @@ func (c *CachedPlaces) get(ctx context.Context, key string, dst proto.Message) (
 	return true, nil
 }
 
-func (c *CachedPlaces) set(ctx context.Context, key string, msg proto.Message) {
+func (c *CachedPlacesClient) set(ctx context.Context, key string, msg proto.Message) {
 	raw, err := proto.MarshalOptions{Deterministic: true}.Marshal(msg)
 	if err != nil {
 		log.Printf("[DEBUG] Cache marshal error - key: %s, error: %v", key, err)
 		return
 	}
-	
+
 	if c.ttl > 0 {
 		if err := c.kv.Do(ctx, c.kv.B().Set().
 			Key(key).Value(string(raw)).
@@ -86,11 +76,11 @@ func (c *CachedPlaces) set(ctx context.Context, key string, msg proto.Message) {
 			return
 		}
 	}
-	
+
 	log.Printf("[DEBUG] Cache set - key: %s", key)
 }
 
-func (c *CachedPlaces) cachedFetchPlace(ctx context.Context, key string, fetchFn func() (*v1.Place, error)) (*v1.Place, error) {
+func (c *CachedPlacesClient) cachedFetchPlace(ctx context.Context, key string, fetchFn func() (*v1.Place, error)) (*v1.Place, error) {
 	var out v1.Place
 	if ok, _ := c.get(ctx, key, &out); ok {
 		return &out, nil
@@ -123,7 +113,7 @@ func (c *CachedPlaces) cachedFetchPlace(ctx context.Context, key string, fetchFn
 	}
 }
 
-func (c *CachedPlaces) cachedFetchSearchResponse(ctx context.Context, key string, fetchFn func() (*v1.SearchTextResponse, error)) (*v1.SearchTextResponse, error) {
+func (c *CachedPlacesClient) cachedFetchSearchResponse(ctx context.Context, key string, fetchFn func() (*v1.SearchTextResponse, error)) (*v1.SearchTextResponse, error) {
 	var out v1.SearchTextResponse
 	if ok, _ := c.get(ctx, key, &out); ok {
 		return &out, nil
@@ -165,7 +155,7 @@ func hashKey(parts ...string) string {
 	return fmt.Sprintf("%x", h.Sum(nil))
 }
 
-func (c *CachedPlaces) buildKey(operation string, params ...string) string {
+func (c *CachedPlacesClient) buildKey(operation string, params ...string) string {
 	return c.prefix + operation + ":" + hashKey(params...)
 }
 
@@ -200,13 +190,13 @@ func normalizeValue(v any) string {
 	}
 }
 
-func (c *CachedPlaces) keyForRequest(operation string, params map[string]any) string {
+func (c *CachedPlacesClient) keyForRequest(operation string, params map[string]any) string {
 	keys := make([]string, 0, len(params))
 	for k := range params {
 		keys = append(keys, k)
 	}
 	sort.Strings(keys)
-	
+
 	parts := make([]string, 0, len(params))
 	for _, k := range keys {
 		v := params[k]
@@ -218,7 +208,7 @@ func (c *CachedPlaces) keyForRequest(operation string, params map[string]any) st
 	return c.buildKey(operation, parts...)
 }
 
-func (c *CachedPlaces) keyGetPlace(req *v1.GetPlaceRequest) string {
+func (c *CachedPlacesClient) keyGetPlace(req *v1.GetPlaceRequest) string {
 	return c.keyForRequest("get", map[string]any{
 		"name":   req.Name,
 		"lang":   req.LanguageCode,
@@ -227,7 +217,7 @@ func (c *CachedPlaces) keyGetPlace(req *v1.GetPlaceRequest) string {
 	})
 }
 
-func (c *CachedPlaces) keyGetRestaurantDetails(req *v1.GetRestaurantDetailsRequest) string {
+func (c *CachedPlacesClient) keyGetRestaurantDetails(req *v1.GetRestaurantDetailsRequest) string {
 	return c.keyForRequest("get_restaurant", map[string]any{
 		"name":   req.Name,
 		"lang":   req.LanguageCode,
@@ -235,24 +225,24 @@ func (c *CachedPlaces) keyGetRestaurantDetails(req *v1.GetRestaurantDetailsReque
 	})
 }
 
-func (c *CachedPlaces) keySearchText(req *v1.SearchTextRequest) string {
+func (c *CachedPlacesClient) keySearchText(req *v1.SearchTextRequest) string {
 	return c.keyForRequest("search_text", map[string]any{
-		"q":        req.TextQuery,
-		"lang":     req.LanguageCode,
-		"region":   req.RegionCode,
-		"rank":     req.RankPreference.String(),
-		"type":     req.IncludedType,
-		"open":     req.OpenNow,
-		"min":      req.MinRating,
-		"max":      req.MaxResultCount,
-		"prices":   req.PriceLevels,
-		"strict":   req.StrictTypeFiltering,
-		"pure":     req.IncludePureServiceAreaBusinesses,
-		"fields":   req.RequestedFields,
+		"q":      req.TextQuery,
+		"lang":   req.LanguageCode,
+		"region": req.RegionCode,
+		"rank":   req.RankPreference.String(),
+		"type":   req.IncludedType,
+		"open":   req.OpenNow,
+		"min":    req.MinRating,
+		"max":    req.MaxResultCount,
+		"prices": req.PriceLevels,
+		"strict": req.StrictTypeFiltering,
+		"pure":   req.IncludePureServiceAreaBusinesses,
+		"fields": req.RequestedFields,
 	})
 }
 
-func (c *CachedPlaces) keySearchRestaurants(req *v1.SearchRestaurantsRequest) string {
+func (c *CachedPlacesClient) keySearchRestaurants(req *v1.SearchRestaurantsRequest) string {
 	return c.keyForRequest("search_restaurants", map[string]any{
 		"q":      req.TextQuery,
 		"lang":   req.LanguageCode,
@@ -260,28 +250,28 @@ func (c *CachedPlaces) keySearchRestaurants(req *v1.SearchRestaurantsRequest) st
 	})
 }
 
-func (c *CachedPlaces) GetRestaurantDetails(ctx context.Context, req *v1.GetRestaurantDetailsRequest) (*v1.Place, error) {
+func (c *CachedPlacesClient) GetRestaurantDetails(ctx context.Context, req *v1.GetRestaurantDetailsRequest) (*v1.Place, error) {
 	key := c.keyGetRestaurantDetails(req)
 	return c.cachedFetchPlace(ctx, key, func() (*v1.Place, error) {
 		return c.inner.GetRestaurantDetails(ctx, req)
 	})
 }
 
-func (c *CachedPlaces) GetPlace(ctx context.Context, req *v1.GetPlaceRequest) (*v1.Place, error) {
+func (c *CachedPlacesClient) GetPlace(ctx context.Context, req *v1.GetPlaceRequest) (*v1.Place, error) {
 	key := c.keyGetPlace(req)
 	return c.cachedFetchPlace(ctx, key, func() (*v1.Place, error) {
 		return c.inner.GetPlace(ctx, req)
 	})
 }
 
-func (c *CachedPlaces) SearchText(ctx context.Context, req *v1.SearchTextRequest) (*v1.SearchTextResponse, error) {
+func (c *CachedPlacesClient) SearchText(ctx context.Context, req *v1.SearchTextRequest) (*v1.SearchTextResponse, error) {
 	key := c.keySearchText(req)
 	return c.cachedFetchSearchResponse(ctx, key, func() (*v1.SearchTextResponse, error) {
 		return c.inner.SearchText(ctx, req)
 	})
 }
 
-func (c *CachedPlaces) SearchRestaurants(ctx context.Context, req *v1.SearchRestaurantsRequest) (*v1.SearchTextResponse, error) {
+func (c *CachedPlacesClient) SearchRestaurants(ctx context.Context, req *v1.SearchRestaurantsRequest) (*v1.SearchTextResponse, error) {
 	key := c.keySearchRestaurants(req)
 	return c.cachedFetchSearchResponse(ctx, key, func() (*v1.SearchTextResponse, error) {
 		return c.inner.SearchRestaurants(ctx, req)
