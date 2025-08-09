@@ -52,3 +52,5 @@ yarn-error.log*
 .github/instructions/nx.instructions.md
 /packages/protos/go.sum
 
+valkey.conf
+/valkeydata/

@@ -3,10 +3,11 @@ package services
 import (
 	v1 "api/src/generated/users/v1"
 	"api/src/generated/users/v1/v1connect"
-	"api/src/services/models"
+	"api/src/internal/models"
 	"context"
 	"errors"
 	"fmt"
+	"log/slog"
 
 	"gorm.io/gorm"
 
@@ -16,6 +17,10 @@ import (
 type UserService struct {
 	v1connect.UnimplementedUsersServiceHandler
 	DB *gorm.DB
+}
+
+func NewUserService(db *gorm.DB) *UserService {
+	return &UserService{DB: db}
 }
 
 func (u *UserService) CreateUser(
@@ -37,13 +42,12 @@ func (u *UserService) GetUser(
 	req *connect.Request[v1.GetUserRequest],
 ) (*connect.Response[v1.GetUserResponse], error) {
 	if req.Msg.Id == "" {
+		slog.Debug("User ID is empty in GetUser request")
 		return nil, errors.New("user ID cannot be empty")
 	}
 	user, err := u.findUserByIDWithContext(ctx, req.Msg.Id)
 	if err != nil {
-		if ctx.Err() != nil {
-			return nil, ctx.Err()
-		}
+		slog.Debug("User not found or error in GetUser", slog.String("id", req.Msg.Id), slog.Any("error", err))
 		return nil, err
 	}
 

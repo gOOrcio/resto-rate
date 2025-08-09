@@ -1,5 +1,5 @@
-export { default as Button } from './Button.svelte';
-export { default as Card } from './Card.svelte';
-export { default as Input } from './Input.svelte';
-export { default as Badge } from './Badge.svelte';
-export { default as Chip } from './Chip.svelte'; 
+export { default as ButtonSv } from './ButtonSv.svelte';
+export { default as CardSv } from './CardSv.svelte';
+export { default as InputSv } from './InputSv.svelte';
+export { default as BadgeSv } from './BadgeSv.svelte';
+export { default as ChipSv } from './ChipSv.svelte';
