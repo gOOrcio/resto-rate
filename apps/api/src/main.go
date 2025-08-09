@@ -5,7 +5,6 @@ import (
 	restaurantsv1connect "api/src/generated/restaurants/v1/v1connect"
 	usersv1connect "api/src/generated/users/v1/v1connect"
 	"api/src/internal/cache"
-	"api/src/internal/database"
 	"api/src/internal/utils"
 	"api/src/services"
 	"api/src/services/google_places"
@@ -40,13 +39,13 @@ func main() {
 	db := mustConnectToDatabase()
 	mux := setupHTTPHandlers(initializeServiceHandlers(db))
 
-	err := database.CreateSchema(db)
+	err := utils.CreateSchema(db)
 	if err != nil {
 		slog.Error("Failed to create database schema", slog.Any("error", err))
 		os.Exit(1)
 	}
 
-	err = database.SeedDatabase(db)
+	err = utils.SeedDatabase(db)
 	if err != nil {
 		slog.Error("Failed to seed database", slog.Any("error", err))
 		os.Exit(1)
