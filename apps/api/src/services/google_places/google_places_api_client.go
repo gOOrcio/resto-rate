@@ -60,7 +60,6 @@ func (s *DirectPlacesClient) GetPlace(ctx context.Context, req *v1.GetPlaceReque
 		Name:         req.Name,
 		LanguageCode: req.LanguageCode,
 		RegionCode:   req.RegionCode,
-		SessionToken: req.SessionToken,
 	}
 
 	mask := mappers.BuildFieldMask(req.RequestedFields)
@@ -84,7 +83,6 @@ func (s *DirectPlacesClient) GetRestaurantDetails(ctx context.Context, req *v1.G
 		Name:         req.Name,
 		LanguageCode: req.LanguageCode,
 		RegionCode:   req.RegionCode,
-		SessionToken: req.SessionToken,
 	}
 
 	mask := mappers.BuildFieldMask(predefinedRestaurantDetails())
