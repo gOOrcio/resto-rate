@@ -36,14 +36,21 @@ var _ ports.PlacesClient = (*CachedPlacesClient)(nil)
 func (c *CachedPlacesClient) get(ctx context.Context, key string, dst proto.Message) (bool, error) {
 	r := c.kv.Do(ctx, c.kv.B().Get().Key(key).Build())
 	if err := r.Error(); err != nil {
+		// Check if this is a "key not found" error rather than a real error
+		if strings.Contains(err.Error(), "valkey nil message") {
+			slog.Debug("Cache key not found", slog.String("key", key))
+			return false, nil
+		}
 		slog.Debug("Cache get error", slog.String("key", key), slog.Any("error", err))
 		return false, nil
 	}
 	raw, err := r.AsBytes()
-	if err != nil || len(raw) == 0 {
-		if err != nil {
-			slog.Debug("Cache value decode error", slog.String("key", key), slog.Any("error", err))
-		}
+	if err != nil {
+		slog.Debug("Cache value decode error", slog.String("key", key), slog.Any("error", err))
+		return false, nil
+	}
+	if len(raw) == 0 {
+		slog.Debug("Cache key not found", slog.String("key", key))
 		return false, nil
 	}
 	if err := proto.Unmarshal(raw, dst); err != nil {
@@ -55,6 +62,11 @@ func (c *CachedPlacesClient) get(ctx context.Context, key string, dst proto.Mess
 }
 
 func (c *CachedPlacesClient) set(ctx context.Context, key string, msg proto.Message) {
+	if msg == nil {
+		slog.Debug("Cache set skipped - nil message", slog.String("key", key))
+		return
+	}
+
 	raw, err := proto.MarshalOptions{Deterministic: true}.Marshal(msg)
 	if err != nil {
 		slog.Debug("Cache marshal error", slog.String("key", key), slog.Any("error", err))
@@ -63,7 +75,7 @@ func (c *CachedPlacesClient) set(ctx context.Context, key string, msg proto.Mess
 
 	if c.ttl > 0 {
 		if err := c.kv.Do(ctx, c.kv.B().Set().
-			Key(key).Value(string(raw)).
+			Key(key).Value(valkey.BinaryString(raw)).
 			Ex(c.ttl).
 			Build()).Error(); err != nil {
 			slog.Debug("Cache set error", slog.String("key", key), slog.Any("error", err))
@@ -71,7 +83,7 @@ func (c *CachedPlacesClient) set(ctx context.Context, key string, msg proto.Mess
 		}
 	} else {
 		if err := c.kv.Do(ctx, c.kv.B().Set().
-			Key(key).Value(string(raw)).
+			Key(key).Value(valkey.BinaryString(raw)).
 			Build()).Error(); err != nil {
 			slog.Debug("Cache set error", slog.String("key", key), slog.Any("error", err))
 			return
@@ -81,70 +93,55 @@ func (c *CachedPlacesClient) set(ctx context.Context, key string, msg proto.Mess
 	slog.Debug("Cache set", slog.String("key", key))
 }
 
-func (c *CachedPlacesClient) cachedFetchPlace(ctx context.Context, key string, fetchFn func() (*v1.Place, error)) (*v1.Place, error) {
-	var out v1.Place
-	if ok, _ := c.get(ctx, key, &out); ok {
-		return &out, nil
+func (c *CachedPlacesClient) cachedFetch(ctx context.Context, key string, dst proto.Message, fetchFn func() (proto.Message, error)) (proto.Message, error) {
+	if ok, _ := c.get(ctx, key, dst); ok {
+		return dst, nil
 	}
 
-	ch := c.sf.DoChan(key, func() (any, error) {
-		if ok, _ := c.get(ctx, key, &out); ok {
-			return &out, nil
+	result, err, _ := c.sf.Do(key, func() (any, error) {
+		if ok, _ := c.get(ctx, key, dst); ok {
+			return dst, nil
 		}
 		fresh, err := fetchFn()
 		if err != nil {
 			return nil, err
 		}
+		if fresh == nil {
+			return nil, fmt.Errorf("fetchFn returned nil result")
+		}
 		c.set(ctx, key, fresh)
 		return fresh, nil
 	})
 
-	select {
-	case <-ctx.Done():
-		return nil, ctx.Err()
-	case result := <-ch:
-		if result.Err != nil {
-			return nil, result.Err
-		}
-		p, ok := result.Val.(*v1.Place)
-		if !ok || p == nil {
-			return nil, fmt.Errorf("singleflight returned unexpected type %T", result.Val)
-		}
-		return p, nil
+	if err != nil {
+		return nil, err
 	}
+
+	typed, ok := result.(proto.Message)
+	if !ok || typed == nil {
+		return nil, fmt.Errorf("singleflight returned unexpected type %T", result)
+	}
+	return typed, nil
+}
+
+func (c *CachedPlacesClient) cachedFetchPlace(ctx context.Context, key string, fetchFn func() (*v1.Place, error)) (*v1.Place, error) {
+	result, err := c.cachedFetch(ctx, key, &v1.Place{}, func() (proto.Message, error) {
+		return fetchFn()
+	})
+	if err != nil {
+		return nil, err
+	}
+	return result.(*v1.Place), nil
 }
 
 func (c *CachedPlacesClient) cachedFetchSearchResponse(ctx context.Context, key string, fetchFn func() (*v1.SearchTextResponse, error)) (*v1.SearchTextResponse, error) {
-	var out v1.SearchTextResponse
-	if ok, _ := c.get(ctx, key, &out); ok {
-		return &out, nil
-	}
-
-	ch := c.sf.DoChan(key, func() (any, error) {
-		if ok, _ := c.get(ctx, key, &out); ok {
-			return &out, nil
-		}
-		fresh, err := fetchFn()
-		if err != nil {
-			return nil, err
-		}
-		c.set(ctx, key, fresh)
-		return fresh, nil
+	result, err := c.cachedFetch(ctx, key, &v1.SearchTextResponse{}, func() (proto.Message, error) {
+		return fetchFn()
 	})
-
-	select {
-	case <-ctx.Done():
-		return nil, ctx.Err()
-	case result := <-ch:
-		if result.Err != nil {
-			return nil, result.Err
-		}
-		resp, ok := result.Val.(*v1.SearchTextResponse)
-		if !ok || resp == nil {
-			return nil, fmt.Errorf("singleflight returned unexpected type %T", result.Val)
-		}
-		return resp, nil
+	if err != nil {
+		return nil, err
 	}
+	return result.(*v1.SearchTextResponse), nil
 }
 
 func hashKey(parts ...string) string {
