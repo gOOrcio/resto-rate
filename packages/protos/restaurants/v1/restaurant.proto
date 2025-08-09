@@ -35,7 +35,7 @@ message RestaurantProto {
   bool google_dine_in = 22;
   bool google_curbside_pickup = 23;
   bool google_reservable = 24;
-  bool google_servers_breakfast = 25;
+  bool google_serves_breakfast = 25;
   bool google_serves_lunch = 26;
   bool google_serves_dinner = 27;
   bool google_serves_beer = 28;
