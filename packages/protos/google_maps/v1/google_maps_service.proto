@@ -10,6 +10,7 @@ service GoogleMapsService {
   rpc GetPlace(GetPlaceRequest) returns (Place);
   rpc GetRestaurantDetails(GetRestaurantDetailsRequest) returns (Place);
   rpc AutocompletePlaces(AutocompletePlacesRequest) returns (AutocompletePlacesResponse);
+  rpc AutocompleteRestaurantPlace(AutocompletePlacesRequest) returns (AutocompletePlacesResponse);
 }
 
 message AutocompletePlacesRequest {
@@ -68,13 +69,15 @@ message GetPlaceRequest {
   string name = 1;
   string language_code = 2;
   string region_code = 3;
-  repeated string requested_fields = 4;
+  string session_token = 4;
+  repeated string requested_fields = 5;
 }
 
 message GetRestaurantDetailsRequest {
   string name = 1;
   string language_code = 2;
   string region_code = 3;
+  string session_token = 4;
 }
 
 message SearchRestaurantsRequest {

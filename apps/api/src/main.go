@@ -7,12 +7,10 @@ import (
 	"api/src/internal/cache"
 	"api/src/internal/utils"
 	"api/src/services"
-	"api/src/services/google_places"
 	"log"
 	"log/slog"
 	"strconv"
 	"strings"
-	"time"
 
 	"fmt"
 	"net/http"
@@ -129,18 +127,16 @@ func initializeServiceHandlers(db *gorm.DB) []ServiceRegistration {
 			return ServiceRegistration{Path: path, Handler: handler}
 		}(),
 		func() ServiceRegistration {
-			gapic, err := google_places.NewGooglePlacesAPIClient()
+			gapic, err := services.NewGooglePlacesAPIClient()
 			if err != nil {
-				slog.Error("places client", slog.Any("error", err))
+				slog.Error("Failed to create Google Places API client", slog.Any("error", err))
 				os.Exit(1)
 			}
-			base := google_places.NewDirectPlacesClient(gapic)
-			kv := mustConnectCache()
-			ttl := 30 * time.Minute
-			cached := google_places.NewCachedPlaces(base, kv, ttl)
-
-			svc := google_places.NewGooglePlacesAPIService(cached)
-			path, h := googlemapsv1connect.NewGoogleMapsServiceHandler(svc, connect.WithInterceptors(prometheusInterceptor))
+			svc := services.NewGooglePlacesAPIService(gapic)
+			path, h := googlemapsv1connect.NewGoogleMapsServiceHandler(
+				svc,
+				connect.WithInterceptors(prometheusInterceptor),
+			)
 			return ServiceRegistration{Path: path, Handler: h}
 		}(),
 	}
