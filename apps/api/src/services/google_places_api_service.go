@@ -7,10 +7,12 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
+	"os"
 
 	places "cloud.google.com/go/maps/places/apiv1"
 	placespb "cloud.google.com/go/maps/places/apiv1/placespb"
 	"connectrpc.com/connect"
+	"google.golang.org/api/option"
 	"google.golang.org/grpc/metadata"
 )
 
@@ -20,7 +22,7 @@ type GooglePlacesAPIService struct {
 }
 
 func NewGooglePlacesAPIClient() (*places.Client, error) {
-	return places.NewClient(context.Background())
+	return places.NewClient(context.Background(), option.WithAPIKey(os.Getenv("GOOGLE_PLACES_API_KEY")))
 }
 
 func NewGooglePlacesAPIService(client *places.Client) *GooglePlacesAPIService {

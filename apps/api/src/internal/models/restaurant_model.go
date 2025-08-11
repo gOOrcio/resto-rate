@@ -25,11 +25,11 @@ func (r *Restaurant) BeforeCreate(tx *gorm.DB) (err error) {
 
 func (r *Restaurant) ToProto() *restaurantpb.RestaurantProto {
 	return &restaurantpb.RestaurantProto{
-		Id:        r.ID,
-		GoogleId:  r.GoogleID,
-		Email:     r.Email,
-		Name:      r.Name,
-		CreatedAt: r.CreatedAt.Unix(),
-		UpdatedAt: r.UpdatedAt.Unix(),
+		Id:             r.ID,
+		GooglePlacesId: r.GoogleID,
+		Email:          r.Email,
+		Name:           r.Name,
+		CreatedAt:      r.CreatedAt.Unix(),
+		UpdatedAt:      r.UpdatedAt.Unix(),
 	}
 }

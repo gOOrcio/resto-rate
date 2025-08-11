@@ -4,7 +4,7 @@ import (
 	v1 "api/src/generated/google_maps/v1"
 	environment "api/src/internal/utils"
 	"api/src/services"
-	"api/src/services/google_places"
+
 	"context"
 	"log"
 	"os"
@@ -56,7 +56,7 @@ func TestGooglePlacesApi(t *testing.T) {
 	}
 	defer client.Close()
 
-	placesService := google_places.NewGooglePlacesAPIService(client)
+	placesService := services.NewGooglePlacesAPIService(client)
 
 	protoRequest := &v1.SearchTextRequest{
 		TextQuery:           "Banja Luka",
@@ -102,7 +102,7 @@ func TestDynamicFieldMask(t *testing.T) {
 	}
 	defer client.Close()
 
-	placesService := google_places.NewGooglePlacesAPIService(client)
+	placesService := services.NewGooglePlacesAPIService(client)
 
 	// Test with specific requested fields
 	protoRequest := &v1.SearchTextRequest{

@@ -12,6 +12,15 @@ Restaurant rating and review application built with SvelteKit frontend and Go AP
 - **Authentication**: Google OAuth (planned, not yet implemented)
 - **Internationalization**: Paraglide setup for multi-language support
 
+## Prerequisites
+
+- **Node.js** 18+ and **npm** (for JavaScript protoc-gen plugins)
+- **Go** 1.21+ (for Go protoc-gen plugins)
+- **Bun** (package manager)
+- **PostgreSQL** database
+- **Docker** (optional, for database)
+- **Buf CLI** (for protobuf code generation): `npm install -g @bufbuild/buf`
+
 ## Current Features
 
 ### ✅ Implemented
@@ -39,26 +48,94 @@ Restaurant rating and review application built with SvelteKit frontend and Go AP
 bun install
 ```
 
-2. **Set up environment**:
+2. **Install Protocol Buffer plugins** (required for code generation):
+
+```bash
+# Install Go plugins for API
+go install google.golang.org/protobuf/cmd/protoc-gen-go@latest
+go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest
+go install github.com/bufbuild/connect-go/cmd/protoc-gen-connect-go@latest
+
+# Install JavaScript/TypeScript plugins for Web
+npm install -g @bufbuild/protoc-gen-es
+npm install -g @bufbuild/protoc-gen-connect-es
+```
+
+3. **Set up environment**:
+Ensure:
+```bash
+export PATH="$PATH:$(go env GOPATH)/bin"
+```
 
 ```bash
 cp env.template .env
 # Edit .env with your database credentials
 ```
 
-3. **Start database** (Docker recommended):
+4. **Start database** (Docker recommended):
 
 ```bash
 docker-compose up -d postgres
 ```
 
-4. **Start development**:
+5. **Start development**:
 
 ```bash
 bun run dev
 ```
 
 This starts both the web app (http://localhost:5173) and API (http://localhost:3001).
+
+## Protocol Buffer Setup
+
+This project uses Protocol Buffers (protobuf) for API contract definition and code generation. The setup includes:
+
+### Required Plugins
+
+**For Go API** (`apps/api/buf.gen.yaml`):
+- `protoc-gen-go` - Generates Go structs from .proto files
+- `protoc-gen-go-grpc` - Generates Go gRPC code
+- `protoc-gen-connect-go` - Generates Connect-Go code
+
+**For Web Frontend** (`apps/web/buf.gen.yaml`):
+- `protoc-gen-es` - Generates TypeScript/JavaScript code
+- `protoc-gen-connect-es` - Generates Connect-ES client code
+
+### Installation Commands
+
+```bash
+# Go plugins (required for API)
+go install google.golang.org/protobuf/cmd/protoc-gen-go@latest
+go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest
+go install buf.build/bufbuild/connect-go/cmd/protoc-gen-connect-go@latest
+
+# JavaScript/TypeScript plugins (required for Web)
+npm install -g @bufbuild/protoc-gen-es
+npm install -g @bufbuild/protoc-gen-connect-es
+```
+
+### Code Generation
+
+After installing plugins, you can generate code from .proto files:
+
+```bash
+# Generate Go code for API
+cd apps/api && buf generate
+
+# Generate TypeScript code for Web
+cd apps/web && buf generate
+```
+
+### Fresh PC Setup
+
+When setting up on a new machine, ensure you have:
+1. **Go** installed (for Go plugins)
+2. **Node.js/npm** installed (for JavaScript plugins)
+3. **Buf CLI** installed: `npm install -g @bufbuild/buf`
+
+Then run the installation commands above.
+
+**Note**: The Buf CLI is required for running `buf generate` commands. Install it globally with npm to ensure it's available system-wide.
 
 ## API Endpoints
 
