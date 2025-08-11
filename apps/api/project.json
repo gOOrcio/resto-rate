@@ -18,7 +18,7 @@
         "command": "air",
         "cwd": "apps/api"
       },
-      "dependsOn": ["protos:generate"],
+      "dependsOn": ["build"],
       "continuous": true
     },
     "lint": {

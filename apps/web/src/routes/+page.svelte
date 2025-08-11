@@ -1,50 +1,10 @@
 <script lang="ts">
-	import clients from '$lib/client/client';
-	import type { RestaurantProto } from '$lib/client/generated/restaurants/v1/restaurant_pb';
 	import type { Place } from '$lib/client/generated/google_maps/v1/google_maps_service_pb';
-	import { ButtonSv, CardSv, InputSv, BadgeSv } from '$lib/ui/components';
-	import { onDestroy } from 'svelte';
+	import { CardSv, BadgeSv } from '$lib/ui/components';
+	import RestaurantSearchSv from '$lib/ui/components/RestaurantSearchSv.svelte';
 
-	let restaurants: RestaurantProto[] = [];
 	let places: Place[] = [];
-	let loading = false;
-	let showLoader = false;
-	let loaderTimer: number;
-	let error = '';
-	let searchQuery = '';
-
-	async function searchPlaces(): Promise<void> {
-		loading = true;
-		showLoader = false;
-		clearTimeout(loaderTimer);
-
-		loaderTimer = setTimeout(() => {
-			if (loading) showLoader = true;
-		}, 500);
-
-		error = '';
-		try {
-			const response = await clients.googleMaps.searchRestaurants({
-				textQuery: searchQuery,
-				languageCode: 'pl',
-				regionCode: 'pl'
-			});
-			places = response.places ?? [];
-		} catch (e: any) {
-			if (e.code && e.details) {
-				error = `Error ${e.code}: ${e.details}`;
-			} else if (e.message) {
-				error = e.message;
-			} else {
-				error = 'Failed to search places';
-			}
-		} finally {
-			loading = false;
-			clearTimeout(loaderTimer);
-		}
-	}
-
-	onDestroy(() => clearTimeout(loaderTimer));
+	let selectedPlace: Place | null = null;
 </script>
 
 <div class="container mx-auto max-w-6xl space-y-8 p-6">
@@ -68,25 +28,44 @@
 				>
 					Search restaurant by name:
 				</label>
-				<InputSv
-					id="searchQuery"
-					type="text"
-					bind:value={searchQuery}
-					class="preset-outlined-surface-200-800 w-full"
-				/>
+				<RestaurantSearchSv onPlaceSelected={(place: Place) => selectedPlace = place} />
 			</div>
-
-			<ButtonSv
-				onclick={searchPlaces}
-				disabled={loading}
-				variant="filled"
-				color="primary"
-				size="md"
-				class="w-full sm:w-auto"
-			>
-				{loading ? 'Searching...' : 'Search Places'}
-			</ButtonSv>
 		</CardSv>
+
+		{#if selectedPlace}
+			<div class="space-y-4">
+				<h3 class="text-primary-800 dark:text-primary-200 text-xl font-semibold">
+					Selected Restaurant:
+				</h3>
+				<CardSv variant="outlined" color="surface" class="space-y-3">
+					<h4 class="text-primary-800 dark:text-primary-200 font-bold">
+						{selectedPlace.displayName?.text || selectedPlace.name}
+					</h4>
+					{#if selectedPlace.rating}
+						<div>
+							<BadgeSv variant="filled" color="primary" size="sm">
+								Rating: {selectedPlace.rating}/5
+							</BadgeSv>
+						</div>
+					{/if}
+					{#if selectedPlace.formattedAddress}
+						<p class="text-surface-600 dark:text-surface-400 text-sm">
+							<strong>Address:</strong>
+							{selectedPlace.formattedAddress}
+						</p>
+					{/if}
+					{#if selectedPlace.types && selectedPlace.types.length > 0}
+						<div class="flex flex-wrap gap-2">
+							{#each selectedPlace.types as type}
+								<BadgeSv variant="outlined" color="secondary" size="sm">
+									{type}
+								</BadgeSv>
+							{/each}
+						</div>
+					{/if}
+				</CardSv>
+			</div>
+		{/if}
 
 		{#if places.length > 0}
 			<div class="space-y-4">

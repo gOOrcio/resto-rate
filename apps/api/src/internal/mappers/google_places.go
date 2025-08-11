@@ -1,11 +1,12 @@
 package mappers
 
 import (
+	"log/slog"
 	"strings"
 
 	v1 "api/src/generated/google_maps/v1"
 
-	placespb "cloud.google.com/go/maps/places/apiv1/placespb"
+	"cloud.google.com/go/maps/places/apiv1/placespb"
 )
 
 func boolPtr(b *bool) bool {
@@ -29,7 +30,6 @@ func stringPtr(s *string) string {
 	return *s
 }
 
-// Enum maps for type safety
 var businessStatusMap = map[placespb.Place_BusinessStatus]v1.BusinessStatus{
 	placespb.Place_BUSINESS_STATUS_UNSPECIFIED: v1.BusinessStatus_BUSINESS_STATUS_UNSPECIFIED,
 	placespb.Place_OPERATIONAL:                 v1.BusinessStatus_BUSINESS_STATUS_OPERATIONAL,
@@ -59,12 +59,7 @@ func BuildFieldMask(requestedFields []string) string {
 	if len(requestedFields) == 0 {
 		return "*"
 	}
-
-	fields := make([]string, len(requestedFields))
-	for i, field := range requestedFields {
-		fields[i] = "places." + field
-	}
-	return strings.Join(fields, ",")
+	return strings.Join(requestedFields, ",")
 }
 
 func PriceLevelsToSDK(levels []v1.PriceLevel) []placespb.PriceLevel {
@@ -73,7 +68,6 @@ func PriceLevelsToSDK(levels []v1.PriceLevel) []placespb.PriceLevel {
 		if sdkLevel, exists := priceLevelReverseMap[level]; exists {
 			result[i] = sdkLevel
 		} else {
-			// Fallback for unknown values
 			result[i] = placespb.PriceLevel(level)
 		}
 	}
@@ -91,17 +85,109 @@ func SearchTextResponseToProto(resp *placespb.SearchTextResponse) *v1.SearchText
 		places = append(places, convertedPlace)
 	}
 
-	// TODO: Implement routing summaries mapping when needed
-	routingSummaries := make([]*v1.RoutingSummary, 0)
-
-	// TODO: Implement contextual contents mapping when needed
-	contextualContents := make([]*v1.ContextualContent, 0)
-
 	return &v1.SearchTextResponse{
-		Places:             places,
-		RoutingSummaries:   routingSummaries,
-		ContextualContents: contextualContents,
+		Places: places,
 	}
+}
+
+func AutocompletePlacesResponseToProto(resp *placespb.AutocompletePlacesResponse) *v1.AutocompletePlacesResponse {
+	if resp == nil {
+		return nil
+	}
+	result := &v1.AutocompletePlacesResponse{Suggestions: suggestionsToProto(resp.Suggestions)}
+	return result
+}
+
+func suggestionsToProto(suggestions []*placespb.AutocompletePlacesResponse_Suggestion) []*v1.Suggestion {
+	if len(suggestions) == 0 {
+		return nil
+	}
+
+	result := make([]*v1.Suggestion, 0, len(suggestions))
+	for _, suggestion := range suggestions {
+		if suggestion == nil {
+			continue
+		}
+
+		var placePrediction *v1.PlacePrediction
+		var queryPrediction *v1.QueryPrediction
+
+		switch suggestion.Kind.(type) {
+		case *placespb.AutocompletePlacesResponse_Suggestion_PlacePrediction_:
+			if placePred := suggestion.GetPlacePrediction(); placePred != nil {
+				placePrediction = PlacePredictionToProto(placePred)
+			}
+		case *placespb.AutocompletePlacesResponse_Suggestion_QueryPrediction_:
+			if queryPred := suggestion.GetQueryPrediction(); queryPred != nil {
+				queryPrediction = QueryPredictionToProto(queryPred)
+			}
+		}
+
+		result = append(result, &v1.Suggestion{
+			PlacePrediction: placePrediction,
+			QueryPrediction: queryPrediction,
+		})
+	}
+	return result
+}
+
+func PlacePredictionToProto(prediction *placespb.AutocompletePlacesResponse_Suggestion_PlacePrediction) *v1.PlacePrediction {
+	if prediction == nil {
+		return nil
+	}
+	return &v1.PlacePrediction{
+		Place:   prediction.Place,
+		PlaceId: prediction.PlaceId,
+		Text:    formattableTextToProto(prediction.Text),
+		StructuredFormat: &v1.StructuredFormat{
+			MainText:      formattableTextToProto(prediction.StructuredFormat.MainText),
+			SecondaryText: formattableTextToProto(prediction.StructuredFormat.SecondaryText),
+		},
+		Types:          prediction.Types,
+		DistanceMeters: prediction.DistanceMeters,
+	}
+}
+
+func QueryPredictionToProto(prediction *placespb.AutocompletePlacesResponse_Suggestion_QueryPrediction) *v1.QueryPrediction {
+	if prediction == nil {
+		return nil
+	}
+	slog.Info("QueryPredictionToProto", "prediction", prediction)
+	return &v1.QueryPrediction{
+		Text: formattableTextToProto(prediction.Text),
+		StructuredFormat: &v1.StructuredFormat{
+			MainText:      formattableTextToProto(prediction.StructuredFormat.MainText),
+			SecondaryText: formattableTextToProto(prediction.StructuredFormat.SecondaryText),
+		},
+	}
+}
+
+func formattableTextToProto(text *placespb.AutocompletePlacesResponse_Suggestion_FormattableText) *v1.FormattableText {
+	if text == nil {
+		return nil
+	}
+	return &v1.FormattableText{
+		Text:    text.Text,
+		Matches: stringRangesToProto(text.Matches),
+	}
+}
+
+func stringRangesToProto(ranges []*placespb.AutocompletePlacesResponse_Suggestion_StringRange) []*v1.StringRange {
+	if len(ranges) == 0 {
+		return nil
+	}
+
+	result := make([]*v1.StringRange, 0, len(ranges))
+	for _, r := range ranges {
+		if r == nil {
+			continue
+		}
+		result = append(result, &v1.StringRange{
+			StartOffset: r.StartOffset,
+			EndOffset:   r.EndOffset,
+		})
+	}
+	return result
 }
 
 func PlaceToProto(place *placespb.Place) *v1.Place {
@@ -167,26 +253,6 @@ func PlaceToProto(place *placespb.Place) *v1.Place {
 			LanguageCode: place.PrimaryTypeDisplayName.LanguageCode,
 		}
 	}
-
-	// TODO: Implement postal address mapping when needed
-	// if place.PostalAddress != nil {
-	//     result.PostalAddress = PostalAddressToProto(place.PostalAddress)
-	// }
-
-	// TODO: Implement location mapping when needed
-	// if place.Location != nil {
-	//     result.Location = LocationToProto(place.Location)
-	// }
-
-	// TODO: Implement viewport mapping when needed
-	// if place.Viewport != nil {
-	//     result.Viewport = ViewportToProto(place.Viewport)
-	// }
-
-	// TODO: Implement hours mapping when needed
-	// if place.OpeningHours != nil {
-	//     result.OpeningHours = OpeningHoursToProto(place.OpeningHours)
-	// }
 
 	result.Photos = photosToProto(place.Photos)
 	result.Attributions = attributionsToProto(place.Attributions)

@@ -9,6 +9,60 @@ service GoogleMapsService {
   rpc SearchRestaurants(SearchRestaurantsRequest) returns (SearchTextResponse);
   rpc GetPlace(GetPlaceRequest) returns (Place);
   rpc GetRestaurantDetails(GetRestaurantDetailsRequest) returns (Place);
+  rpc AutocompletePlaces(AutocompletePlacesRequest) returns (AutocompletePlacesResponse);
+}
+
+message AutocompletePlacesRequest {
+  string input = 1;
+  repeated string included_primary_types = 2;
+  LocationBias location_bias = 3;
+  LocationRestriction location_restriction = 4;
+  repeated string included_region_codes = 5;
+  string language_code = 6;
+  LatLng origin = 7;
+  int32 input_offset = 8;
+  bool include_query_prediction = 9;
+  string session_token = 10;
+  bool include_pure_service_area_business = 11;
+  repeated string requested_fields = 12;
+}
+
+message AutocompletePlacesResponse {
+  repeated Suggestion suggestions = 1;
+}
+
+message Suggestion {
+  PlacePrediction place_prediction = 1;
+  QueryPrediction query_prediction = 2;
+}
+
+message PlacePrediction {
+  string place = 1;
+  string place_id = 2;
+  FormattableText text = 3;
+  StructuredFormat structured_format = 4;
+  repeated string types = 5;
+  int32 distance_meters = 6;
+}
+
+message QueryPrediction {
+  FormattableText text = 1;
+  StructuredFormat structured_format = 2;
+}
+
+message StructuredFormat {
+  FormattableText main_text = 1;
+  FormattableText secondary_text = 2;
+}
+
+message FormattableText {
+  string text = 1;
+  repeated StringRange matches = 2;
+}
+
+message StringRange {
+  int32 start_offset = 1;
+  int32 end_offset = 2;
 }
 
 message GetPlaceRequest {

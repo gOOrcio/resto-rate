@@ -13,7 +13,7 @@
 	<AppBar
 		headlineClasses="sm:hidden"
 		centerClasses="hidden sm:block"
-		background="bg-primary-900"
+		background="bg-primary-400"
 		base="text-primary-contrast-900"
 	>
 		{#snippet lead()}

@@ -13,3 +13,4 @@ vendor
 /watched_protos/
 /tmp
 api
+/logs

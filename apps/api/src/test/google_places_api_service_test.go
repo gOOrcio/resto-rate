@@ -3,7 +3,8 @@ package test
 import (
 	v1 "api/src/generated/google_maps/v1"
 	environment "api/src/internal/utils"
-	"api/src/services/google_places"
+	"api/src/services"
+
 	"context"
 	"log"
 	"os"
@@ -49,13 +50,13 @@ func TestGooglePlacesApi(t *testing.T) {
 	log.Printf("Using Project ID: %s", projectID)
 
 	// Create real Google Places API client
-	client, err := google_places.NewGooglePlacesAPIClient()
+	client, err := services.NewGooglePlacesAPIClient()
 	if err != nil {
 		t.Fatalf("Failed to create Google Places API client: %v", err)
 	}
 	defer client.Close()
 
-	placesService := google_places.NewGooglePlacesAPIService(client)
+	placesService := services.NewGooglePlacesAPIService(client)
 
 	protoRequest := &v1.SearchTextRequest{
 		TextQuery:           "Banja Luka",
@@ -95,13 +96,13 @@ func TestDynamicFieldMask(t *testing.T) {
 		t.Skip("Skipping test: GOOGLE_CLOUD_PROJECT is not set")
 	}
 
-	client, err := google_places.NewGooglePlacesAPIClient()
+	client, err := services.NewGooglePlacesAPIClient()
 	if err != nil {
 		t.Fatalf("Failed to create Google Places API client: %v", err)
 	}
 	defer client.Close()
 
-	placesService := google_places.NewGooglePlacesAPIService(client)
+	placesService := services.NewGooglePlacesAPIService(client)
 
 	// Test with specific requested fields
 	protoRequest := &v1.SearchTextRequest{

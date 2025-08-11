@@ -1,0 +1,22 @@
+version: v2
+plugins:
+  # Go generation
+  - name: go
+    out: apps/api/src/generated
+    opt: paths=source_relative
+  - name: go-grpc
+    out: apps/api/src/generated
+    opt: paths=source_relative
+  - name: connect-go
+    out: apps/api/src/generated
+    opt: paths=source_relative
+  
+  # TypeScript generation
+  - local: node_modules/.bin/protoc-gen-es
+    out: apps/web/src/lib/client/generated
+    include_imports: true
+    opt: target=ts
+  - local: node_modules/.bin/protoc-gen-connect-es
+    out: apps/web/src/lib/client/generated
+    include_imports: true
+    opt: target=ts

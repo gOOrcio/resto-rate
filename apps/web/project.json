@@ -9,7 +9,8 @@
       "options": {
         "command": "vite build",
         "cwd": "apps/web"
-      }
+      },
+      "dependsOn": ["protos:generate"]
     },
     "dev": {
       "executor": "nx:run-commands",
@@ -17,7 +18,7 @@
         "command": "vite dev --open",
         "cwd": "apps/web"
       },
-      "dependsOn": ["protos:generate"],
+      "dependsOn": ["build"],
       "continuous": true
     },
     "preview": {
