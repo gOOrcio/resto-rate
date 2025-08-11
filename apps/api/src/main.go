@@ -34,9 +34,12 @@ type ServiceRegistration struct {
 }
 
 func main() {
-	slog.Info("Application starting...")
 	utils.MustLoadEnvironmentVariables()
-	slog.SetLogLoggerLevel(envLogLevel())
+	level := envLogLevel()
+	if err := utils.SetupLogging(level); err != nil {
+		log.Fatalf("Failed to setup logging: %v", err)
+	}
+	slog.Info("Application starting...")
 
 	db := mustConnectToDatabase()
 	mux := setupHTTPHandlers(initializeServiceHandlers(db))
