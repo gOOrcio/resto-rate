@@ -3,9 +3,10 @@
     import type { Place, Suggestion } from '$lib/client/generated/google_maps/v1/google_maps_service_pb';
     import { onMount, onDestroy } from 'svelte';
     import InputSv from './InputSv.svelte';
+    import { v4 as uuidv4 } from 'uuid';
 
     function randomUUID(): string {
-        return crypto.randomUUID();
+        return uuidv4();
     }
 
     let autocompleteSessionToken = randomUUID();
@@ -36,7 +37,7 @@
                 queryPrediction = '';
                 autocompleteSessionToken = randomUUID();
             }
-        }, 300);
+        }, 500);
     }
 
     async function performAutocomplete(input: string) {

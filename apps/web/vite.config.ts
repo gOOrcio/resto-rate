@@ -21,5 +21,13 @@ export default defineConfig({
 	},
 	build: {
 		outDir: '../../dist/apps/web'
+	},
+	optimizeDeps: {
+		// Force pre-bundling for Safari compatibility
+		include: ['svelte']
+	},
+	esbuild: {
+		// Ensure Safari compatibility
+		target: 'es2020'
 	}
 });
