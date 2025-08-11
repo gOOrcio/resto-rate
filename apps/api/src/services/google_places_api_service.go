@@ -51,6 +51,7 @@ func (s *GooglePlacesAPIService) AutocompletePlaces(
 		slog.Debug("AutocompletePlaces failed", slog.Any("error", err))
 		return nil, fmt.Errorf("autocomplete places failed: %w", err)
 	}
+
 	return connect.NewResponse(mappers.AutocompletePlacesResponseToProto(out)), nil
 }
 

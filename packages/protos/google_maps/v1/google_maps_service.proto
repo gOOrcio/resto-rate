@@ -10,7 +10,6 @@ service GoogleMapsService {
   rpc GetPlace(GetPlaceRequest) returns (Place);
   rpc GetRestaurantDetails(GetRestaurantDetailsRequest) returns (Place);
   rpc AutocompletePlaces(AutocompletePlacesRequest) returns (AutocompletePlacesResponse);
-  rpc AutocompleteRestaurantPlace(AutocompletePlacesRequest) returns (AutocompletePlacesResponse);
 }
 
 message AutocompletePlacesRequest {
@@ -25,6 +24,7 @@ message AutocompletePlacesRequest {
   bool include_query_prediction = 9;
   string session_token = 10;
   bool include_pure_service_area_business = 11;
+  repeated string requested_fields = 12;
 }
 
 message AutocompletePlacesResponse {
@@ -37,7 +37,7 @@ message Suggestion {
 }
 
 message PlacePrediction {
-  Place place = 1;
+  string place = 1;
   string place_id = 2;
   FormattableText text = 3;
   StructuredFormat structured_format = 4;
