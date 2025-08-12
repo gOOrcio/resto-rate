@@ -11,13 +11,12 @@
 
     let autocompleteSessionToken = randomUUID();
     let input = $state('');
-    let placeId = $state('');
     let suggestions = $state<Suggestion[]>([]);
     let isLoading = $state(false);
     let selectedIndex = $state(-1);
     let showSuggestions = $state(false);
     let queryPrediction = $state('');
-    let debounceTimer: NodeJS.Timeout | null = null;
+    let debounceTimer: ReturnType<typeof setTimeout> | null = null;
     
     let { onPlaceSelected } = $props<{
         onPlaceSelected?: (place: Place) => void;
@@ -28,16 +27,23 @@
             clearTimeout(debounceTimer);
         }
         
+        if (input.length < 2) {
+            suggestions = [];
+            showSuggestions = false;
+            queryPrediction = '';
+            autocompleteSessionToken = randomUUID();
+            return;
+        }
+        
+        if (input.length >= 2 && !isLoading) {
+            isLoading = true;
+        }
+        
         debounceTimer = setTimeout(() => {
             if (input.length >= 2) {
                 performAutocomplete(input);
-            } else {
-                suggestions = [];
-                showSuggestions = false;
-                queryPrediction = '';
-                autocompleteSessionToken = randomUUID();
             }
-        }, 500);
+        }, 300);
     }
 
     async function performAutocomplete(input: string) {
@@ -56,7 +62,6 @@
             suggestions = response.suggestions || [];
             showSuggestions = suggestions.length > 0;
             
-            // Set query prediction if available
             const querySuggestion = suggestions.find(s => s.queryPrediction);
             if (querySuggestion?.queryPrediction?.text?.text) {
                 queryPrediction = querySuggestion.queryPrediction.text.text;
@@ -74,16 +79,15 @@
         }
     }
 
-    async function getPlaceDetails(placeId: string) {
+    async function getPlaceDetails(name: string) {
         try {
             const response = await clients.googleMaps.getRestaurantDetails({
-                name: placeId,
+                name: name,
                 languageCode: 'pl',
                 regionCode: 'pl',
                 sessionToken: autocompleteSessionToken,
             });
             
-            console.log('Place details:', response);
             if (onPlaceSelected) {
                 onPlaceSelected(response);
             }
@@ -102,8 +106,19 @@
 
     function handleInputChange(event: Event) {
         const target = event.target as HTMLInputElement;
-        input = target.value;
-        debouncedAutocomplete(input);
+        const newValue = target.value;
+        
+        input = newValue;
+        
+        if (!newValue.trim()) {
+            suggestions = [];
+            showSuggestions = false;
+            queryPrediction = '';
+            isLoading = false;
+            return;
+        }
+        
+        debouncedAutocomplete(newValue);
     }
 
     function handleKeyDown(event: KeyboardEvent) {
@@ -161,6 +176,7 @@
     onDestroy(() => {
         if (debounceTimer) {
             clearTimeout(debounceTimer);
+            debounceTimer = null;
         }
     });
 </script>
@@ -177,7 +193,9 @@
                 class="w-full"
             />
             {#if isLoading}
-                <div class="absolute right-3 text-lg text-gray-500">⌛</div>
+                <div class="absolute right-3 flex items-center">
+                    <div class="animate-spin rounded-full h-4 w-4 border-2 border-gray-300 border-t-primary-500"></div>
+                </div>
             {/if}
         </div>
         
@@ -212,6 +230,12 @@
             <div class="absolute top-1/2 left-4 transform -translate-y-1/2 pointer-events-none text-base text-gray-500 z-10 {showSuggestions ? 'hidden' : ''}">
                 <span class="text-transparent">{input}</span>
                 <span class="text-gray-500 opacity-60">{queryPrediction.substring(input.length)}</span>
+            </div>
+        {/if}
+        
+        {#if input.length > 0 && input.length < 2}
+            <div class="absolute top-full left-0 right-0 mt-1 p-2 text-sm text-gray-500 bg-gray-50 border border-gray-200 rounded">
+                Type at least 2 characters to search...
             </div>
         {/if}
     </div>
