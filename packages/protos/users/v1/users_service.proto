@@ -19,6 +19,11 @@ message CreateUserRequest {
   string email = 2;
   string username = 3;
   string name = 4;
+  string default_language = 5;
+  string default_region = 6;
+  bool is_dark_mode_enabled = 7;
+  bool is_active = 8;
+  bool is_admin = 9;
 }
 
 message CreateUserResponse {
@@ -30,6 +35,11 @@ message CreateAdminUserRequest {
   string email = 2;
   string username = 3;
   string name = 4;
+  string default_language = 5;
+  string default_region = 6;
+  bool is_dark_mode_enabled = 7;
+  bool is_active = 8;
+  bool is_admin = 9;
 }
 
 message CreateAdminUserResponse {
@@ -50,6 +60,11 @@ message UpdateUserRequest {
   string email = 3;
   string username = 4;
   string name = 5;
+  string default_language = 6;
+  string default_region = 7;
+  bool is_dark_mode_enabled = 8;
+  bool is_active = 9;
+  bool is_admin = 10;
 }
 
 message UpdateUserResponse {
