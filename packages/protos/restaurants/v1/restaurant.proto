@@ -7,13 +7,8 @@ option go_package = "api/src/generated/restaurants/v1";
 message RestaurantProto {
   string id = 1;
   string google_places_id = 2;
-  string email = 3;
-  string name = 4;
-  string address = 5;
-  string website_uri = 6;
-  double rating = 7;
-  string review_comment = 8;
-  repeated string tags = 9;
-  int64 created_at = 10;
-  int64 updated_at = 11;
+  string name = 3;
+  string address = 4;
+  int64 created_at = 6;
+  int64 updated_at = 7;
 }

@@ -15,9 +15,9 @@ service RestaurantsService {
 }
 
 message CreateRestaurantRequest {
-  string google_id = 1;
-  string email = 2;
-  string name = 3;
+  string google_places_id = 1;
+  string name = 2;
+  string address = 3;
 }
 
 message CreateRestaurantResponse {
@@ -34,9 +34,9 @@ message GetRestaurantResponse {
 
 message UpdateRestaurantRequest {
   string id = 1; // UUIDv7 as string
-  string google_id = 2;
-  string email = 3;
-  string name = 4;
+  string google_places_id = 2;
+  string name = 3;
+  string address = 4;
 }
 
 message UpdateRestaurantResponse {

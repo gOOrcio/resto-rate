@@ -190,7 +190,13 @@
                 onkeydown={handleKeyDown}
                 placeholder="Search for restaurants..."
                 autocomplete="off"
-                class="w-full"
+                class="
+                    w-full pr-10
+                    bg-no-repeat
+                    bg-[length:60px_60px]
+                    bg-[url('/GoogleMaps_Logo_Gray.svg')]
+                    bg-[position:calc(100%-2.25rem)_50%]
+                    "
             />
             {#if isLoading}
                 <div class="absolute right-3 flex items-center">

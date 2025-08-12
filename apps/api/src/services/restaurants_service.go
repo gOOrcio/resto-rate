@@ -31,16 +31,16 @@ func (s *RestaurantsService) CreateRestaurant(
 		return nil, fmt.Errorf("restaurant name is required")
 	}
 
-	if req.Msg.GoogleId == "" {
+	if req.Msg.GooglePlacesId == "" {
 		slog.Debug("Google ID is not provided for restaurant", slog.String("name", req.Msg.Name))
 	}
 
-	if req.Msg.Email == "" {
-		slog.Debug("Email is not provided for restaurant", slog.String("name", req.Msg.Name))
+	if req.Msg.Address == "" {
+		slog.Debug("Address is not provided for restaurant", slog.String("name", req.Msg.Name))
 	}
 	restaurant := &models.Restaurant{
-		GoogleID: req.Msg.GoogleId,
-		Email:    req.Msg.Email,
+		GoogleID: req.Msg.GooglePlacesId,
+		Address:  req.Msg.Address,
 		Name:     req.Msg.Name,
 	}
 
@@ -97,7 +97,7 @@ func (s *RestaurantsService) UpdateRestaurant(
 
 	updates := map[string]interface{}{
 		"Name":  req.Msg.Name,
-		"Email": req.Msg.Email,
+		"Email": req.Msg.Address,
 	}
 
 	if err := s.DB.WithContext(ctx).Model(restaurant).Updates(updates).Error; err != nil {

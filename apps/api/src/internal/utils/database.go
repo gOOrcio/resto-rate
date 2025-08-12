@@ -33,8 +33,8 @@ func seedRestaurants(db *gorm.DB) error {
 	if count == 0 {
 		slog.Info("Seeding restaurants...")
 		seedRestaurants := []models.Restaurant{
-			{GoogleID: "g1", Email: "a@b.com", Name: "Testaurant"},
-			{GoogleID: "g2", Email: "c@d.com", Name: "Food Place"},
+			{GoogleID: "places/1", Address: "Szkolna warszawa", Name: "Banjaluka"},
+			{GoogleID: "places/2", Address: "Plac kazimierza tarnów", Name: "Bistro Przepis"},
 		}
 		if err := db.Create(&seedRestaurants).Error; err != nil {
 			return err
