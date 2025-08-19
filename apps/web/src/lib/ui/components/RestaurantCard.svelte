@@ -78,7 +78,7 @@
 		<!-- Restaurant Types -->
 		{#if place.types && place.types.length > 0}
 			<div class="space-y-2">
-				<h4 class="sr-only text-sm font-semibold text-gray-700 dark:text-gray-300">
+				<h4 class="sr-only">
 					Restaurant Types
 				</h4>
 				<div class="flex flex-wrap gap-2">
