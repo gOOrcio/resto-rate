@@ -156,24 +156,6 @@ All components automatically support dark mode using the `dark:` prefix:
 </div>
 ```
 
-## Skeleton UI Components
-
-### Available Components
-- **Accordion**: Collapsible content sections
-- **AppBar**: Top navigation bar
-- **Avatar**: User profile pictures
-- **Navigation**: Side navigation
-- **Pagination**: Page navigation
-- **Progress**: Progress indicators
-- **ProgressRing**: Circular progress
-- **Rating**: Star ratings
-- **Segment Control**: Toggle buttons
-- **Slider**: Range sliders
-- **Switch**: Toggle switches
-- **Tabs**: Tabbed content
-- **Tags Input**: Tag input field
-- **Toast**: Notifications
-
 ### Usage Example
 
 ```svelte

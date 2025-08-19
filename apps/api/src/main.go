@@ -105,7 +105,7 @@ func mustConnectToDatabase() *gorm.DB {
 func mustConnectCache() valkey.Client {
 	slog.Info("Connecting to cache...")
 	uri := os.Getenv("VALKEY_URI")
-	username := "default" // for dev only!
+	username := "default"
 	password := os.Getenv("VALKEY_PASSWORD")
 	client, err := cache.NewValkey(uri, username, password)
 	if err != nil {

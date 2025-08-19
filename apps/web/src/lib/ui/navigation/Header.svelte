@@ -1,7 +1,14 @@
 <script lang="ts">
-	import { Navbar, NavBrand, NavLi, NavUl, NavHamburger, Drawer } from "flowbite-svelte";
-	import { sineIn } from "svelte/easing";
-	let open6 = $state(false)
+	import { page } from '$app/state';
+	import { Navbar, NavBrand, NavLi, NavUl, NavHamburger, Drawer, Hr } from 'flowbite-svelte';
+	import { sineIn } from 'svelte/easing';
+
+	let openDrawer = $state(false);
+	let activeUrl = $derived(page.url.pathname);
+	let activeClass =
+		'text-white bg-green-700 md:bg-transparent md:text-red-700 md:dark:text-white dark:bg-green-600 md:dark:bg-transparent';
+	let nonActiveClass =
+		'text-gray-700 hover:bg-gray-100 md:hover:bg-transparent md:border-0 md:hover:text-red-700 dark:text-gray-400 md:dark:hover:text-white dark:hover:bg-gray-700 dark:hover:text-white md:dark:hover:bg-transparent';
 	let transitionParamsRight = {
 		x: 80,
 		duration: 200,
@@ -9,48 +16,51 @@
 	};
 </script>
 
-	<header>
-		<Navbar class="bg-primary-200 dark:bg-primary-900 px-4">
-			<div class="flex items-center justify-between w-full">
-					<NavBrand href="/">
-						<img src="/favicon.svg" class="me-3 h-6 sm:h-9" alt="App Logo" />
-						<span class="self-center text-xl font-semibold whitespace-nowrap dark:text-white">Restorate</span>
-					</NavBrand>
+<header>
+	<Navbar class="bg-primary-200 dark:bg-primary-900 sm:px- fixed start-0 top-0 z-20 w-full p-2">
+		<div class="flex w-full items-center justify-between align-middle">
+			<NavBrand href="/">
+				<img src="/resto-rate-logo.svg" class="h-6 sm:h-9" alt="App Logo" />
+				<span class="self-center whitespace-nowrap text-xl font-semibold dark:text-white"
+					>Restorate</span
+				>
+			</NavBrand>
 
-				<div class="flex items-center">
-					<div class="hidden md:block">
-						<NavUl>
-							<div class="flex flex-row space-x-2 items-center">
-								<NavLi href="/">Home</NavLi>
-								<NavLi href="/about">About</NavLi>
-								<NavLi href="/docs/components/navbar">Navbar</NavLi>
-								<NavLi href="/pricing">Pricing</NavLi>
-								<NavLi href="/contact">Contact</NavLi>
-							</div>
-						</NavUl>
-					</div>
-
-					<NavHamburger onclick={() => (open6 = true)} name="" class="md:hidden ml-3" />
+			<div class="flex items-center">
+				<div class="hidden md:block">
+					<NavUl {activeUrl} classes={{ active: activeClass, nonActive: nonActiveClass }}>
+						<div class="flex flex-row items-center space-x-4">
+							<NavLi href="/">Home</NavLi>
+							<NavLi href="/about">About</NavLi>
+							<NavLi href="/pricing">Pricing</NavLi>
+							<NavLi href="/contact">Contact</NavLi>
+						</div>
+					</NavUl>
 				</div>
+
+				<NavHamburger onclick={() => (openDrawer = true)} name="" class="ml-3 md:hidden" />
 			</div>
-		</Navbar>
+		</div>
+	</Navbar>
 </header>
 
 <Drawer
-	bind:open={open6}
+	bind:open={openDrawer}
 	placement="right"
 	transitionParams={transitionParamsRight}
-	backdropClass="bg-black/50"
-	class="!fixed !top-0 !bottom-0 !right-0 !left-auto !m-0
-         !h-[100dvh] !w-25 !max-w-none !rounded-none p-0
-         overflow-y-auto bg-surface-50 dark:bg-surface-900"
-	formClass="!h-full !rounded-none !p-0"
+	class="!w-27 bg-surface-50 dark:bg-surface-900 !fixed !bottom-0 !left-auto
+         !right-0 !top-0 !z-50 !m-0 !h-screen
+         !min-h-screen !max-w-none overflow-hidden !rounded-none !p-0"
 >
-	<div class="h-full p-4 items-center flex flex-col gap-1">
-		<a href="/" on:click={() => (open6 = false)}>Home</a>
-		<a href="/about" on:click={() => (open6 = false)}>About</a>
-		<a href="/docs/components/navbar" on:click={() => (open6 = false)}>Navbar</a>
-		<a href="/pricing" on:click={() => (open6 = false)}>Pricing</a>
-		<a href="/contact" on:click={() => (open6 = false)}>Contact</a>
+	<div class="flex w-full items-center justify-center p-4">
+		<img src="/resto-rate-logo.svg" class="h-6 sm:h-9" alt="App Logo" />
+	</div>
+	<Hr class="mx-auto my-4 h-1 w-10 rounded-sm md:my-10" />
+	<div class="flex flex-col items-center gap-4 px-4">
+		<a href="/" onclick={() => (openDrawer = false)}>Home</a>
+		<a href="/" onclick={() => (openDrawer = false)}>About</a>
+		<a href="/" onclick={() => (openDrawer = false)}>Navbar</a>
+		<a href="/" onclick={() => (openDrawer = false)}>Pricing</a>
+		<a href="/" onclick={() => (openDrawer = false)}>Contact</a>
 	</div>
 </Drawer>

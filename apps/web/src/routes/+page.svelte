@@ -1,6 +1,6 @@
 <script lang="ts">
 	import type { Place } from '$lib/client/generated/google_maps/v1/google_maps_service_pb';
-	import { CardSv, BadgeSv } from '$lib/ui/components';
+	import { Card, Badge } from 'flowbite-svelte';
 	import RestaurantSearchSv from '$lib/ui/components/RestaurantSearchSv.svelte';
 
 	let places: Place[] = [];
@@ -13,32 +13,24 @@
 			Google Places API Search
 		</h2>
 
-		<CardSv variant="outlined" color="surface" class="space-y-4">
-			<div>
-				<label
-					for="searchQuery"
-					class="text-surface-700 dark:text-surface-300 mb-2 block text-sm font-medium"
-				>
-					Search restaurant by name:
-				</label>
-				<RestaurantSearchSv onPlaceSelected={(place: Place) => selectedPlace = place} />
-			</div>
-		</CardSv>
+		<div class="space-y-4">
+			<RestaurantSearchSv onPlaceSelected={(place: Place) => (selectedPlace = place)} />
+		</div>
 
 		{#if selectedPlace}
 			<div class="space-y-4">
 				<h3 class="text-primary-800 dark:text-primary-200 text-xl font-semibold">
 					Selected Restaurant:
 				</h3>
-				<CardSv variant="outlined" color="surface" class="space-y-3">
+				<Card class="space-y-3">
 					<h4 class="text-primary-800 dark:text-primary-200 font-bold">
 						{selectedPlace.displayName?.text || selectedPlace.name}
 					</h4>
 					{#if selectedPlace.rating}
 						<div>
-							<BadgeSv variant="filled" color="primary" size="sm">
+							<Badge color="primary">
 								Rating: {selectedPlace.rating}/5
-							</BadgeSv>
+							</Badge>
 						</div>
 					{/if}
 					{#if selectedPlace.formattedAddress}
@@ -50,13 +42,13 @@
 					{#if selectedPlace.types && selectedPlace.types.length > 0}
 						<div class="flex flex-wrap gap-2">
 							{#each selectedPlace.types as type}
-								<BadgeSv variant="outlined" color="secondary" size="sm">
+								<Badge color="secondary">
 									{type}
-								</BadgeSv>
+								</Badge>
 							{/each}
 						</div>
 					{/if}
-				</CardSv>
+				</Card>
 			</div>
 		{/if}
 
@@ -67,15 +59,15 @@
 				</h3>
 				<div class="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
 					{#each places as place}
-						<CardSv variant="outlined" color="surface" class="space-y-3">
+						<Card class="space-y-3">
 							<h4 class="text-primary-800 dark:text-primary-200 font-bold">
 								{place.displayName?.text || place.name}
 							</h4>
 							{#if place.rating}
 								<div>
-									<BadgeSv variant="filled" color="primary" size="sm">
+									<Badge color="primary">
 										Rating: {place.rating}/5
-									</BadgeSv>
+									</Badge>
 								</div>
 							{/if}
 							{#if place.formattedAddress}
@@ -84,7 +76,7 @@
 									{place.formattedAddress}
 								</p>
 							{/if}
-						</CardSv>
+						</Card>
 					{/each}
 				</div>
 			</div>
