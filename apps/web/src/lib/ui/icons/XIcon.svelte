@@ -1,11 +1,12 @@
 <script lang="ts">
 	export let size: number = 24;
+	export let color: string = 'currentColor';
 </script>
 
 <svg
 	style="width: {size}px; height: {size}px;"
 	viewBox="0 0 16 16"
-	fill="currentColor"
+	fill={color}
 	xmlns="http://www.w3.org/2000/svg"
 	aria-hidden="true"
 >

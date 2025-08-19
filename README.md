@@ -4,7 +4,7 @@ Restaurant rating and review application built with SvelteKit frontend and Go AP
 
 ## Architecture
 
-- **Frontend**: SvelteKit with TailwindCSS, Skeleton UI, and Paraglide for i18n
+- **Frontend**: SvelteKit with TailwindCSS, Flowbite UI, and Paraglide for i18n
 - **Backend**: Go API with Connect-RPC (gRPC-compatible), PostgreSQL database
 - **Database**: PostgreSQL with GORM ORM
 - **Communication**: Connect-RPC for type-safe API communication
@@ -240,7 +240,7 @@ resto-rate/
 ### Frontend
 - **SvelteKit** - Full-stack web framework
 - **TailwindCSS** - Utility-first CSS framework
-- **Skeleton UI** - SvelteKit UI toolkit
+- **Flobite UI** - SvelteKit UI toolkit
 - **Connect-RPC** - Type-safe API client
 - **Paraglide** - Internationalization
 - **TypeScript** - Type safety
