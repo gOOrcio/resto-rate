@@ -8,13 +8,6 @@
 </script>
 
 <div class="container mx-auto max-w-6xl space-y-8 p-6">
-	<header class="space-y-4 text-center">
-		<h1 class="text-primary-900 dark:text-primary-100 text-4xl font-bold">Resto Rate</h1>
-		<p class="text-surface-600 dark:text-surface-400 text-lg">
-			Discover, rate, and review the best restaurants around you
-		</p>
-	</header>
-
 	<section class="space-y-6">
 		<h2 class="text-primary-800 dark:text-primary-200 text-2xl font-semibold">
 			Google Places API Search
