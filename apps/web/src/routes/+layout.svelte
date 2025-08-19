@@ -5,10 +5,12 @@
 	let { children } = $props();
 </script>
 
-<div class="bg-surface-50 dark:bg-surface-950 flex min-h-screen flex-col">
+<div
+	class="flex min-h-screen flex-col bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900"
+>
 	<Header />
 
-	<main class="flex-grow pt-14">
+	<main class="flex-grow">
 		{@render children()}
 	</main>
 

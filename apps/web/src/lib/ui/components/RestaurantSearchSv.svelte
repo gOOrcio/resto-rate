@@ -5,8 +5,9 @@
 		Suggestion
 	} from '$lib/client/generated/google_maps/v1/google_maps_service_pb';
 	import { onMount, onDestroy } from 'svelte';
-	import { Input } from 'flowbite-svelte';
+	import { Input, Card, Badge } from 'flowbite-svelte';
 	import { v4 as uuidv4 } from 'uuid';
+	import RestaurantCard from './RestaurantCard.svelte';
 
 	function randomUUID(): string {
 		return uuidv4();
@@ -19,6 +20,7 @@
 	let selectedIndex = $state(-1);
 	let showSuggestions = $state(false);
 	let queryPrediction = $state('');
+	let selectedPlace = $state<Place | null>(null);
 	let debounceTimer: ReturnType<typeof setTimeout> | null = null;
 
 	let { onPlaceSelected } = $props<{
@@ -90,6 +92,8 @@
 				regionCode: 'pl',
 				sessionToken: autocompleteSessionToken
 			});
+
+			selectedPlace = response;
 
 			if (onPlaceSelected) {
 				onPlaceSelected(response);
@@ -257,6 +261,15 @@
 			class="absolute left-0 right-0 top-full mt-1 rounded border border-gray-200 bg-gray-50 p-2 text-sm text-gray-500"
 		>
 			Type at least 2 characters to search...
+		</div>
+	{/if}
+
+	{#if selectedPlace}
+		<div class="mt-6 space-y-4">
+			<h3 class="text-primary-800 dark:text-primary-200 text-xl font-semibold">
+				Selected Restaurant:
+			</h3>
+			<RestaurantCard place={selectedPlace} />
 		</div>
 	{/if}
 </div>

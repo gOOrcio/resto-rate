@@ -1,10 +1,5 @@
 <script lang="ts">
-	import type { Place } from '$lib/client/generated/google_maps/v1/google_maps_service_pb';
-	import { Card, Badge } from 'flowbite-svelte';
 	import RestaurantSearchSv from '$lib/ui/components/RestaurantSearchSv.svelte';
-
-	let places: Place[] = [];
-	let selectedPlace: Place | null = null;
 </script>
 
 <div class="container mx-auto max-w-6xl space-y-8 p-6">
@@ -14,72 +9,7 @@
 		</h2>
 
 		<div class="space-y-4">
-			<RestaurantSearchSv onPlaceSelected={(place: Place) => (selectedPlace = place)} />
+			<RestaurantSearchSv />
 		</div>
-
-		{#if selectedPlace}
-			<div class="space-y-4">
-				<h3 class="text-primary-800 dark:text-primary-200 text-xl font-semibold">
-					Selected Restaurant:
-				</h3>
-				<Card class="space-y-3">
-					<h4 class="text-primary-800 dark:text-primary-200 font-bold">
-						{selectedPlace.displayName?.text || selectedPlace.name}
-					</h4>
-					{#if selectedPlace.rating}
-						<div>
-							<Badge color="primary">
-								Rating: {selectedPlace.rating}/5
-							</Badge>
-						</div>
-					{/if}
-					{#if selectedPlace.formattedAddress}
-						<p class="text-surface-600 dark:text-surface-400 text-sm">
-							<strong>Address:</strong>
-							{selectedPlace.formattedAddress}
-						</p>
-					{/if}
-					{#if selectedPlace.types && selectedPlace.types.length > 0}
-						<div class="flex flex-wrap gap-2">
-							{#each selectedPlace.types as type}
-								<Badge color="secondary">
-									{type}
-								</Badge>
-							{/each}
-						</div>
-					{/if}
-				</Card>
-			</div>
-		{/if}
-
-		{#if places.length > 0}
-			<div class="space-y-4">
-				<h3 class="text-primary-800 dark:text-primary-200 text-xl font-semibold">
-					Search Results:
-				</h3>
-				<div class="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-					{#each places as place}
-						<Card class="space-y-3">
-							<h4 class="text-primary-800 dark:text-primary-200 font-bold">
-								{place.displayName?.text || place.name}
-							</h4>
-							{#if place.rating}
-								<div>
-									<Badge color="primary">
-										Rating: {place.rating}/5
-									</Badge>
-								</div>
-							{/if}
-							{#if place.formattedAddress}
-								<p class="text-surface-600 dark:text-surface-400 text-sm">
-									<strong>Address:</strong>
-									{place.formattedAddress}
-								</p>
-							{/if}
-						</Card>
-					{/each}
-				</div>
-			</div>
-		{/if}
 	</section>
 </div>
