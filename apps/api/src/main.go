@@ -67,9 +67,11 @@ func connectPrometheusInterceptor() connect.Interceptor {
 }
 
 func startServer(mux *http.ServeMux, apiPort string) {
-	slog.Info("Starting HTTP server", slog.String("port", apiPort))
-	if err := http.ListenAndServe(
+	slog.Info("Starting HTTPS server", slog.String("port", apiPort))
+	if err := http.ListenAndServeTLS(
 		":"+apiPort,
+		"cert.pem",
+		"key.pem",
 		h2c.NewHandler(mux, &http2.Server{}),
 	); err != nil {
 		slog.Error("Failed to run application", slog.Any("error", err))
