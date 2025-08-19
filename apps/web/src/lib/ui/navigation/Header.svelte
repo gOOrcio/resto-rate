@@ -17,7 +17,7 @@
 </script>
 
 <header>
-	<Navbar class="bg-primary-200 dark:bg-primary-900 sm:px- fixed start-0 top-0 z-20 w-full p-2">
+	<Navbar class="bg-primary-200 dark:bg-primary-900 sm:px- sticky top-0 z-10 w-full p-2">
 		<div class="flex w-full items-center justify-between align-middle">
 			<NavBrand href="/">
 				<img src="/resto-rate-logo.svg" class="h-6 sm:h-9" alt="App Logo" />
