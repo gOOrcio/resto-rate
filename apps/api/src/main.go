@@ -162,7 +162,25 @@ func setupHTTPHandlers(registrations []ServiceRegistration) *http.ServeMux {
 
 func corsMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Access-Control-Allow-Origin", "http://localhost:5173")
+		requestOrigin := r.Header.Get("Origin")
+
+		if os.Getenv("ENV") == "dev" {
+			allowedOrigins := []string{
+				getAPIProtocol() + "://localhost:" + getWebUiPort(),
+				getAPIProtocol() + "://" + getAPIHost() + ":" + getWebUiPort(),
+			}
+
+			for _, allowed := range allowedOrigins {
+				if requestOrigin == allowed {
+					w.Header().Set("Access-Control-Allow-Origin", requestOrigin)
+					break
+				}
+			}
+		} else {
+			allowedOrigin := getAPIProtocol() + "://" + getAPIHost() + ":" + getWebUiPort()
+			w.Header().Set("Access-Control-Allow-Origin", allowedOrigin)
+		}
+
 		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
 		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization, Connect-Protocol-Version")
 		w.Header().Set("Access-Control-Allow-Credentials", "true")
@@ -195,6 +213,30 @@ func getAPIPort() string {
 		log.Fatal("API_PORT is not set in the environment variables")
 	}
 	return apiPort
+}
+
+func getAPIProtocol() string {
+	apiProtocol := os.Getenv("API_PROTOCOL")
+	if apiProtocol == "" {
+		log.Fatal("API_PROTOCOL is not set in the environment variables")
+	}
+	return apiProtocol
+}
+
+func getAPIHost() string {
+	apiHost := os.Getenv("API_HOST")
+	if apiHost == "" {
+		log.Fatal("API_HOST is not set in the environment variables")
+	}
+	return apiHost
+}
+
+func getWebUiPort() string {
+	webUiPort := os.Getenv("WEB_UI_PORT")
+	if webUiPort == "" {
+		log.Fatal("WEB_UI_PORT is not set in the environment variables")
+	}
+	return webUiPort
 }
 
 func envLogLevel() slog.Level {
