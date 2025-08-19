@@ -2,7 +2,7 @@
 	import type { Place } from '$lib/client/generated/google_maps/v1/google_maps_service_pb';
 	import { Card, Badge } from 'flowbite-svelte';
 
-	export let place: Place;
+	const { place } = $props<{ place: Place }>();
 </script>
 
 <Card
