@@ -12,7 +12,8 @@ export default defineConfig({
 		tailwindcss(),
 		sveltekit(),
 		devtoolsJson(),
-		basicSsl(),
+		// Only use SSL in production
+		...(process.env.NODE_ENV === 'production' ? [basicSsl()] : []),
 		paraglideVitePlugin({
 			project: './project.inlang',
 			outdir: './src/lib/paraglide'
@@ -21,10 +22,13 @@ export default defineConfig({
 	server: {
 		port: parseInt(process.env.VITE_PORT || '5173'),
 		strictPort: true,
-		https: {
-			key: fs.readFileSync(path.resolve(__dirname, 'key.pem')),
-			cert: fs.readFileSync(path.resolve(__dirname, 'web-cert.pem')),
-		},
+		// Only use HTTPS in production
+		...(process.env.NODE_ENV === 'production' ? {
+			https: {
+				key: fs.readFileSync(path.resolve(__dirname, 'key.pem')),
+				cert: fs.readFileSync(path.resolve(__dirname, 'web-cert.pem')),
+			}
+		} : {}),
 		host: true,
 		hmr: {
 			clientPort: 5173,
@@ -32,10 +36,13 @@ export default defineConfig({
 		}
 	},
 	preview: {
-		https: {
-			key: fs.readFileSync(path.resolve(__dirname, 'key.pem')),
-			cert: fs.readFileSync(path.resolve(__dirname, 'web-cert.pem')),
-		},
+		// Only use HTTPS in production
+		...(process.env.NODE_ENV === 'production' ? {
+			https: {
+				key: fs.readFileSync(path.resolve(__dirname, 'key.pem')),
+				cert: fs.readFileSync(path.resolve(__dirname, 'web-cert.pem')),
+			}
+		} : {}),
 		host: true
 	},
 	build: {
