@@ -6,7 +6,6 @@
 	import { restaurantCardTheme, ratingTheme } from '$lib/ui/theme/components';
 
 	const { place } = $props<{ place: Place }>();
-	let ratingId = uuidv4();
 	const wrapper = (props: RatingIconProps) => (anchor: any, _props: RatingIconProps) =>
 		Star(anchor, { ..._props, ...props });
 </script>
@@ -26,7 +25,7 @@
 				<div class="flex items-center justify-between">
 					<div class="flex items-center space-x-3">
 						<Rating
-							id={ratingId}
+							id={uuidv4()}
 							total={5}
 							size={24}
 							rating={place.rating}

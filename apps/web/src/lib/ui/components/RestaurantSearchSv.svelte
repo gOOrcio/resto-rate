@@ -9,7 +9,6 @@
 	import { v4 as uuidv4 } from 'uuid';
 	import RestaurantCard from './RestaurantCard.svelte';
 
-	// Generate unique IDs for components that need them
 	function randomUUID(): string {
 		return uuidv4();
 	}
@@ -70,7 +69,9 @@
 
 			const querySuggestion = suggestions.find((s) => s.queryPrediction);
 			if (querySuggestion?.queryPrediction?.text?.text) {
-				queryPrediction = querySuggestion.queryPrediction.text.text;
+				if (querySuggestion) {
+					queryPrediction = querySuggestion.queryPrediction.text.text;
+				}
 			} else {
 				queryPrediction = '';
 			}
@@ -161,7 +162,7 @@
 
 	function getSuggestionText(suggestion: Suggestion): string {
 		if (suggestion.placePrediction?.structuredFormat?.mainText?.text) {
-			return suggestion.placePrediction.structuredFormat.mainText.text;
+			return <string>suggestion.placePrediction?.structuredFormat.mainText.text;
 		}
 		if (suggestion.placePrediction?.text?.text) {
 			return suggestion.placePrediction.text.text;
@@ -171,7 +172,7 @@
 
 	function getSuggestionSubtext(suggestion: Suggestion): string {
 		if (suggestion.placePrediction?.structuredFormat?.secondaryText?.text) {
-			return suggestion.placePrediction.structuredFormat.secondaryText.text;
+			return <string>suggestion.placePrediction?.structuredFormat.secondaryText.text;
 		}
 		return '';
 	}
@@ -196,7 +197,6 @@
 			oninput={handleInputChange}
 			onkeydown={handleKeyDown}
 			placeholder="Search for restaurants..."
-			autocomplete="off"
 			class="
                     w-full bg-[url('/GoogleMaps_Logo_Gray.svg')]
                     bg-[length:60px_60px]
