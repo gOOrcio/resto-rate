@@ -67,13 +67,26 @@ func connectPrometheusInterceptor() connect.Interceptor {
 }
 
 func startServer(mux *http.ServeMux, apiPort string) {
-	slog.Info("Starting HTTP server", slog.String("port", apiPort))
-	if err := http.ListenAndServe(
-		":"+apiPort,
-		h2c.NewHandler(mux, &http2.Server{}),
-	); err != nil {
-		slog.Error("Failed to run application", slog.Any("error", err))
-		os.Exit(1)
+	if os.Getenv("ENV") == "dev" {
+		slog.Info("Starting HTTP server for development", slog.String("port", apiPort))
+		if err := http.ListenAndServe(
+			":"+apiPort,
+			h2c.NewHandler(mux, &http2.Server{}),
+		); err != nil {
+			slog.Error("Failed to run application", slog.Any("error", err))
+			os.Exit(1)
+		}
+	} else {
+		slog.Info("Starting HTTPS server", slog.String("port", apiPort))
+		if err := http.ListenAndServeTLS(
+			":"+apiPort,
+			"cert.pem",
+			"key.pem",
+			h2c.NewHandler(mux, &http2.Server{}),
+		); err != nil {
+			slog.Error("Failed to run application", slog.Any("error", err))
+			os.Exit(1)
+		}
 	}
 }
 
@@ -105,7 +118,7 @@ func mustConnectToDatabase() *gorm.DB {
 func mustConnectCache() valkey.Client {
 	slog.Info("Connecting to cache...")
 	uri := os.Getenv("VALKEY_URI")
-	username := "default" // for dev only!
+	username := "default"
 	password := os.Getenv("VALKEY_PASSWORD")
 	client, err := cache.NewValkey(uri, username, password)
 	if err != nil {
@@ -162,7 +175,28 @@ func setupHTTPHandlers(registrations []ServiceRegistration) *http.ServeMux {
 
 func corsMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Access-Control-Allow-Origin", "http://localhost:5173")
+		requestOrigin := r.Header.Get("Origin")
+
+		if os.Getenv("ENV") == "dev" {
+			// In development, allow both HTTP and HTTPS origins for flexibility
+			allowedOrigins := []string{
+				"http://localhost:" + getWebUiPort(),
+				"https://localhost:" + getWebUiPort(),
+				"http://" + getAPIHost() + ":" + getWebUiPort(),
+				"https://" + getAPIHost() + ":" + getWebUiPort(),
+			}
+
+			for _, allowed := range allowedOrigins {
+				if requestOrigin == allowed {
+					w.Header().Set("Access-Control-Allow-Origin", requestOrigin)
+					break
+				}
+			}
+		} else {
+			allowedOrigin := getAPIProtocol() + "://" + getAPIHost() + ":" + getWebUiPort()
+			w.Header().Set("Access-Control-Allow-Origin", allowedOrigin)
+		}
+
 		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
 		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization, Connect-Protocol-Version")
 		w.Header().Set("Access-Control-Allow-Credentials", "true")
@@ -195,6 +229,30 @@ func getAPIPort() string {
 		log.Fatal("API_PORT is not set in the environment variables")
 	}
 	return apiPort
+}
+
+func getAPIProtocol() string {
+	apiProtocol := os.Getenv("API_PROTOCOL")
+	if apiProtocol == "" {
+		log.Fatal("API_PROTOCOL is not set in the environment variables")
+	}
+	return apiProtocol
+}
+
+func getAPIHost() string {
+	apiHost := os.Getenv("API_HOST")
+	if apiHost == "" {
+		log.Fatal("API_HOST is not set in the environment variables")
+	}
+	return apiHost
+}
+
+func getWebUiPort() string {
+	webUiPort := os.Getenv("WEB_UI_PORT")
+	if webUiPort == "" {
+		log.Fatal("WEB_UI_PORT is not set in the environment variables")
+	}
+	return webUiPort
 }
 
 func envLogLevel() slog.Level {

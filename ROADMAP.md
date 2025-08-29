@@ -10,7 +10,7 @@ Resto Rate is a restaurant rating and review application built with SvelteKit fr
 - **Basic Architecture**: SvelteKit frontend + Go API backend
 - **Database**: PostgreSQL with basic restaurant and user models
 - **API**: gRPC/Connect-RPC services for restaurants and users
-- **UI Framework**: SvelteKit with TailwindCSS and Skeleton UI
+- **UI Framework**: SvelteKit with TailwindCSS and Flowbite UI
 - **Monorepo**: Nx workspace with bun package manager
 - **Docker**: Basic PostgreSQL container setup
 - **Internationalization**: Paraglide setup for i18n
