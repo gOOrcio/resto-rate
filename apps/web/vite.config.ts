@@ -32,7 +32,7 @@ export default defineConfig({
 		host: true,
 		hmr: {
 			clientPort: 5173,
-			host: '192.168.1.173'
+			host: process.env.VITE_HMR_HOST || 'localhost'
 		}
 	},
 	preview: {
