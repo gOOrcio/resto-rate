@@ -5,10 +5,11 @@
 		Suggestion
 	} from '$lib/client/generated/google_maps/v1/google_maps_service_pb';
 	import { onMount, onDestroy } from 'svelte';
-	import { Input, Card, Badge } from 'flowbite-svelte';
+	import { Input } from 'flowbite-svelte';
 	import { v4 as uuidv4 } from 'uuid';
 	import RestaurantCard from './RestaurantCard.svelte';
 
+	// Generate unique IDs for components that need them
 	function randomUUID(): string {
 		return uuidv4();
 	}
@@ -51,7 +52,7 @@
 		}, 300);
 	}
 
-	async function performAutocomplete(input: string) {
+	async function performAutocomplete(input: string, regionCode: string = 'pl') {
 		if (input.length < 2) return;
 
 		isLoading = true;
@@ -59,7 +60,7 @@
 			const response = await clients.googleMaps.autocompletePlaces({
 				input,
 				languageCode: 'pl',
-				includedRegionCodes: ['pl'],
+				includedRegionCodes: [regionCode],
 				sessionToken: autocompleteSessionToken,
 				includeQueryPrediction: true
 			});
@@ -263,13 +264,13 @@
 			Type at least 2 characters to search...
 		</div>
 	{/if}
-
-	{#if selectedPlace}
-		<div class="mt-6 space-y-4">
-			<h3 class="text-primary-800 dark:text-primary-200 text-xl font-semibold">
-				Selected Restaurant:
-			</h3>
-			<RestaurantCard place={selectedPlace} />
-		</div>
-	{/if}
 </div>
+
+{#if selectedPlace}
+	<div class="mt-6 space-y-4">
+		<h3 class="text-primary-800 dark:text-primary-200 text-xl font-semibold">
+			Selected Restaurant:
+		</h3>
+		<RestaurantCard place={selectedPlace} />
+	</div>
+{/if}

@@ -67,13 +67,26 @@ func connectPrometheusInterceptor() connect.Interceptor {
 }
 
 func startServer(mux *http.ServeMux, apiPort string) {
-	slog.Info("Starting HTTP server", slog.String("port", apiPort))
-	if err := http.ListenAndServe(
-		":"+apiPort,
-		h2c.NewHandler(mux, &http2.Server{}),
-	); err != nil {
-		slog.Error("Failed to run application", slog.Any("error", err))
-		os.Exit(1)
+	if os.Getenv("ENV") == "dev" {
+		slog.Info("Starting HTTP server for development", slog.String("port", apiPort))
+		if err := http.ListenAndServe(
+			":"+apiPort,
+			h2c.NewHandler(mux, &http2.Server{}),
+		); err != nil {
+			slog.Error("Failed to run application", slog.Any("error", err))
+			os.Exit(1)
+		}
+	} else {
+		slog.Info("Starting HTTPS server", slog.String("port", apiPort))
+		if err := http.ListenAndServeTLS(
+			":"+apiPort,
+			"cert.pem",
+			"key.pem",
+			h2c.NewHandler(mux, &http2.Server{}),
+		); err != nil {
+			slog.Error("Failed to run application", slog.Any("error", err))
+			os.Exit(1)
+		}
 	}
 }
 
@@ -165,9 +178,12 @@ func corsMiddleware(next http.Handler) http.Handler {
 		requestOrigin := r.Header.Get("Origin")
 
 		if os.Getenv("ENV") == "dev" {
+			// In development, allow both HTTP and HTTPS origins for flexibility
 			allowedOrigins := []string{
-				getAPIProtocol() + "://localhost:" + getWebUiPort(),
-				getAPIProtocol() + "://" + getAPIHost() + ":" + getWebUiPort(),
+				"http://localhost:" + getWebUiPort(),
+				"https://localhost:" + getWebUiPort(),
+				"http://" + getAPIHost() + ":" + getWebUiPort(),
+				"https://" + getAPIHost() + ":" + getWebUiPort(),
 			}
 
 			for _, allowed := range allowedOrigins {

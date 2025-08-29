@@ -6,9 +6,9 @@
 	let openDrawer = $state(false);
 	let activeUrl = $derived(page.url.pathname);
 	let activeClass =
-		'text-white bg-green-700 md:bg-transparent md:text-red-700 md:dark:text-white dark:bg-green-600 md:dark:bg-transparent';
+		'text-white bg-primary-700 md:bg-transparent md:text-primary-700 md:dark:text-white dark:bg-primary-600 md:dark:bg-transparent';
 	let nonActiveClass =
-		'text-gray-700 hover:bg-gray-100 md:hover:bg-transparent md:border-0 md:hover:text-red-700 dark:text-gray-400 md:dark:hover:text-white dark:hover:bg-gray-700 dark:hover:text-white md:dark:hover:bg-transparent';
+		'text-gray-700 hover:bg-gray-100 md:hover:bg-transparent md:border-0 md:hover:text-primary-700 dark:text-gray-400 md:dark:hover:text-white dark:hover:bg-gray-700 dark:hover:text-white md:dark:hover:bg-transparent';
 	let transitionParamsRight = {
 		x: 80,
 		duration: 200,
@@ -20,8 +20,9 @@
 	<Navbar class="bg-primary-200 dark:bg-primary-900 sm:px- sticky top-0 z-10 w-full p-2">
 		<div class="flex w-full items-center justify-between align-middle">
 			<NavBrand href="/">
-				<img src="/resto-rate-logo.svg" class="h-6 sm:h-9" alt="App Logo" />
-				<span class="self-center whitespace-nowrap text-xl font-semibold dark:text-white"
+				<img src="/resto-rate-logo.svg" class="h-4 w-4 sm:h-5 sm:w-5" alt="App Logo" />
+				<span
+					class="text-primary-800 ml-2 self-center whitespace-nowrap text-xl font-semibold dark:text-white"
 					>Restorate</span
 				>
 			</NavBrand>
@@ -53,7 +54,7 @@
          !min-h-screen !max-w-none overflow-hidden !rounded-none !p-0"
 >
 	<div class="flex w-full items-center justify-center p-4">
-		<img src="/resto-rate-logo.svg" class="h-6 sm:h-9" alt="App Logo" />
+		<img src="/resto-rate-logo.svg" class="h-6 w-8" alt="App Logo" />
 	</div>
 	<Hr class="mx-auto my-4 h-1 w-10 rounded-sm md:my-10" />
 	<div class="flex flex-col items-center gap-4 px-4">
