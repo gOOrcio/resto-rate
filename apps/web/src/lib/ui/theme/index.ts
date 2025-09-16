@@ -54,7 +54,11 @@ export const appTheme: ThemeConfig = {
   // Spinner theming
   spinner: {
     base: 'inline animate-spin text-gray-200 dark:text-gray-600'
-  }
+  },
+
+	rating: {
+		base: 'inline-flex items-center justify-center font-medium rounded-full'
+	}
 };
 
 // Export individual component themes for granular usage
@@ -69,10 +73,12 @@ export const dropdownTheme = appTheme.dropdown;
 export const paginationTheme = appTheme.pagination;
 export const alertTheme = appTheme.alert;
 export const spinnerTheme = appTheme.spinner;
+export const ratingTheme = appTheme.rating;
 
 // Custom component themes
 export const restaurantCardTheme = {
-  base: 'overflow-hidden rounded-2xl border-0 bg-white shadow-xl transition-all duration-300 hover:scale-[1.02] hover:shadow-2xl dark:bg-gray-800 dark:shadow-gray-900/50'
+  base: 'overflow-hidden rounded-2xl border-0 bg-white shadow-xl transition-all duration-300 hover:scale-[1.01] hover:shadow-2xl dark:bg-gray-800' +
+		' dark:shadow-gray-900/50'
 };
 
 export const searchInputTheme = {
@@ -91,8 +97,6 @@ export const containerTheme = {
   base: 'container mx-auto max-w-6xl space-y-8 p-6'
 };
 
-// Hr theme (not part of Flowbite's ThemeConfig)
 export const hrTheme = 'my-6 border-gray-200 dark:border-gray-700';
 
-// Table theme (not part of Flowbite's ThemeConfig)
-export const tableTheme = 'w-full text-sm text-left text-gray-500 dark:text-gray-400'; 
+export const tableTheme = 'w-full text-sm text-left text-gray-500 dark:text-gray-400';

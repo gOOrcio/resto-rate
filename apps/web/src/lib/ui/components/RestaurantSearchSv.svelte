@@ -271,6 +271,13 @@
 		<h3 class="text-primary-800 dark:text-primary-200 text-xl font-semibold">
 			Selected Restaurant:
 		</h3>
-		<RestaurantCard place={selectedPlace} />
+		<!-- Desktop variant for larger screens -->
+		<div class="hidden md:block">
+			<RestaurantCard place={selectedPlace} size="desktop" />
+		</div>
+		<!-- Mobile variant for smaller screens -->
+		<div class="block md:hidden">
+			<RestaurantCard place={selectedPlace} size="mobile" />
+		</div>
 	</div>
 {/if}

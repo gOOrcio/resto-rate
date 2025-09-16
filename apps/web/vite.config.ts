@@ -12,7 +12,6 @@ export default defineConfig({
 		tailwindcss(),
 		sveltekit(),
 		devtoolsJson(),
-		// Only use SSL in production
 		...(process.env.NODE_ENV === 'production' ? [basicSsl()] : []),
 		paraglideVitePlugin({
 			project: './project.inlang',
@@ -22,7 +21,6 @@ export default defineConfig({
 	server: {
 		port: parseInt(process.env.VITE_PORT || '5173'),
 		strictPort: true,
-		// Only use HTTPS in production
 		...(process.env.NODE_ENV === 'production' ? {
 			https: {
 				key: fs.readFileSync(path.resolve(__dirname, 'key.pem')),

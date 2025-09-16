@@ -13,7 +13,6 @@ export { paginationTheme } from './index';
 export { alertTheme } from './index';
 export { spinnerTheme } from './index';
 
-// Custom component themes that extend the base Flowbite themes
 export { restaurantCardTheme } from './index';
 export { searchInputTheme } from './index';
 export { ratingTheme } from './index';
