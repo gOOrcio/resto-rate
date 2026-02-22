@@ -4,6 +4,7 @@
 		Place,
 		Suggestion
 	} from '$lib/client/generated/google_maps/v1/google_maps_service_pb';
+	import type { RestaurantProto } from '$lib/client/generated/restaurants/v1/restaurant_pb';
 	import { onMount, onDestroy } from 'svelte';
 	import { Input } from 'flowbite-svelte';
 	import { v4 as uuidv4 } from 'uuid';
@@ -20,7 +21,12 @@
 	let selectedIndex = $state(-1);
 	let showSuggestions = $state(false);
 	let queryPrediction = $state('');
+
+	// After selection: the fetched Place and the created DB record
 	let selectedPlace = $state<Place | null>(null);
+	let selectedRestaurant = $state<RestaurantProto | null>(null);
+	let createError = $state<string | null>(null);
+
 	let debounceTimer: ReturnType<typeof setTimeout> | null = null;
 
 	let { onPlaceSelected } = $props<{
@@ -69,9 +75,7 @@
 
 			const querySuggestion = suggestions.find((s) => s.queryPrediction);
 			if (querySuggestion?.queryPrediction?.text?.text) {
-				if (querySuggestion) {
-					queryPrediction = querySuggestion.queryPrediction.text.text;
-				}
+				queryPrediction = querySuggestion.queryPrediction.text.text;
 			} else {
 				queryPrediction = '';
 			}
@@ -88,25 +92,40 @@
 
 	async function getPlaceDetails(name: string) {
 		try {
-			const response = await clients.googleMaps.getRestaurantDetails({
+			const place = await clients.googleMaps.getRestaurantDetails({
 				name: name,
 				languageCode: 'pl',
 				regionCode: 'pl',
 				sessionToken: autocompleteSessionToken
 			});
 
-			selectedPlace = response;
+			selectedPlace = place;
+			selectedRestaurant = null;
+			createError = null;
 
 			if (onPlaceSelected) {
-				onPlaceSelected(response);
+				onPlaceSelected(place);
 			}
 
 			suggestions = [];
 			showSuggestions = false;
 			queryPrediction = '';
-			input = response.displayName?.text || response.name || '';
+			input = place.displayName?.text || place.name || '';
 
 			autocompleteSessionToken = randomUUID();
+
+			// Persist to database
+			try {
+				const response = await clients.restaurants.createRestaurant({
+					name: place.displayName?.text || place.name || '',
+					googlePlacesId: place.name || '',
+					address: place.formattedAddress || ''
+				});
+				selectedRestaurant = response.restaurant ?? null;
+			} catch (err) {
+				console.error('Failed to save restaurant to DB:', err);
+				createError = 'Could not save restaurant to database.';
+			}
 		} catch (error) {
 			console.error('Get place details error:', error);
 		}
@@ -266,18 +285,23 @@
 	{/if}
 </div>
 
-{#if selectedPlace}
+{#if selectedRestaurant}
 	<div class="mt-6 space-y-4">
 		<h3 class="text-primary-800 dark:text-primary-200 text-xl font-semibold">
-			Selected Restaurant:
+			Selected Restaurant
 		</h3>
-		<!-- Desktop variant for larger screens -->
-		<div class="hidden md:block">
-			<RestaurantCard place={selectedPlace} size="desktop" />
+		<div class="overflow-x-auto pb-2">
+			<RestaurantCard
+				restaurant={selectedRestaurant}
+				initialGoogleData={selectedPlace ?? undefined}
+			/>
 		</div>
-		<!-- Mobile variant for smaller screens -->
-		<div class="block md:hidden">
-			<RestaurantCard place={selectedPlace} size="mobile" />
-		</div>
+	</div>
+{:else if selectedPlace && createError}
+	<div class="mt-6 rounded-lg border border-amber-200 bg-amber-50 p-4 dark:border-amber-800 dark:bg-amber-900/20">
+		<p class="text-sm font-medium text-amber-700 dark:text-amber-400">
+			{selectedPlace.displayName?.text || selectedPlace.name}
+		</p>
+		<p class="mt-1 text-xs text-amber-600 dark:text-amber-500">{createError}</p>
 	</div>
 {/if}

@@ -4,8 +4,8 @@ import tailwindcss from '@tailwindcss/vite';
 import { sveltekit } from '@sveltejs/kit/vite';
 import { defineConfig } from 'vite';
 import basicSsl from '@vitejs/plugin-basic-ssl';
-import fs from 'fs';
-import path from 'path';
+import fs from 'node:fs';
+import path from 'node:path';
 
 export default defineConfig({
 	plugins: [
@@ -19,7 +19,7 @@ export default defineConfig({
 		})
 	],
 	server: {
-		port: parseInt(process.env.VITE_PORT || '5173'),
+		port: Number.parseInt(process.env.VITE_PORT || '5173'),
 		strictPort: true,
 		...(process.env.NODE_ENV === 'production' ? {
 			https: {

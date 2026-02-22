@@ -96,8 +96,8 @@ func (s *RestaurantsService) UpdateRestaurant(
 	}
 
 	updates := map[string]interface{}{
-		"Name":  req.Msg.Name,
-		"Email": req.Msg.Address,
+		"Name":    req.Msg.Name,
+		"Address": req.Msg.Address,
 	}
 
 	if err := s.DB.WithContext(ctx).Model(restaurant).Updates(updates).Error; err != nil {
@@ -107,8 +107,13 @@ func (s *RestaurantsService) UpdateRestaurant(
 		return nil, err
 	}
 
+	updated, err := s.findRestaurantByIDWithContext(ctx, req.Msg.Id)
+	if err != nil {
+		return nil, err
+	}
+
 	res := connect.NewResponse(&v1.UpdateRestaurantResponse{
-		Restaurant: restaurant.ToProto(),
+		Restaurant: updated.ToProto(),
 	})
 	return res, nil
 }
