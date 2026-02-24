@@ -6,7 +6,7 @@
 	} from '$lib/client/generated/google_maps/v1/google_maps_service_pb';
 	import type { RestaurantProto } from '$lib/client/generated/restaurants/v1/restaurant_pb';
 	import { onMount, onDestroy } from 'svelte';
-	import { Input } from 'flowbite-svelte';
+	import { Input } from '$lib/components/ui/input/index.js';
 	import { v4 as uuidv4 } from 'uuid';
 	import RestaurantCard from './RestaurantCard.svelte';
 

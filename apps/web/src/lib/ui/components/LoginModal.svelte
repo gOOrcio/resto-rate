@@ -1,6 +1,8 @@
 <script lang="ts">
-	import { Button, Input, Label, Helper } from 'flowbite-svelte';
-	import { CloseOutline } from 'flowbite-svelte-icons';
+	import { Button } from '$lib/components/ui/button/index.js';
+	import { Input } from '$lib/components/ui/input/index.js';
+	import { Label } from '$lib/components/ui/label/index.js';
+	import { X } from '@lucide/svelte';
 	import client from '$lib/client/client';
 	import { auth } from '$lib/state/auth.svelte';
 
@@ -60,18 +62,18 @@
 		use:initDialog
 		oncancel={() => (open = false)}
 		onclick={handleBackdropClick}
-		class="m-auto w-full max-w-[calc(100%-2rem)] rounded-lg bg-white p-0 shadow-xl backdrop:bg-gray-900/50 dark:bg-gray-800 sm:max-w-sm"
+		class="m-auto w-full max-w-[calc(100%-2rem)] rounded-lg bg-white p-0 shadow-xl backdrop:bg-gray-900/50 sm:max-w-sm"
 	>
 		<div class="flex flex-col gap-4 p-6">
 			<div class="flex items-center justify-between">
-				<h3 class="text-xl font-semibold text-gray-900 dark:text-white">Sign in</h3>
+				<h3 class="text-xl font-semibold text-gray-900">Sign in</h3>
 				<button
 					type="button"
 					onclick={() => (open = false)}
-					class="rounded-lg p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-900 dark:hover:bg-gray-600 dark:hover:text-white"
+					class="rounded-lg p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-900"
 					aria-label="Close"
 				>
-					<CloseOutline class="h-5 w-5" />
+					<X class="h-5 w-5" />
 				</button>
 			</div>
 			<div>
@@ -84,7 +86,7 @@
 					disabled={loading}
 				/>
 				{#if error}
-					<Helper class="mt-1" color="red">{error}</Helper>
+					<p class="mt-1 text-sm text-red-600">{error}</p>
 				{/if}
 			</div>
 			<Button onclick={handleLogin} disabled={loading} class="w-full">
