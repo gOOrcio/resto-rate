@@ -81,7 +81,7 @@ func (u *UserService) UpdateUser(
 		}
 	}
 
-	if req.Msg.Email != "" && req.Msg.Email != user.Email {
+	if req.Msg.Email != "" && (user.Email == nil || req.Msg.Email != *user.Email) {
 		var existingUser models.User
 		if err := u.DB.WithContext(ctx).Where("email = ? AND id != ?", req.Msg.Email, user.ID).First(&existingUser).Error; err == nil {
 			return nil, fmt.Errorf("email '%s' is already taken", req.Msg.Email)
@@ -274,8 +274,8 @@ func (u *UserService) createUserInternal(
 	}
 
 	user := &models.User{
-		GoogleId: googleId,
-		Email:    email,
+		GoogleId: models.StringPtr(googleId),
+		Email:    models.StringPtr(email),
 		Username: username,
 		Name:     name,
 		IsAdmin:  isAdmin,

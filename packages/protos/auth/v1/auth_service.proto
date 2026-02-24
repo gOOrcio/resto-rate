@@ -1,0 +1,33 @@
+syntax = "proto3";
+
+package auth.v1;
+
+import "users/v1/user.proto";
+
+option go_package = "api/src/generated/auth/v1";
+
+service AuthService {
+  rpc Login(LoginRequest) returns (LoginResponse);
+  rpc Logout(LogoutRequest) returns (LogoutResponse);
+  rpc GetCurrentUser(GetCurrentUserRequest) returns (GetCurrentUserResponse);
+}
+
+message LoginRequest {
+  string username = 1;
+}
+
+message LoginResponse {
+  users.v1.UserProto user = 1;
+}
+
+message LogoutRequest {}
+
+message LogoutResponse {
+  bool success = 1;
+}
+
+message GetCurrentUserRequest {}
+
+message GetCurrentUserResponse {
+  users.v1.UserProto user = 1;
+}

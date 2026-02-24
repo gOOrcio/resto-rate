@@ -1,9 +1,13 @@
 <script lang="ts">
 	import { page } from '$app/state';
-	import { Navbar, NavBrand, NavLi, NavUl, NavHamburger, Drawer, Hr } from 'flowbite-svelte';
+	import { Navbar, NavBrand, NavLi, NavUl, NavHamburger, Drawer, Hr, Button } from 'flowbite-svelte';
 	import { sineIn } from 'svelte/easing';
+	import { auth } from '$lib/state/auth.svelte';
+	import LoginModal from '$lib/ui/components/LoginModal.svelte';
+	import client from '$lib/client/client';
 
 	let openDrawer = $state(false);
+	let loginOpen = $state(false);
 	let activeUrl = $derived(page.url.pathname);
 	let activeClass =
 		'text-white bg-primary-700 md:bg-transparent md:text-primary-700 md:dark:text-white dark:bg-primary-600 md:dark:bg-transparent';
@@ -14,6 +18,14 @@
 		duration: 200,
 		easing: sineIn
 	};
+
+	async function handleLogout() {
+		try {
+			await client.auth.logout({});
+		} finally {
+			auth.setUser(null);
+		}
+	}
 </script>
 
 <header>
@@ -37,6 +49,15 @@
 							<NavLi href="/contact">Contact</NavLi>
 						</div>
 					</NavUl>
+				</div>
+
+				<div class="ml-4 flex items-center gap-2">
+					{#if auth.isLoggedIn}
+						<span class="text-sm text-gray-700 dark:text-gray-300">{auth.user?.username}</span>
+						<Button size="sm" color="light" onclick={handleLogout}>Logout</Button>
+					{:else}
+						<Button size="sm" onclick={() => (loginOpen = true)}>Login</Button>
+					{/if}
 				</div>
 
 				<NavHamburger onclick={() => (openDrawer = true)} name="" class="ml-3 md:hidden" />
@@ -65,3 +86,5 @@
 		<a href="/" onclick={() => (openDrawer = false)}>Contact</a>
 	</div>
 </Drawer>
+
+<LoginModal bind:open={loginOpen} />
