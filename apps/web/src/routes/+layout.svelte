@@ -4,8 +4,22 @@
 	import Header from '$lib/ui/navigation/Header.svelte';
 	import { ThemeProvider } from 'flowbite-svelte';
 	import { appTheme } from '$lib/ui/theme';
+	import { onMount } from 'svelte';
+	import client from '$lib/client/client';
+	import { auth } from '$lib/state/auth.svelte';
 
 	let { children } = $props();
+
+	onMount(async () => {
+		try {
+			const res = await client.auth.getCurrentUser({});
+			if (res.user) {
+				auth.setUser(res.user);
+			}
+		} catch {
+			// Not authenticated — ignore
+		}
+	});
 </script>
 
 <ThemeProvider theme={appTheme}>
