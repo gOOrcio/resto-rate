@@ -10,7 +10,7 @@ import (
 	"os"
 
 	places "cloud.google.com/go/maps/places/apiv1"
-	placespb "cloud.google.com/go/maps/places/apiv1/placespb"
+	"cloud.google.com/go/maps/places/apiv1/placespb"
 	"connectrpc.com/connect"
 	"google.golang.org/api/option"
 	"google.golang.org/grpc/metadata"

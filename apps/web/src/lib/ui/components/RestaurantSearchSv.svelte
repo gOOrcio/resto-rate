@@ -4,12 +4,12 @@
 		Place,
 		Suggestion
 	} from '$lib/client/generated/google_maps/v1/google_maps_service_pb';
+	import type { RestaurantProto } from '$lib/client/generated/restaurants/v1/restaurant_pb';
 	import { onMount, onDestroy } from 'svelte';
 	import { Input } from 'flowbite-svelte';
 	import { v4 as uuidv4 } from 'uuid';
 	import RestaurantCard from './RestaurantCard.svelte';
 
-	// Generate unique IDs for components that need them
 	function randomUUID(): string {
 		return uuidv4();
 	}
@@ -21,7 +21,12 @@
 	let selectedIndex = $state(-1);
 	let showSuggestions = $state(false);
 	let queryPrediction = $state('');
+
+	// After selection: the fetched Place and the created DB record
 	let selectedPlace = $state<Place | null>(null);
+	let selectedRestaurant = $state<RestaurantProto | null>(null);
+	let createError = $state<string | null>(null);
+
 	let debounceTimer: ReturnType<typeof setTimeout> | null = null;
 
 	let { onPlaceSelected } = $props<{
@@ -87,25 +92,40 @@
 
 	async function getPlaceDetails(name: string) {
 		try {
-			const response = await clients.googleMaps.getRestaurantDetails({
+			const place = await clients.googleMaps.getRestaurantDetails({
 				name: name,
 				languageCode: 'pl',
 				regionCode: 'pl',
 				sessionToken: autocompleteSessionToken
 			});
 
-			selectedPlace = response;
+			selectedPlace = place;
+			selectedRestaurant = null;
+			createError = null;
 
 			if (onPlaceSelected) {
-				onPlaceSelected(response);
+				onPlaceSelected(place);
 			}
 
 			suggestions = [];
 			showSuggestions = false;
 			queryPrediction = '';
-			input = response.displayName?.text || response.name || '';
+			input = place.displayName?.text || place.name || '';
 
 			autocompleteSessionToken = randomUUID();
+
+			// Persist to database
+			try {
+				const response = await clients.restaurants.createRestaurant({
+					name: place.displayName?.text || place.name || '',
+					googlePlacesId: place.name || '',
+					address: place.formattedAddress || ''
+				});
+				selectedRestaurant = response.restaurant ?? null;
+			} catch (err) {
+				console.error('Failed to save restaurant to DB:', err);
+				createError = 'Could not save restaurant to database.';
+			}
 		} catch (error) {
 			console.error('Get place details error:', error);
 		}
@@ -161,7 +181,7 @@
 
 	function getSuggestionText(suggestion: Suggestion): string {
 		if (suggestion.placePrediction?.structuredFormat?.mainText?.text) {
-			return suggestion.placePrediction.structuredFormat.mainText.text;
+			return <string>suggestion.placePrediction?.structuredFormat.mainText.text;
 		}
 		if (suggestion.placePrediction?.text?.text) {
 			return suggestion.placePrediction.text.text;
@@ -171,7 +191,7 @@
 
 	function getSuggestionSubtext(suggestion: Suggestion): string {
 		if (suggestion.placePrediction?.structuredFormat?.secondaryText?.text) {
-			return suggestion.placePrediction.structuredFormat.secondaryText.text;
+			return <string>suggestion.placePrediction?.structuredFormat.secondaryText.text;
 		}
 		return '';
 	}
@@ -196,7 +216,6 @@
 			oninput={handleInputChange}
 			onkeydown={handleKeyDown}
 			placeholder="Search for restaurants..."
-			autocomplete="off"
 			class="
                     w-full bg-[url('/GoogleMaps_Logo_Gray.svg')]
                     bg-[length:60px_60px]
@@ -266,11 +285,23 @@
 	{/if}
 </div>
 
-{#if selectedPlace}
+{#if selectedRestaurant}
 	<div class="mt-6 space-y-4">
 		<h3 class="text-primary-800 dark:text-primary-200 text-xl font-semibold">
-			Selected Restaurant:
+			Selected Restaurant
 		</h3>
-		<RestaurantCard place={selectedPlace} />
+		<div class="overflow-x-auto pb-2">
+			<RestaurantCard
+				restaurant={selectedRestaurant}
+				initialGoogleData={selectedPlace ?? undefined}
+			/>
+		</div>
+	</div>
+{:else if selectedPlace && createError}
+	<div class="mt-6 rounded-lg border border-amber-200 bg-amber-50 p-4 dark:border-amber-800 dark:bg-amber-900/20">
+		<p class="text-sm font-medium text-amber-700 dark:text-amber-400">
+			{selectedPlace.displayName?.text || selectedPlace.name}
+		</p>
+		<p class="mt-1 text-xs text-amber-600 dark:text-amber-500">{createError}</p>
 	</div>
 {/if}
