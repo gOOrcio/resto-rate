@@ -13,4 +13,5 @@ message ReviewProto {
   double rating = 6;
   int64 created_at = 7;
   int64 updated_at = 8;
+  repeated string tags = 9;
 }
