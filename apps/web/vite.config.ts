@@ -50,6 +50,10 @@ export default defineConfig({
 		// Force pre-bundling for Safari compatibility
 		include: ['svelte']
 	},
+	ssr: {
+		// bits-ui ships raw .svelte files — bundle them instead of letting Node load them directly
+		noExternal: ['bits-ui', '@internationalized/date']
+	},
 	esbuild: {
 		// Ensure Safari compatibility
 		target: 'es2020'
