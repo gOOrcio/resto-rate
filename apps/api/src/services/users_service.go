@@ -69,7 +69,7 @@ func (u *UserService) UpdateUser(
 		return nil, err
 	}
 
-	if req.Msg.Username != "" && req.Msg.Username != user.Username {
+	if req.Msg.Username != "" && (user.Username == nil || req.Msg.Username != *user.Username) {
 		var existingUser models.User
 		if err := u.DB.WithContext(ctx).Where("username = ? AND id != ?", req.Msg.Username, user.ID).First(&existingUser).Error; err == nil {
 			return nil, fmt.Errorf("username '%s' is already taken", req.Msg.Username)
@@ -99,7 +99,7 @@ func (u *UserService) UpdateUser(
 	}
 
 	if req.Msg.Username != "" {
-		updates["Username"] = req.Msg.Username
+		updates["Username"] = models.StringPtr(req.Msg.Username)
 	}
 
 	if err := u.DB.WithContext(ctx).Model(user).Updates(updates).Error; err != nil {
@@ -276,7 +276,7 @@ func (u *UserService) createUserInternal(
 	user := &models.User{
 		GoogleId: models.StringPtr(googleId),
 		Email:    models.StringPtr(email),
-		Username: username,
+		Username: models.StringPtr(username),
 		Name:     name,
 		IsAdmin:  isAdmin,
 	}
