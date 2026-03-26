@@ -13,6 +13,15 @@
 		return activeUrl === href;
 	}
 
+	function initDialog(el: HTMLDialogElement) {
+		el.showModal();
+		return {
+			destroy() {
+				if (el.open) el.close();
+			}
+		};
+	}
+
 	async function handleLogout() {
 		try {
 			await client.auth.logout({});
@@ -107,7 +116,7 @@
 <!-- Sign in dialog -->
 {#if loginOpen}
 	<dialog
-		open
+		use:initDialog
 		oncancel={() => (loginOpen = false)}
 		onclick={(e) => {
 			const rect = (e.currentTarget as HTMLDialogElement).getBoundingClientRect();
