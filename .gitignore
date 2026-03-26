@@ -57,3 +57,4 @@ valkey.conf
 
 .claude
 .worktrees
+/.agents/

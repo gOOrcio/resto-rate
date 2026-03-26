@@ -14,7 +14,19 @@ bun run dev:api      # Start only the Go API (uses `air` for hot reload)
 
 ### Build, Lint, Test
 
+Always use Nx to build, test, and lint — never invoke `go build` or `bun run check` directly.
+
 ```bash
+# Per-app Nx targets (preferred for targeted checks)
+nx run api:build     # Build Go API
+nx run api:test      # Run Go tests
+nx run api:lint      # Lint Go code
+nx run web:build     # Build SvelteKit frontend
+nx run web:test      # Run frontend tests
+nx run web:lint      # Lint frontend
+nx run web:check     # svelte-check TypeScript + Svelte types
+
+# Convenience wrappers (bun run X calls nx under the hood)
 bun run build        # Build all apps
 bun run lint         # Lint all packages
 bun run check-types  # TypeScript type checking
@@ -36,8 +48,9 @@ cd apps/api && go test ./src/test/... -run TestName -v
 ### Quick verification (without running tests)
 
 ```bash
-cd apps/api && go build ./...          # Verify Go compiles
-cd apps/web && bun run check           # svelte-check TypeScript + Svelte types
+# Use Nx targets, not raw go/bun commands:
+nx run api:build     # Verify Go compiles
+nx run web:check     # svelte-check TypeScript + Svelte types
 ```
 
 ### Protobuf code generation
