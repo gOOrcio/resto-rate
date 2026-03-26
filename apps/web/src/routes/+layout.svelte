@@ -13,10 +13,16 @@
 			const res = await client.auth.getCurrentUser({});
 			if (res.user) {
 				auth.setUser(res.user);
+				// Already logged in — do not show One Tap
+				return;
 			}
 		} catch {
-			// Not authenticated — ignore
+			// Not authenticated — fall through to One Tap
 		}
+
+		// Trigger One Tap for unauthenticated users.
+		// GIS silently skips this in WebViews and unsupported browsers.
+		window.google?.accounts?.id?.prompt();
 	});
 </script>
 

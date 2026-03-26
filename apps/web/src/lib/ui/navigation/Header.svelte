@@ -3,7 +3,7 @@
 	import { Button } from '$lib/components/ui/button/index.js';
 	import * as Sheet from '$lib/components/ui/sheet/index.js';
 	import { auth } from '$lib/state/auth.svelte';
-	import LoginModal from '$lib/ui/components/LoginModal.svelte';
+	import SocialSignIn from '$lib/ui/components/SocialSignIn.svelte';
 	import client from '$lib/client/client';
 
 	let loginOpen = $state(false);
@@ -20,6 +20,12 @@
 			auth.setUser(null);
 		}
 	}
+
+	const authNavLinks = [
+		{ href: '/reviews', label: 'My Reviews' },
+		{ href: '/wishlist', label: 'Wishlist' },
+		{ href: '/friends', label: 'Friends' },
+	];
 </script>
 
 <header class="sticky top-0 z-10 w-full bg-blue-200 p-2 shadow-sm">
@@ -32,29 +38,33 @@
 			</span>
 		</a>
 
-		<!-- Desktop nav links -->
-		<ul class="hidden items-center gap-6 md:flex">
-			{#each [{ href: '/', label: 'Home' }, { href: '/about', label: 'About' }, { href: '/pricing', label: 'Pricing' }, { href: '/contact', label: 'Contact' }] as link}
-				<li>
-					<a
-						href={link.href}
-						class="text-sm font-medium transition-colors {isActive(link.href)
-							? 'text-blue-700 underline underline-offset-4'
-							: 'text-gray-700 hover:text-blue-700'}"
-					>
-						{link.label}
-					</a>
-				</li>
-			{/each}
-		</ul>
+		<!-- Desktop nav links (auth-gated) -->
+		{#if auth.isLoggedIn}
+			<ul class="hidden items-center gap-6 md:flex">
+				{#each authNavLinks as link}
+					<li>
+						<a
+							href={link.href}
+							class="text-sm font-medium transition-colors {isActive(link.href)
+								? 'text-blue-700 underline underline-offset-4'
+								: 'text-gray-700 hover:text-blue-700'}"
+						>
+							{link.label}
+						</a>
+					</li>
+				{/each}
+			</ul>
+		{/if}
 
 		<!-- Auth controls + mobile hamburger -->
 		<div class="flex items-center gap-2">
 			{#if auth.isLoggedIn}
-				<span class="hidden text-sm text-gray-700 sm:inline">{auth.user?.username}</span>
+				<span class="hidden text-sm text-gray-700 sm:inline">
+					{auth.user?.username || auth.user?.email}
+				</span>
 				<Button size="sm" variant="outline" onclick={handleLogout}>Logout</Button>
 			{:else}
-				<Button size="sm" onclick={() => (loginOpen = true)}>Login</Button>
+				<Button size="sm" onclick={() => (loginOpen = true)}>Sign in</Button>
 			{/if}
 
 			<!-- Mobile hamburger (Sheet trigger) -->
@@ -82,9 +92,11 @@
 					<hr class="mb-4 border-gray-200" />
 					<nav class="flex flex-col gap-4 px-2">
 						<a href="/" class="text-gray-700 hover:text-blue-700">Home</a>
-						<a href="/about" class="text-gray-700 hover:text-blue-700">About</a>
-						<a href="/pricing" class="text-gray-700 hover:text-blue-700">Pricing</a>
-						<a href="/contact" class="text-gray-700 hover:text-blue-700">Contact</a>
+						{#if auth.isLoggedIn}
+							{#each authNavLinks as link}
+								<a href={link.href} class="text-gray-700 hover:text-blue-700">{link.label}</a>
+							{/each}
+						{/if}
 					</nav>
 				</Sheet.Content>
 			</Sheet.Root>
@@ -92,4 +104,27 @@
 	</nav>
 </header>
 
-<LoginModal bind:open={loginOpen} />
+<!-- Sign in dialog -->
+{#if loginOpen}
+	<dialog
+		open
+		oncancel={() => (loginOpen = false)}
+		onclick={(e) => {
+			const rect = (e.currentTarget as HTMLDialogElement).getBoundingClientRect();
+			if (
+				e.clientX < rect.left ||
+				e.clientX > rect.right ||
+				e.clientY < rect.top ||
+				e.clientY > rect.bottom
+			) {
+				loginOpen = false;
+			}
+		}}
+		class="m-auto w-full max-w-[calc(100%-2rem)] rounded-lg bg-white p-6 shadow-xl backdrop:bg-gray-900/50 sm:max-w-sm"
+	>
+		<div class="flex flex-col gap-4">
+			<h3 class="text-xl font-semibold text-gray-900">Sign in to Restorate</h3>
+			<SocialSignIn onSuccess={() => (loginOpen = false)} />
+		</div>
+	</dialog>
+{/if}
