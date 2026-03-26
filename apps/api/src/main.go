@@ -43,9 +43,14 @@ func main() {
 	}
 	slog.Info("Application starting...")
 
+	googleClientID := os.Getenv("GOOGLE_CLIENT_ID")
+	if googleClientID == "" {
+		log.Fatal("GOOGLE_CLIENT_ID environment variable is required")
+	}
+
 	db := mustConnectToDatabase()
 	valkeyClient := mustConnectCache()
-	mux := setupHTTPHandlers(initializeServiceHandlers(db, valkeyClient))
+	mux := setupHTTPHandlers(initializeServiceHandlers(db, valkeyClient, googleClientID))
 
 	err := utils.CreateSchema(db)
 	if err != nil {
@@ -132,7 +137,7 @@ func mustConnectCache() valkey.Client {
 	return client
 }
 
-func initializeServiceHandlers(db *gorm.DB, valkeyClient valkey.Client) []ServiceRegistration {
+func initializeServiceHandlers(db *gorm.DB, valkeyClient valkey.Client, googleClientID string) []ServiceRegistration {
 	prometheusInterceptor := connectPrometheusInterceptor()
 
 	return []ServiceRegistration{
@@ -160,7 +165,7 @@ func initializeServiceHandlers(db *gorm.DB, valkeyClient valkey.Client) []Servic
 			return ServiceRegistration{Path: path, Handler: h}
 		}(),
 		func() ServiceRegistration {
-			svc := services.NewAuthService(db, valkeyClient)
+			svc := services.NewAuthService(db, valkeyClient, googleClientID, os.Getenv("ENV") != "dev")
 			path, handler := authv1connect.NewAuthServiceHandler(svc, connect.WithInterceptors(prometheusInterceptor))
 			return ServiceRegistration{Path: path, Handler: handler}
 		}(),

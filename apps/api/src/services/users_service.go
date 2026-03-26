@@ -69,7 +69,7 @@ func (u *UserService) UpdateUser(
 		return nil, err
 	}
 
-	if req.Msg.Username != "" && req.Msg.Username != user.Username {
+	if req.Msg.Username != "" && (user.Username == nil || req.Msg.Username != *user.Username) {
 		var existingUser models.User
 		if err := u.DB.WithContext(ctx).Where("username = ? AND id != ?", req.Msg.Username, user.ID).First(&existingUser).Error; err == nil {
 			return nil, fmt.Errorf("username '%s' is already taken", req.Msg.Username)
@@ -99,7 +99,7 @@ func (u *UserService) UpdateUser(
 	}
 
 	if req.Msg.Username != "" {
-		updates["Username"] = req.Msg.Username
+		updates["Username"] = models.StringPtr(req.Msg.Username)
 	}
 
 	if err := u.DB.WithContext(ctx).Model(user).Updates(updates).Error; err != nil {
@@ -250,18 +250,16 @@ func (u *UserService) createUserInternal(
 		return nil, fmt.Errorf("name is required")
 	}
 
-	if username == "" {
-		return nil, fmt.Errorf("username is required")
-	}
-
 	var existingUser models.User
-	if err := u.DB.WithContext(ctx).Where("username = ?", username).First(&existingUser).Error; err == nil {
-		return nil, fmt.Errorf("username '%s' is already taken", username)
-	} else if !errors.Is(err, gorm.ErrRecordNotFound) {
-		if ctx.Err() != nil {
-			return nil, ctx.Err()
+	if username != "" {
+		if err := u.DB.WithContext(ctx).Where("username = ?", username).First(&existingUser).Error; err == nil {
+			return nil, fmt.Errorf("username '%s' is already taken", username)
+		} else if !errors.Is(err, gorm.ErrRecordNotFound) {
+			if ctx.Err() != nil {
+				return nil, ctx.Err()
+			}
+			return nil, err
 		}
-		return nil, err
 	}
 
 	if err := u.DB.WithContext(ctx).Where("email = ?", email).First(&existingUser).Error; err == nil {
@@ -276,7 +274,7 @@ func (u *UserService) createUserInternal(
 	user := &models.User{
 		GoogleId: models.StringPtr(googleId),
 		Email:    models.StringPtr(email),
-		Username: username,
+		Username: models.StringPtr(username),
 		Name:     name,
 		IsAdmin:  isAdmin,
 	}

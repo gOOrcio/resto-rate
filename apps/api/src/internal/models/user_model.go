@@ -11,7 +11,7 @@ type User struct {
 	UUIDv7
 	GoogleId  *string   `gorm:"uniqueIndex"`
 	Email     *string   `gorm:"uniqueIndex"`
-	Username  string    `gorm:"uniqueIndex"`
+	Username  *string   `gorm:"uniqueIndex"`
 	Name      string    `gorm:"not null"`
 	IsAdmin   bool      `gorm:"default:false"`
 	CreatedAt time.Time `gorm:"autoCreateTime"`
@@ -30,7 +30,7 @@ func (u *User) ToProto() *userpb.UserProto {
 		Id:        u.ID,
 		GoogleId:  derefString(u.GoogleId),
 		Email:     derefString(u.Email),
-		Username:  u.Username,
+		Username:  derefString(u.Username),
 		Name:      u.Name,
 		IsAdmin:   u.IsAdmin,
 		CreatedAt: u.CreatedAt.Unix(),
