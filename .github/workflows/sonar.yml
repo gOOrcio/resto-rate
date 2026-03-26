@@ -8,17 +8,71 @@ on:
 
 jobs:
   sonarqube-api:
-    uses: gOOrcio/sonarqube-sandbox/.github/workflows/reusable-sonar-go.yml@main
-    with:
-      project_key: resto-rate-api
-      working_directory: apps/api
-    secrets:
-      SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+    name: SonarQube Scan — Go API
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: apps/api/go.mod
+
+      - name: Generate protobuf files
+        uses: bufbuild/buf-action@v1
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          push: false
+          lint: false
+          breaking: false
+
+      - name: Run tests with coverage
+        working-directory: apps/api
+        run: go test ./... -coverprofile=coverage.out -covermode=atomic
+        continue-on-error: true
+
+      - uses: sonarsource/sonarqube-scan-action@v3
+        with:
+          projectBaseDir: apps/api
+          args: >
+            -Dsonar.projectKey=resto-rate-api
+            -Dsonar.host.url=https://sonarqube.mati-lab.online
+            ${{ github.event_name == 'pull_request' &&
+              format('-Dsonar.pullrequest.key={0} -Dsonar.pullrequest.branch={1} -Dsonar.pullrequest.base={2}',
+                github.event.pull_request.number, github.head_ref, github.base_ref) ||
+              format('-Dsonar.branch.name={0}', github.ref_name) }}
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
 
   sonarqube-web:
-    uses: gOOrcio/sonarqube-sandbox/.github/workflows/reusable-sonar-typescript.yml@main
-    with:
-      project_key: resto-rate-web
-      working_directory: apps/web
-    secrets:
-      SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+    name: SonarQube Scan — Web
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: oven-sh/setup-bun@v2
+
+      - name: Install dependencies
+        working-directory: apps/web
+        run: bun install
+
+      - name: Run tests with coverage
+        working-directory: apps/web
+        run: bunx vitest run --coverage --coverage.reporter=lcov --passWithNoTests
+        continue-on-error: true
+
+      - uses: sonarsource/sonarqube-scan-action@v3
+        with:
+          projectBaseDir: apps/web
+          args: >
+            -Dsonar.projectKey=resto-rate-web
+            -Dsonar.host.url=https://sonarqube.mati-lab.online
+            ${{ github.event_name == 'pull_request' &&
+              format('-Dsonar.pullrequest.key={0} -Dsonar.pullrequest.branch={1} -Dsonar.pullrequest.base={2}',
+                github.event.pull_request.number, github.head_ref, github.base_ref) ||
+              format('-Dsonar.branch.name={0}', github.ref_name) }}
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
