@@ -250,18 +250,16 @@ func (u *UserService) createUserInternal(
 		return nil, fmt.Errorf("name is required")
 	}
 
-	if username == "" {
-		return nil, fmt.Errorf("username is required")
-	}
-
 	var existingUser models.User
-	if err := u.DB.WithContext(ctx).Where("username = ?", username).First(&existingUser).Error; err == nil {
-		return nil, fmt.Errorf("username '%s' is already taken", username)
-	} else if !errors.Is(err, gorm.ErrRecordNotFound) {
-		if ctx.Err() != nil {
-			return nil, ctx.Err()
+	if username != "" {
+		if err := u.DB.WithContext(ctx).Where("username = ?", username).First(&existingUser).Error; err == nil {
+			return nil, fmt.Errorf("username '%s' is already taken", username)
+		} else if !errors.Is(err, gorm.ErrRecordNotFound) {
+			if ctx.Err() != nil {
+				return nil, ctx.Err()
+			}
+			return nil, err
 		}
-		return nil, err
 	}
 
 	if err := u.DB.WithContext(ctx).Where("email = ?", email).First(&existingUser).Error; err == nil {

@@ -165,7 +165,7 @@ func initializeServiceHandlers(db *gorm.DB, valkeyClient valkey.Client, googleCl
 			return ServiceRegistration{Path: path, Handler: h}
 		}(),
 		func() ServiceRegistration {
-			svc := services.NewAuthService(db, valkeyClient, googleClientID)
+			svc := services.NewAuthService(db, valkeyClient, googleClientID, os.Getenv("ENV") != "dev")
 			path, handler := authv1connect.NewAuthServiceHandler(svc, connect.WithInterceptors(prometheusInterceptor))
 			return ServiceRegistration{Path: path, Handler: handler}
 		}(),

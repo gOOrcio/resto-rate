@@ -7,6 +7,7 @@ import (
 	"context"
 	"errors"
 	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/google/uuid"
@@ -31,10 +32,19 @@ type AuthService struct {
 	DB             *gorm.DB
 	Valkey         valkey.Client
 	GoogleClientID string
+	SecureCookie   bool
 }
 
-func NewAuthService(db *gorm.DB, kv valkey.Client, googleClientID string) *AuthService {
-	return &AuthService{DB: db, Valkey: kv, GoogleClientID: googleClientID}
+func NewAuthService(db *gorm.DB, kv valkey.Client, googleClientID string, secureCookie bool) *AuthService {
+	return &AuthService{DB: db, Valkey: kv, GoogleClientID: googleClientID, SecureCookie: secureCookie}
+}
+
+func (s *AuthService) sessionCookie(name, value string, maxAge int) string {
+	cookie := name + "=" + value + "; HttpOnly; Path=/; Max-Age=" + strconv.Itoa(maxAge) + "; SameSite=Lax"
+	if s.SecureCookie {
+		cookie += "; Secure"
+	}
+	return cookie
 }
 
 func (s *AuthService) Login(
@@ -67,7 +77,7 @@ func (s *AuthService) Login(
 	res := connect.NewResponse(&authv1.LoginResponse{
 		User: user.ToProto(),
 	})
-	res.Header().Set("Set-Cookie", "session_token="+token+"; HttpOnly; Path=/; Max-Age=86400; SameSite=Lax")
+	res.Header().Set("Set-Cookie", s.sessionCookie("session_token", token, 86400))
 	return res, nil
 }
 
@@ -81,7 +91,7 @@ func (s *AuthService) Logout(
 	}
 
 	res := connect.NewResponse(&authv1.LogoutResponse{Success: true})
-	res.Header().Set("Set-Cookie", "session_token=; HttpOnly; Path=/; Max-Age=-1; SameSite=Lax")
+	res.Header().Set("Set-Cookie", s.sessionCookie("session_token", "", -1))
 	return res, nil
 }
 
@@ -164,6 +174,9 @@ func (s *AuthService) upsertUser(ctx context.Context, provider authv1.AuthProvid
 			}).Error; err != nil {
 				return nil, err
 			}
+			// Refresh in-memory struct so LoginResponse reflects the updated values
+			user.Email = models.StringPtr(claims.Email)
+			user.Name = claims.Name
 		}
 	default:
 		return nil, errors.New("unsupported provider for upsert")
