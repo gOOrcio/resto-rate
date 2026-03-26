@@ -56,4 +56,4 @@ valkey.conf
 /valkeydata/
 
 .claude
-CLAUDE.md
+.worktrees
