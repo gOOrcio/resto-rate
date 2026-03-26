@@ -11,43 +11,51 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/valkey-io/valkey-go"
+	"google.golang.org/api/idtoken"
 	"gorm.io/gorm"
 
 	"connectrpc.com/connect"
 )
 
-type AuthService struct {
-	v1connect.UnimplementedAuthServiceHandler
-	DB     *gorm.DB
-	Valkey valkey.Client
+// ProviderClaims holds the normalized identity from any OAuth provider.
+// ProviderID is the stable unique identifier (Google: "sub").
+// Name may be empty for Apple Sign-In on repeat logins.
+type ProviderClaims struct {
+	ProviderID string
+	Email      string
+	Name       string
 }
 
-func NewAuthService(db *gorm.DB, kv valkey.Client) *AuthService {
-	return &AuthService{DB: db, Valkey: kv}
+type AuthService struct {
+	v1connect.UnimplementedAuthServiceHandler
+	DB             *gorm.DB
+	Valkey         valkey.Client
+	GoogleClientID string
+}
+
+func NewAuthService(db *gorm.DB, kv valkey.Client, googleClientID string) *AuthService {
+	return &AuthService{DB: db, Valkey: kv, GoogleClientID: googleClientID}
 }
 
 func (s *AuthService) Login(
 	ctx context.Context,
 	req *connect.Request[authv1.LoginRequest],
 ) (*connect.Response[authv1.LoginResponse], error) {
-	if req.Msg.Username == "" {
-		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("username is required"))
+	if req.Msg.Provider == authv1.AuthProvider_AUTH_PROVIDER_UNSPECIFIED {
+		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("provider is required"))
+	}
+	if req.Msg.IdToken == "" {
+		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("id_token is required"))
 	}
 
-	var user models.User
-	err := s.DB.WithContext(ctx).Where("username = ?", req.Msg.Username).First(&user).Error
+	claims, err := verifyIDToken(ctx, req.Msg.Provider, req.Msg.IdToken, s.GoogleClientID)
 	if err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			user = models.User{
-				Username: req.Msg.Username,
-				Name:     req.Msg.Username,
-			}
-			if createErr := s.DB.WithContext(ctx).Create(&user).Error; createErr != nil {
-				return nil, connect.NewError(connect.CodeInternal, createErr)
-			}
-		} else {
-			return nil, connect.NewError(connect.CodeInternal, err)
-		}
+		return nil, connect.NewError(connect.CodeUnauthenticated, err)
+	}
+
+	user, err := s.upsertUser(ctx, req.Msg.Provider, claims)
+	if err != nil {
+		return nil, connect.NewError(connect.CodeInternal, err)
 	}
 
 	token := uuid.New().String()
@@ -101,10 +109,67 @@ func (s *AuthService) GetCurrentUser(
 		return nil, connect.NewError(connect.CodeUnauthenticated, errors.New("user not found"))
 	}
 
-	res := connect.NewResponse(&authv1.GetCurrentUserResponse{
-		User: user.ToProto(),
-	})
-	return res, nil
+	return connect.NewResponse(&authv1.GetCurrentUserResponse{User: user.ToProto()}), nil
+}
+
+// verifyIDToken verifies a provider-issued JWT and returns normalized claims.
+// To add Apple: implement AUTH_PROVIDER_APPLE case below.
+func verifyIDToken(ctx context.Context, provider authv1.AuthProvider, token, clientID string) (ProviderClaims, error) {
+	switch provider {
+	case authv1.AuthProvider_AUTH_PROVIDER_GOOGLE:
+		payload, err := idtoken.Validate(ctx, token, clientID)
+		if err != nil {
+			return ProviderClaims{}, err
+		}
+		name, _ := payload.Claims["name"].(string)
+		email, _ := payload.Claims["email"].(string)
+		return ProviderClaims{
+			ProviderID: payload.Subject,
+			Email:      email,
+			Name:       name,
+		}, nil
+	// case authv1.AuthProvider_AUTH_PROVIDER_APPLE:
+	//     TODO: implement Apple Sign-In verification
+	default:
+		return ProviderClaims{}, errors.New("unsupported auth provider")
+	}
+}
+
+// upsertUser finds user by provider ID or creates a new one, keeping email/name up to date.
+func (s *AuthService) upsertUser(ctx context.Context, provider authv1.AuthProvider, claims ProviderClaims) (*models.User, error) {
+	var user models.User
+
+	switch provider {
+	case authv1.AuthProvider_AUTH_PROVIDER_GOOGLE:
+		err := s.DB.WithContext(ctx).Where("google_id = ?", claims.ProviderID).First(&user).Error
+		if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, err
+		}
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			// New user — create
+			user = models.User{
+				GoogleId: models.StringPtr(claims.ProviderID),
+				Email:    models.StringPtr(claims.Email),
+				Name:     claims.Name,
+				Username: nil, // optional; set later via profile
+			}
+			if createErr := s.DB.WithContext(ctx).Create(&user).Error; createErr != nil {
+				return nil, createErr
+			}
+		} else {
+			// Existing user — update email and name in case they changed in Google
+			if err := s.DB.WithContext(ctx).Model(&user).Updates(map[string]interface{}{
+				"Email": models.StringPtr(claims.Email),
+				"Name":  claims.Name,
+			}).Error; err != nil {
+				return nil, err
+			}
+		}
+	default:
+		return nil, errors.New("unsupported provider for upsert")
+	}
+
+	return &user, nil
 }
 
 func sessionToken(h http.Header) string {
