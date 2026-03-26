@@ -3,7 +3,7 @@ syntax = "proto3";
 package reviews.v1;
 
 import "reviews/v1/review.proto";
-import "reviews/v1/tag.proto";
+import "restaurants/v1/restaurant.proto";
 
 option go_package = "api/src/generated/reviews/v1";
 
@@ -13,57 +13,39 @@ service ReviewsService {
   rpc UpdateReview(UpdateReviewRequest) returns (UpdateReviewResponse);
   rpc DeleteReview(DeleteReviewRequest) returns (DeleteReviewResponse);
   rpc ListReviews(ListReviewsRequest) returns (ListReviewsResponse);
-  rpc AddTag(AddTagRequest) returns (AddTagResponse);
-  rpc RemoveTag(RemoveTagRequest) returns (RemoveTagResponse);
-  rpc ListTags(ListTagsRequest) returns (ListTagsResponse);
 }
 
 message CreateReviewRequest {
-  string restaurant_id = 1;
-  string user_id = 2;
-  string comment = 3;
-  double rating = 4;
-  repeated TagProto tags = 5;
+  string google_places_id = 1;
+  string restaurant_name = 2;
+  string restaurant_address = 3;
+  string comment = 4;
+  double rating = 5;
+  repeated string tags = 6;
 }
 
 message CreateReviewResponse {
-  string id = 1;
-  string restaurant_id = 2;
-  string user_id = 3;
-  string comment = 4;
-  double rating = 5;
+  ReviewProto review = 1;
+  restaurants.v1.RestaurantProto restaurant = 2;
 }
 
 message GetReviewRequest {
-  string restaurant_id = 2;
-  string user_id = 3;
+  string id = 1;
 }
 
 message GetReviewResponse {
-  string id = 1;
-  string restaurant_id = 2;
-  string user_id = 3;
-  string comment = 4;
-  double rating = 5;
-  repeated TagProto tags = 6;
+  ReviewProto review = 1;
 }
 
 message UpdateReviewRequest {
   string id = 1;
-  string restaurant_id = 2;
-  string user_id = 3;
-  string comment = 4;
-  double rating = 5;
-  repeated TagProto tags = 6;
+  string comment = 2;
+  double rating = 3;
+  repeated string tags = 4;
 }
 
 message UpdateReviewResponse {
-  string id = 1;
-  string restaurant_id = 2;
-  string user_id = 3;
-  string comment = 4;
-  double rating = 5;
-  repeated TagProto tags = 6;
+  ReviewProto review = 1;
 }
 
 message DeleteReviewRequest {
@@ -71,44 +53,13 @@ message DeleteReviewRequest {
 }
 
 message DeleteReviewResponse {
-  string id = 1;
+  bool success = 1;
 }
 
 message ListReviewsRequest {
-  string restaurant_id = 1;
-  string user_id = 2;
-  string comment = 3;
-  double rating = 4;
+  string google_places_id = 1;
 }
 
 message ListReviewsResponse {
   repeated ReviewProto reviews = 1;
-} 
-
-message AddTagRequest {
-  string review_id = 1;
-  string tag_id = 2;
-}
-
-message AddTagResponse {
-  string review_id = 1;
-  string tag_id = 2;
-}
-
-message RemoveTagRequest {
-  string review_id = 1;
-  string tag_id = 2;
-}
-
-message RemoveTagResponse {
-  string review_id = 1;
-  string tag_id = 2;
-}
-
-message ListTagsRequest {
-  string review_id = 1;
-}
-
-message ListTagsResponse {
-  repeated TagProto tags = 1;
 }

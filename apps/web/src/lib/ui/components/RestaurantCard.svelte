@@ -6,18 +6,19 @@
 		BusinessStatus
 	} from '$lib/client/generated/google_maps/v1/google_maps_service_pb';
 	import type { RestaurantProto } from '$lib/client/generated/restaurants/v1/restaurant_pb';
-	import { Rating, Star, Spinner, type RatingIconProps } from 'flowbite-svelte';
 	import {
-		MapPinAltOutline,
-		EditOutline,
-		CheckOutline,
-		CloseOutline,
-		ChevronRightOutline,
-		ChevronLeftOutline,
-		PhoneOutline,
-		GlobeOutline
-	} from 'flowbite-svelte-icons';
-	import { v4 as uuidv4 } from 'uuid';
+		MapPin,
+		Pencil,
+		Check,
+		X,
+		ChevronRight,
+		ChevronLeft,
+		Phone,
+		Globe,
+		Star,
+		Loader2
+	} from '@lucide/svelte';
+	import { fly } from 'svelte/transition';
 
 	const { restaurant, initialGoogleData = undefined } = $props<{
 		restaurant: RestaurantProto;
@@ -42,10 +43,6 @@
 	let isLoadingGoogle = $state(false);
 	let googleError = $state<string | null>(null);
 
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	const ratingIcon = (props: RatingIconProps) => (anchor: any, _props: RatingIconProps) =>
-		Star(anchor, { ..._props, ...props });
-
 	const hasGoogle = $derived(!!restaurant.googlePlacesId);
 	const isEditing = $derived(isEditingName || isEditingAddress);
 
@@ -54,14 +51,11 @@
 			? (() => {
 					switch (googleData.businessStatus) {
 						case BusinessStatus.OPERATIONAL:
-							return { label: 'Operational', color: 'text-green-600 dark:text-green-400' };
+							return { label: 'Operational', color: 'text-green-600' };
 						case BusinessStatus.CLOSED_TEMPORARILY:
-							return {
-								label: 'Temporarily closed',
-								color: 'text-yellow-600 dark:text-yellow-400'
-							};
+							return { label: 'Temporarily closed', color: 'text-yellow-600' };
 						case BusinessStatus.CLOSED_PERMANENTLY:
-							return { label: 'Permanently closed', color: 'text-red-600 dark:text-red-400' };
+							return { label: 'Permanently closed', color: 'text-red-600' };
 						default:
 							return null;
 					}
@@ -184,7 +178,7 @@
 </script>
 
 <div
-	class="flex w-fit overflow-hidden rounded-2xl bg-white shadow-xl transition-all duration-300 hover:shadow-2xl dark:bg-gray-800 dark:shadow-gray-900/50"
+	class="flex w-fit overflow-hidden rounded-2xl bg-white shadow-xl transition-all duration-300 hover:shadow-2xl"
 >
 	<!-- ═══ Left panel: DB data ═══ -->
 	<div class="flex w-80 flex-shrink-0 flex-col gap-5 p-6">
@@ -193,21 +187,21 @@
 			{#if isEditingName}
 				<input
 					type="text"
-					class="w-full rounded-lg border border-blue-300 px-2 py-1 text-xl font-bold text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-blue-500 dark:bg-gray-700 dark:text-white"
+					class="w-full rounded-lg border border-blue-300 px-2 py-1 text-xl font-bold text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
 					bind:value={editedName}
 					onkeydown={(e) => e.key === 'Escape' && cancelEdit()}
 				/>
 			{:else}
 				<div class="flex items-start justify-between gap-2">
-					<h3 class="text-xl font-bold leading-tight text-gray-900 dark:text-white">
+					<h3 class="text-xl font-bold leading-tight text-gray-900">
 						{localName}
 					</h3>
 					<button
 						onclick={startEditName}
-						class="mt-0.5 shrink-0 text-gray-400 opacity-0 transition-opacity hover:text-gray-600 group-hover:opacity-100 dark:hover:text-gray-200"
+						class="mt-0.5 shrink-0 text-gray-400 opacity-0 transition-opacity hover:text-gray-600 group-hover:opacity-100"
 						aria-label="Edit name"
 					>
-						<EditOutline class="h-4 w-4" />
+						<Pencil class="h-4 w-4" />
 					</button>
 				</div>
 			{/if}
@@ -217,24 +211,24 @@
 		<div class="group flex-1">
 			{#if isEditingAddress}
 				<textarea
-					class="w-full resize-none rounded-lg border border-blue-300 px-2 py-1 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-blue-500 dark:bg-gray-700 dark:text-gray-200"
+					class="w-full resize-none rounded-lg border border-blue-300 px-2 py-1 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
 					rows="3"
 					bind:value={editedAddress}
 					onkeydown={(e) => e.key === 'Escape' && cancelEdit()}
 				></textarea>
 			{:else}
 				<div class="flex items-start gap-2">
-					<MapPinAltOutline class="mt-0.5 h-5 w-5 shrink-0 text-gray-400" />
+					<MapPin class="mt-0.5 h-5 w-5 shrink-0 text-gray-400" />
 					<div class="flex flex-1 items-start justify-between gap-2">
-						<p class="text-sm leading-relaxed text-gray-600 dark:text-gray-300">
+						<p class="text-sm leading-relaxed text-gray-600">
 							{localAddress || '—'}
 						</p>
 						<button
 							onclick={startEditAddress}
-							class="mt-0.5 shrink-0 text-gray-400 opacity-0 transition-opacity hover:text-gray-600 group-hover:opacity-100 dark:hover:text-gray-200"
+							class="mt-0.5 shrink-0 text-gray-400 opacity-0 transition-opacity hover:text-gray-600 group-hover:opacity-100"
 							aria-label="Edit address"
 						>
-							<EditOutline class="h-4 w-4" />
+							<Pencil class="h-4 w-4" />
 						</button>
 					</div>
 				</div>
@@ -251,17 +245,17 @@
 						class="flex items-center gap-1.5 rounded-lg bg-blue-600 px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-blue-700 disabled:opacity-50"
 					>
 						{#if isSaving}
-							<Spinner size="4" />
+							<Loader2 class="h-4 w-4 animate-spin" />
 						{:else}
-							<CheckOutline class="h-4 w-4" />
+							<Check class="h-4 w-4" />
 						{/if}
 						Save
 					</button>
 					<button
 						onclick={cancelEdit}
-						class="flex items-center gap-1.5 rounded-lg border border-gray-300 px-3 py-1.5 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-50 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700"
+						class="flex items-center gap-1.5 rounded-lg border border-gray-300 px-3 py-1.5 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-50"
 					>
-						<CloseOutline class="h-4 w-4" />
+						<X class="h-4 w-4" />
 						Cancel
 					</button>
 				</div>
@@ -279,13 +273,13 @@
 			{#if hasGoogle}
 				<button
 					onclick={toggleExpand}
-					class="flex items-center gap-1.5 rounded-lg border border-gray-200 px-3 py-1.5 text-sm font-medium text-gray-600 transition-all hover:border-blue-300 hover:bg-blue-50 hover:text-blue-600 dark:border-gray-600 dark:text-gray-300 dark:hover:border-blue-500 dark:hover:bg-blue-900/20 dark:hover:text-blue-400"
+					class="flex items-center gap-1.5 rounded-lg border border-gray-200 px-3 py-1.5 text-sm font-medium text-gray-600 transition-all hover:border-blue-300 hover:bg-blue-50 hover:text-blue-600"
 				>
 					{#if isExpanded}
-						<ChevronLeftOutline class="h-4 w-4" />
+						<ChevronLeft class="h-4 w-4" />
 						Collapse
 					{:else}
-						<ChevronRightOutline class="h-4 w-4" />
+						<ChevronRight class="h-4 w-4" />
 						Google details
 					{/if}
 				</button>
@@ -293,173 +287,162 @@
 		</div>
 	</div>
 
-	<!-- ═══ Separator ═══ -->
-	<div
-		class="w-px shrink-0 self-stretch bg-gray-200 transition-opacity duration-300 dark:bg-gray-600 {isExpanded
-			? 'opacity-100'
-			: 'opacity-0'}"
-	></div>
+	<!-- ═══ Right panel: Google data (Svelte fly transition) ═══ -->
+	{#if isExpanded}
+		<div transition:fly={{ x: 50, duration: 300 }}>
+			<!-- separator -->
+			<div class="w-px self-stretch bg-gray-200"></div>
 
-	<!-- ═══ Right panel: Google data (slides in) ═══ -->
-	<div
-		class="overflow-hidden transition-[max-width,opacity] duration-300 ease-in-out {isExpanded
-			? 'max-w-[24rem] opacity-100'
-			: 'max-w-0 opacity-0'}"
-	>
-		<div class="flex h-full w-96 flex-col overflow-y-auto">
-			{#if isLoadingGoogle}
-				<div class="flex flex-1 items-center justify-center py-16">
-					<Spinner size="10" />
-				</div>
-			{:else if googleError}
-				<div class="flex flex-1 flex-col items-center justify-center gap-3 py-16 text-center">
-					<p class="text-sm text-red-500">{googleError}</p>
-					<button
-						onclick={fetchGoogleData}
-						class="rounded-lg bg-blue-600 px-4 py-2 text-sm text-white transition-colors hover:bg-blue-700"
-					>
-						Retry
-					</button>
-				</div>
-			{:else if googleData}
-				<div class="space-y-5 p-6">
-					<!-- Header -->
-					<div class="flex items-center justify-between">
-						<img src="/GoogleMaps_Logo_Gray.svg" alt="Google Maps" class="h-4 w-auto" />
-						<span class="text-xs text-gray-400">Live · not cached</span>
+			<div class="flex h-full w-96 flex-col overflow-y-auto">
+				{#if isLoadingGoogle}
+					<div class="flex flex-1 items-center justify-center py-16">
+						<Loader2 class="h-10 w-10 animate-spin text-gray-400" />
 					</div>
+				{:else if googleError}
+					<div class="flex flex-1 flex-col items-center justify-center gap-3 py-16 text-center">
+						<p class="text-sm text-red-500">{googleError}</p>
+						<button
+							onclick={fetchGoogleData}
+							class="rounded-lg bg-blue-600 px-4 py-2 text-sm text-white transition-colors hover:bg-blue-700"
+						>
+							Retry
+						</button>
+					</div>
+				{:else if googleData}
+					<div class="space-y-5 p-6">
+						<!-- Header -->
+						<div class="flex items-center justify-between">
+							<img src="/GoogleMaps_Logo_Gray.svg" alt="Google Maps" class="h-4 w-auto" />
+							<span class="text-xs text-gray-400">Live · not cached</span>
+						</div>
 
-					<!-- Core info: rating, status, price -->
-					<div class="space-y-2">
-						{#if googleData.rating}
-							<div class="flex items-center gap-3">
-								<Rating
-									id={uuidv4()}
-									total={5}
-									size={18}
-									rating={googleData.rating}
-									icon={ratingIcon({ fillColor: '#ffa200', strokeColor: '#d97706' })}
-									class="flex items-center gap-1"
-								>
-									{#snippet text()}
-										<span class="ml-1 text-sm font-semibold text-gray-800 dark:text-gray-100">
-											{googleData!.rating!.toFixed(1)}
+						<!-- Core info: rating, status, price -->
+						<div class="space-y-2">
+							{#if googleData.rating}
+								<div class="flex items-center gap-3">
+									<div class="flex items-center gap-0.5">
+										{#each Array(5) as _, i}
+											<Star
+												class="h-4 w-4 {i < Math.round(googleData.rating)
+													? 'fill-amber-400 text-amber-400'
+													: 'fill-none text-gray-300'}"
+											/>
+										{/each}
+										<span class="ml-1 text-sm font-semibold text-gray-800">
+											{googleData.rating.toFixed(1)}
 										</span>
-									{/snippet}
-								</Rating>
-								{#if googleData.userRatingCount}
-									<span class="text-xs text-gray-400">
-										({googleData.userRatingCount.toLocaleString()} reviews)
+									</div>
+									{#if googleData.userRatingCount}
+										<span class="text-xs text-gray-400">
+											({googleData.userRatingCount.toLocaleString()} reviews)
+										</span>
+									{/if}
+								</div>
+							{/if}
+
+							<div class="flex items-center gap-2">
+								{#if status}
+									<span class="text-sm font-medium {status.color}">{status.label}</span>
+								{/if}
+								{#if priceLabel}
+									<span class="rounded bg-gray-100 px-1.5 py-0.5 text-xs font-semibold text-gray-700">
+										{priceLabel}
 									</span>
 								{/if}
 							</div>
-						{/if}
+						</div>
 
-						<div class="flex items-center gap-2">
-							{#if status}
-								<span class="text-sm font-medium {status.color}">{status.label}</span>
+						<hr class="border-gray-200" />
+
+						<!-- Contact & location -->
+						<div class="space-y-3">
+							{#if googleData.formattedAddress}
+								<div class="flex items-start gap-2">
+									<MapPin class="mt-0.5 h-4 w-4 shrink-0 text-gray-400" />
+									<p class="text-sm leading-relaxed text-gray-600">
+										{googleData.formattedAddress}
+									</p>
+								</div>
 							{/if}
-							{#if priceLabel}
-								<span
-									class="rounded bg-gray-100 px-1.5 py-0.5 text-xs font-semibold text-gray-700 dark:bg-gray-700 dark:text-gray-200"
-								>
-									{priceLabel}
-								</span>
+							{#if googleData.nationalPhoneNumber || googleData.internationalPhoneNumber}
+								<div class="flex items-center gap-2">
+									<Phone class="h-4 w-4 shrink-0 text-gray-400" />
+									<a
+										href="tel:{googleData.internationalPhoneNumber || googleData.nationalPhoneNumber}"
+										class="text-sm text-blue-600 hover:underline"
+									>
+										{googleData.nationalPhoneNumber || googleData.internationalPhoneNumber}
+									</a>
+								</div>
+							{/if}
+							{#if googleData.websiteUri}
+								<div class="flex items-center gap-2 overflow-hidden">
+									<Globe class="h-4 w-4 shrink-0 text-gray-400" />
+									<a
+										href={googleData.websiteUri}
+										target="_blank"
+										rel="noopener noreferrer"
+										class="truncate text-sm text-blue-600 hover:underline"
+									>
+										{safeHostname(googleData.websiteUri)}
+									</a>
+								</div>
+							{/if}
+							{#if googleData.googleMapsUri}
+								<div class="flex items-center gap-2">
+									<img src="/GoogleMaps_Logo_Gray.svg" alt="" class="h-3.5 w-auto shrink-0" />
+									<a
+										href={googleData.googleMapsUri}
+										target="_blank"
+										rel="noopener noreferrer"
+										class="text-sm text-blue-600 hover:underline"
+									>
+										Open in Maps
+									</a>
+								</div>
 							{/if}
 						</div>
-					</div>
 
-					<hr class="border-gray-200 dark:border-gray-600" />
+						<!-- Opening hours: today -->
+						{#if hoursToday}
+							<div>
+								<hr class="mb-4 border-gray-200" />
+								<h4 class="mb-1.5 text-xs font-semibold uppercase tracking-wide text-gray-400">
+									Today's hours
+								</h4>
+								<p class="text-sm text-gray-600">{hoursToday}</p>
+							</div>
+						{/if}
 
-					<!-- Contact & location -->
-					<div class="space-y-3">
-						{#if googleData.formattedAddress}
-							<div class="flex items-start gap-2">
-								<MapPinAltOutline class="mt-0.5 h-4 w-4 shrink-0 text-gray-400" />
-								<p class="text-sm leading-relaxed text-gray-600 dark:text-gray-300">
-									{googleData.formattedAddress}
-								</p>
+						<!-- Amenities -->
+						{#if amenities.length > 0}
+							<div>
+								<hr class="mb-4 border-gray-200" />
+								<h4 class="mb-3 text-xs font-semibold uppercase tracking-wide text-gray-400">
+									Features
+								</h4>
+								<div class="grid grid-cols-2 gap-2">
+									{#each amenities as feature}
+										<div class="flex items-center gap-1.5">
+											{#if feature.value}
+												<Check class="h-3.5 w-3.5 shrink-0 text-green-500" />
+											{:else}
+												<X class="h-3.5 w-3.5 shrink-0 text-gray-300" />
+											{/if}
+											<span class="text-xs text-gray-600">{feature.label}</span>
+										</div>
+									{/each}
+								</div>
 							</div>
 						{/if}
-						{#if googleData.nationalPhoneNumber || googleData.internationalPhoneNumber}
-							<div class="flex items-center gap-2">
-								<PhoneOutline class="h-4 w-4 shrink-0 text-gray-400" />
-								<a
-									href="tel:{googleData.internationalPhoneNumber ||
-										googleData.nationalPhoneNumber}"
-									class="text-sm text-blue-600 hover:underline dark:text-blue-400"
-								>
-									{googleData.nationalPhoneNumber || googleData.internationalPhoneNumber}
-								</a>
-							</div>
-						{/if}
-						{#if googleData.websiteUri}
-							<div class="flex items-center gap-2 overflow-hidden">
-								<GlobeOutline class="h-4 w-4 shrink-0 text-gray-400" />
-								<a
-									href={googleData.websiteUri}
-									target="_blank"
-									rel="noopener noreferrer"
-									class="truncate text-sm text-blue-600 hover:underline dark:text-blue-400"
-								>
-									{safeHostname(googleData.websiteUri)}
-								</a>
-							</div>
-						{/if}
-						{#if googleData.googleMapsUri}
-							<div class="flex items-center gap-2">
-								<img src="/GoogleMaps_Logo_Gray.svg" alt="" class="h-3.5 w-auto shrink-0" />
-								<a
-									href={googleData.googleMapsUri}
-									target="_blank"
-									rel="noopener noreferrer"
-									class="text-sm text-blue-600 hover:underline dark:text-blue-400"
-								>
-									Open in Maps
-								</a>
-							</div>
-						{/if}
-					</div>
 
-					<!-- Opening hours: today -->
-					{#if hoursToday}
-						<div>
-							<hr class="mb-4 border-gray-200 dark:border-gray-600" />
-							<h4 class="mb-1.5 text-xs font-semibold uppercase tracking-wide text-gray-400">
-								Today's hours
-							</h4>
-							<p class="text-sm text-gray-600 dark:text-gray-300">{hoursToday}</p>
+						<!-- Attribution -->
+						<div class="border-t border-gray-100 pt-3">
+							<p class="text-xs text-gray-400">Data from Google Places API</p>
 						</div>
-					{/if}
-
-					<!-- Amenities -->
-					{#if amenities.length > 0}
-						<div>
-							<hr class="mb-4 border-gray-200 dark:border-gray-600" />
-							<h4 class="mb-3 text-xs font-semibold uppercase tracking-wide text-gray-400">
-								Features
-							</h4>
-							<div class="grid grid-cols-2 gap-2">
-								{#each amenities as feature}
-									<div class="flex items-center gap-1.5">
-										{#if feature.value}
-											<CheckOutline class="h-3.5 w-3.5 shrink-0 text-green-500" />
-										{:else}
-											<CloseOutline class="h-3.5 w-3.5 shrink-0 text-gray-300 dark:text-gray-600" />
-										{/if}
-										<span class="text-xs text-gray-600 dark:text-gray-300">{feature.label}</span>
-									</div>
-								{/each}
-							</div>
-						</div>
-					{/if}
-
-					<!-- Attribution -->
-					<div class="border-t border-gray-100 pt-3 dark:border-gray-700">
-						<p class="text-xs text-gray-400">Data from Google Places API</p>
 					</div>
-				</div>
-			{/if}
+				{/if}
+			</div>
 		</div>
-	</div>
+	{/if}
 </div>

@@ -1,263 +1,123 @@
 # Resto Rate
 
-Restaurant rating and review application built with SvelteKit frontend and Go API backend.
+Social restaurant rating app — find restaurants via Google Places, rate them, build a wishlist, and share with friends.
 
 ## Architecture
 
-- **Frontend**: SvelteKit with TailwindCSS, Flowbite UI, and Paraglide for i18n
-- **Backend**: Go API with Connect-RPC (gRPC-compatible), PostgreSQL database
-- **Database**: PostgreSQL with GORM ORM
-- **Communication**: Connect-RPC for type-safe API communication
-- **Monorepo**: Nx workspace with bun package manager
-- **Authentication**: Google OAuth (planned, not yet implemented)
-- **Internationalization**: Paraglide setup for multi-language support
-
-## Prerequisites
-
-- **Node.js** 18+ and **npm** (for JavaScript protoc-gen plugins)
-- **Go** 1.21+ (for Go protoc-gen plugins)
-- **Bun** (package manager)
-- **PostgreSQL** database
-- **Docker** (optional, for database)
-- **Buf CLI** (for protobuf code generation): `npm install -g @bufbuild/buf`
+- **Frontend**: SvelteKit 5 (Svelte runes) + TailwindCSS + ShadCN Svelte + Paraglide i18n
+- **Backend**: Go + Connect-RPC (gRPC-compatible) + PostgreSQL + Valkey cache
+- **API contract**: Protocol Buffers (source of truth in `packages/protos/`)
+- **Monorepo**: Nx workspace managed with bun
+- **Auth**: Session-based (cookie + Valkey); Google OAuth planned
 
 ## Current Features
 
-### ✅ Implemented
-- **Basic CRUD Operations**: Full CRUD for restaurants and users
-- **Database Models**: User and Restaurant models with UUIDv7 primary keys
-- **API Services**: Connect-RPC services for restaurants and users
-- **Pagination**: Server-side pagination with page tokens
-- **Database Seeding**: Development data seeding
-- **CORS Support**: Cross-origin resource sharing configured
-- **gRPC Reflection**: Development API introspection
-- **Docker Support**: PostgreSQL container setup
+### Implemented
+- **All 5 Connect-RPC services**: `auth`, `users`, `restaurants`, `reviews`, `google_maps`
+- **Auth**: Session login (username), logout, get current user — sessions stored in Valkey (24h TTL, HttpOnly cookie)
+- **Restaurants**: Full CRUD + paginated list; created from Google Places data (GoogleID + address as unique identifiers)
+- **Reviews**: Create (with find-or-create restaurant), get, update, delete, list — one review per user per restaurant enforced at DB level; supports 1–5 star rating, comment, and free-form tags (stored as JSON array)
+- **Google Places**: Text search, autocomplete (session-token batching), get place details, search restaurants, get restaurant details — comprehensive `Place` proto with 100+ fields
+- **UI**: Restaurant search (autocomplete), restaurant card (inline edit + Google details panel), rating form (stars + comment + tags), review summary, login modal
 
-### 🚧 In Development
-- **Authentication System**: Google OAuth integration
-- **Google Places API**: Restaurant data integration
-- **User Reviews**: Rating and review system
-- **Search & Filtering**: Restaurant search functionality
-- **UI/UX**: Complete frontend implementation
+### In Progress / Planned (MVP)
+- Google OAuth login (replace username-only flow)
+- My reviews page (list + filter + sort)
+- Wishlist (save restaurants without rating)
+- Friends (friend/unfriend, browse friend reviews + wishlist)
 
 ## Quick Start
 
 1. **Install dependencies**:
-
 ```bash
 bun install
 ```
 
-2. **Install Protocol Buffer plugins** (required for code generation):
-
+2. **Start infrastructure** (PostgreSQL + Valkey):
 ```bash
-# Install Go plugins for API
-go install google.golang.org/protobuf/cmd/protoc-gen-go@latest
-go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest
-go install github.com/bufbuild/connect-go/cmd/protoc-gen-connect-go@latest
-
-# Install JavaScript/TypeScript plugins for Web
-npm install -g @bufbuild/protoc-gen-es
-npm install -g @bufbuild/protoc-gen-connect-es
+docker-compose up -d
 ```
 
 3. **Set up environment**:
-Ensure:
-```bash
-export PATH="$PATH:$(go env GOPATH)/bin"
-```
-
 ```bash
 cp env.template .env
-# Edit .env with your database credentials
+# Edit .env — set POSTGRES_* and GOOGLE_PLACES_API_KEY at minimum
 ```
 
-4. **Start database** (Docker recommended):
-
-```bash
-docker-compose up -d postgres
-```
-
-5. **Start development**:
-
+4. **Start development**:
 ```bash
 bun run dev
 ```
 
-This starts both the web app (http://localhost:5173) and API (http://localhost:3001).
+Web: http://localhost:5173 · API: http://localhost:3001
 
-## Protocol Buffer Setup
+## Proto → Code Generation
 
-This project uses Protocol Buffers (protobuf) for API contract definition and code generation. The setup includes:
-
-### Required Plugins
-
-**For Go API** (`apps/api/buf.gen.yaml`):
-- `protoc-gen-go` - Generates Go structs from .proto files
-- `protoc-gen-go-grpc` - Generates Go gRPC code
-- `protoc-gen-connect-go` - Generates Connect-Go code
-
-**For Web Frontend** (`apps/web/buf.gen.yaml`):
-- `protoc-gen-es` - Generates TypeScript/JavaScript code
-- `protoc-gen-connect-es` - Generates Connect-ES client code
-
-### Installation Commands
+All API contracts live in `packages/protos/`. To regenerate after editing `.proto` files:
 
 ```bash
-# Go plugins (required for API)
-go install google.golang.org/protobuf/cmd/protoc-gen-go@latest
-go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest
-go install buf.build/bufbuild/connect-go/cmd/protoc-gen-connect-go@latest
-
-# JavaScript/TypeScript plugins (required for Web)
-npm install -g @bufbuild/protoc-gen-es
-npm install -g @bufbuild/protoc-gen-connect-es
+nx run protos:generate       # both Go and TypeScript
+nx run protos:generate:api   # Go only
+nx run protos:generate:web   # TypeScript only
 ```
-
-### Code Generation
-
-After installing plugins, you can generate code from .proto files:
-
-```bash
-# Generate Go code for API
-cd apps/api && buf generate
-
-# Generate TypeScript code for Web
-cd apps/web && buf generate
-```
-
-### Fresh PC Setup
-
-When setting up on a new machine, ensure you have:
-1. **Go** installed (for Go plugins)
-2. **Node.js/npm** installed (for JavaScript plugins)
-3. **Buf CLI** installed: `npm install -g @bufbuild/buf`
-
-Then run the installation commands above.
-
-**Note**: The Buf CLI is required for running `buf generate` commands. Install it globally with npm to ensure it's available system-wide.
-
-## API Endpoints
-
-### Restaurants Service
-- `CreateRestaurant` - Create a new restaurant
-- `GetRestaurant` - Get restaurant by ID
-- `UpdateRestaurant` - Update restaurant details
-- `DeleteRestaurant` - Delete restaurant
-- `ListRestaurants` - List restaurants with pagination
-
-### Users Service
-- `CreateUser` - Create a new user
-- `GetUser` - Get user by ID
-- `UpdateUser` - Update user details
-- `DeleteUser` - Delete user
-- `ListUsers` - List users with pagination
-
-### Google Maps Service
-- `SearchText` - Search for places using text query with dynamic field selection
-
-#### Dynamic Field Selection
-The Google Maps service supports dynamic field selection to optimize API calls and reduce response size. You can specify which fields to return in the response:
-
-```typescript
-// Example: Request only specific fields
-const response = await client.searchText({
-  textQuery: "restaurants in Banja Luka",
-  includedType: "restaurant",
-  maxResultCount: 10,
-  requestedFields: [
-    "name",
-    "displayName", 
-    "rating",
-    "formattedAddress",
-    "photos",
-    "priceLevel"
-  ]
-});
-
-// Example: Request all fields (default behavior)
-const response = await client.searchText({
-  textQuery: "restaurants in Banja Luka",
-  includedType: "restaurant",
-  maxResultCount: 10
-  // requestedFields not specified - returns all available fields
-});
-```
-
-**Available Fields:**
-- Basic info: `name`, `displayName`, `id`, `types`, `primaryType`, `primaryTypeDisplayName`
-- Contact: `nationalPhoneNumber`, `internationalPhoneNumber`, `formattedAddress`, `shortFormattedAddress`
-- Ratings: `rating`, `userRatingCount`
-- Business: `businessStatus`, `priceLevel`, `websiteUri`, `googleMapsUri`
-- Services: `takeout`, `delivery`, `dineIn`, `curbsidePickup`, `reservable`
-- Food options: `servesBreakfast`, `servesLunch`, `servesDinner`, `servesBeer`, `servesWine`, `servesBrunch`, `servesVegetarianFood`
-- Amenities: `outdoorSeating`, `liveMusic`, `menuForChildren`, `servesCocktails`, `servesDessert`, `servesCoffee`
-- Accessibility: `goodForChildren`, `allowsDogs`, `restroom`, `goodForGroups`, `goodForWatchingSports`
-- Media: `photos`, `attributions`
-- Other: `utcOffsetMinutes`, `pureServiceAreaBusiness`
 
 ## Database Schema
 
 ### Users
-- `id` (UUIDv7) - Primary key
-- `google_id` - Google OAuth ID (unique)
-- `email` - User email (unique)
-- `username` - Username (unique)
-- `name` - Display name
-- `is_admin` - Admin privileges
-- `created_at` / `updated_at` - Timestamps
+| Column | Type | Notes |
+|--------|------|-------|
+| id | UUIDv7 | PK |
+| google_id | string | unique, nullable |
+| email | string | unique, nullable |
+| username | string | unique |
+| name | string | |
+| is_admin | bool | |
 
 ### Restaurants
-- `id` (UUIDv7) - Primary key
-- `google_id` - Google Places ID (unique)
-- `email` - Restaurant email (unique)
-- `name` - Restaurant name
-- `created_at` / `updated_at` - Timestamps
+| Column | Type | Notes |
+|--------|------|-------|
+| id | UUIDv7 | PK |
+| google_id | string | unique — full Places resource name (`places/ChIJ...`) |
+| name | string | |
+| address | string | unique |
 
-## Development
+### Reviews
+| Column | Type | Notes |
+|--------|------|-------|
+| id | UUIDv7 | PK |
+| user_id | string | FK → users |
+| restaurant_id | string | FK → restaurants |
+| google_places_id | string | indexed |
+| rating | float64 | 1–5 |
+| comment | string | |
+| tags | JSON array | free-form strings |
+| (restaurant_id, user_id) | composite unique | one review per user per restaurant |
 
-- `bun run dev` - Start both apps
-- `bun run build` - Build all apps
-- `bun run lint` - Lint all packages
-- `bun run test` - Run tests
-- `bun run graph` - View project dependency graph
+## Development Commands
 
-## Project Structure
+```bash
+bun run dev          # Start web + API concurrently
+bun run build        # Build all
+bun run lint         # Lint all
+bun run test         # Run all tests
+bun run format       # Prettier
 
+cd apps/api && go build ./...       # Verify Go compiles
+cd apps/web && bun run check        # svelte-check
 ```
-resto-rate/
-├── apps/
-│   ├── web/          # SvelteKit frontend
-│   └── api/          # Go backend
-├── packages/
-│   └── protos/       # Protocol Buffer definitions
-├── .env              # Environment variables
-└── env.template      # Environment template
-```
 
-## Technology Stack
+## Tech Stack
 
-### Frontend
-- **SvelteKit** - Full-stack web framework
-- **TailwindCSS** - Utility-first CSS framework
-- **Flobite UI** - SvelteKit UI toolkit
-- **Connect-RPC** - Type-safe API client
-- **Paraglide** - Internationalization
-- **TypeScript** - Type safety
+| Layer | Technology |
+|-------|-----------|
+| Frontend | SvelteKit 5, Svelte 5 runes, TailwindCSS v4, ShadCN Svelte, Lucide |
+| API client | Connect-RPC (TypeScript), generated from protos |
+| Backend | Go, Connect-RPC, GORM |
+| Database | PostgreSQL (UUIDv7 PKs, GORM auto-migrate) |
+| Cache | Valkey (Redis-compatible) — sessions + proto caching |
+| API contract | Protocol Buffers + Buf CLI |
+| Monorepo | Nx + bun |
+| Observability | Prometheus metrics, structured slog logging |
+| i18n | Paraglide |
 
-### Backend
-- **Go** - Programming language
-- **Connect-RPC** - gRPC-compatible RPC framework
-- **GORM** - Go ORM library
-- **PostgreSQL** - Database
-- **UUIDv7** - Unique identifier generation
-
-### Infrastructure
-- **Nx** - Monorepo build system
-- **Bun** - Package manager and runtime
-- **Docker** - Containerization
-- **Protocol Buffers** - API contract definition
-
-## Documentation
-
-See `ROADMAP.md` for detailed development roadmap and `SETUP.md` for detailed setup instructions.
+See `ROADMAP.md` for the MVP implementation plan.

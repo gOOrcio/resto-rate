@@ -4,6 +4,7 @@ import (
 	authv1connect "api/src/generated/auth/v1/v1connect"
 	googlemapsv1connect "api/src/generated/google_maps/v1/v1connect"
 	restaurantsv1connect "api/src/generated/restaurants/v1/v1connect"
+	reviewsv1connect "api/src/generated/reviews/v1/v1connect"
 	usersv1connect "api/src/generated/users/v1/v1connect"
 	"api/src/internal/cache"
 	"api/src/internal/utils"
@@ -163,6 +164,11 @@ func initializeServiceHandlers(db *gorm.DB, valkeyClient valkey.Client) []Servic
 			path, handler := authv1connect.NewAuthServiceHandler(svc, connect.WithInterceptors(prometheusInterceptor))
 			return ServiceRegistration{Path: path, Handler: handler}
 		}(),
+		func() ServiceRegistration {
+			svc := services.NewReviewsService(db, valkeyClient)
+			path, handler := reviewsv1connect.NewReviewsServiceHandler(svc, connect.WithInterceptors(prometheusInterceptor))
+			return ServiceRegistration{Path: path, Handler: handler}
+		}(),
 	}
 }
 
@@ -225,6 +231,7 @@ func optionallySetupGRPCReflection(mux *http.ServeMux) {
 			restaurantsv1connect.RestaurantsServiceName,
 			googlemapsv1connect.GoogleMapsServiceName,
 			authv1connect.AuthServiceName,
+			reviewsv1connect.ReviewsServiceName,
 		)
 		mux.Handle(grpcreflect.NewHandlerV1(reflector))
 		mux.Handle(grpcreflect.NewHandlerV1Alpha(reflector))

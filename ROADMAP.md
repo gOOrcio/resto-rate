@@ -1,455 +1,329 @@
-# Resto Rate - Development Roadmap
+# Resto Rate — MVP Roadmap
 
-## 🎯 Project Overview
+## Vision
 
-Resto Rate is a restaurant rating and review application built with SvelteKit frontend and Go API backend. This roadmap outlines the features needed to create a fully functional restaurant rating platform.
+Social restaurant rating app: find restaurants (Google Places), rate them (stars + comment + tags), build a wishlist, share with friends (mutual follow only).
 
-## 📋 Current State Analysis
-
-### ✅ What's Already Implemented
-- **Basic Architecture**: SvelteKit frontend + Go API backend
-- **Database**: PostgreSQL with basic restaurant and user models
-- **API**: gRPC/Connect-RPC services for restaurants and users
-- **UI Framework**: SvelteKit with TailwindCSS and Flowbite UI
-- **Monorepo**: Nx workspace with bun package manager
-- **Docker**: Basic PostgreSQL container setup
-- **Internationalization**: Paraglide setup for i18n
-
-### ❌ What's Missing
-- Authentication system
-- Google Places API integration
-- Restaurant wishlist functionality
-- Restaurant filtering and search
-- User reviews and ratings
-- Complete UI/UX
-- Production deployment
-- Security features
+Login via provider only — Google OAuth first, Apple later.
 
 ---
 
-## 🚀 Implementation Roadmap
+## Decisions Log
 
-### Phase 1: Core Authentication & User Management (Priority: HIGH)
-
-#### 1.1 Complete Authentication System
-- [ ] **Implement Google OAuth Integration**
-  - Set up Google Cloud Console project
-  - Configure OAuth 2.0 credentials
-  - Implement OAuth flow in frontend
-  - Create authentication middleware for API
-  - Add session management and JWT tokens
-
-- [ ] **User Profile Management**
-  - User registration/login pages
-  - Profile editing functionality
-  - User preferences storage
-  - Profile picture upload
-
-- [ ] **Security Enhancements**
-  - Password hashing (Argon2/BCrypt)
-  - CSRF protection
-  - Rate limiting
-  - Input validation and sanitization
-  - Secure session management
-
-#### 1.2 Database Schema Enhancements
-- [ ] **User Model Extensions**
-  - Add user preferences
-  - Add profile information
-  - Add authentication tokens
-  - Add user roles (admin, moderator, user)
-
-- [ ] **Session Management**
-  - Session storage and validation
-  - Token refresh mechanism
-  - Session expiry handling
-
-### Phase 2: Restaurant Data & Google Places Integration (Priority: HIGH)
-
-#### 2.1 Google Places API Integration
-- [ ] **Google Places API Setup**
-  - Set up Google Cloud project
-  - Enable Places API
-  - Configure API keys and quotas
-  - Implement rate limiting
-
-- [ ] **Restaurant Data Models**
-  - Extend restaurant model with Google Places data
-  - Add location information (address, coordinates)
-  - Add business hours, phone, website
-  - Add categories and tags
-  - Add photos and media
-
-- [ ] **API Endpoints for Places**
-  - Restaurant search by location
-  - Restaurant details from Google Places
-  - Place autocomplete
-  - Nearby restaurants search
-
-#### 2.2 Restaurant Management
-- [ ] **Restaurant CRUD Operations**
-  - Create restaurant from Google Places data
-  - Update restaurant information
-  - Delete restaurant (admin only)
-  - Restaurant approval workflow
-
-- [ ] **Data Synchronization**
-  - Sync with Google Places API
-  - Handle data conflicts
-  - Update frequency management
-
-### Phase 3: Core Features - Reviews & Ratings (Priority: HIGH)
-
-#### 3.1 Review System
-- [ ] **Review Model & API**
-  - Review database schema
-  - Create review API endpoints
-  - Review validation and moderation
-  - Review helpfulness voting
-
-- [ ] **Rating System**
-  - Star rating (1-5 stars)
-  - Rating categories (food, service, ambiance, value)
-  - Overall rating calculation
-  - Rating analytics
-
-- [ ] **Review Features**
-  - Photo uploads for reviews
-  - Review editing and deletion
-  - Review reporting system
-  - Review moderation tools
-
-#### 3.2 Restaurant Wishlist
-- [ ] **Wishlist Functionality**
-  - Add/remove from wishlist
-  - Wishlist management page
-  - Wishlist sharing
-  - Wishlist notifications
-
-### Phase 4: Search & Discovery (Priority: MEDIUM)
-
-#### 4.1 Advanced Search
-- [ ] **Search Implementation**
-  - Full-text search (PostgreSQL FTS)
-  - Search by location, cuisine, rating
-  - Search filters (price range, open now, etc.)
-  - Search suggestions and autocomplete
-
-- [ ] **Filtering System**
-  - Filter by cuisine type
-  - Filter by price range
-  - Filter by rating
-  - Filter by distance
-  - Filter by open/closed status
-
-#### 4.2 Discovery Features
-- [ ] **Recommendation System**
-  - Personalized recommendations
-  - Popular restaurants
-  - Trending restaurants
-  - Similar restaurants
-
-- [ ] **Browse Features**
-  - Browse by cuisine
-  - Browse by location
-  - Browse by rating
-  - Featured restaurants
-
-### Phase 5: User Experience & UI/UX (Priority: MEDIUM)
-
-#### 5.1 Core Pages
-- [ ] **Homepage**
-  - Hero section with search
-  - Featured restaurants
-  - Recent reviews
-  - Popular cuisines
-
-- [ ] **Restaurant Pages**
-  - Restaurant detail page
-  - Photo gallery
-  - Menu integration
-  - Reviews and ratings display
-  - Map integration
-
-- [ ] **User Pages**
-  - User profile page
-  - User reviews page
-  - User wishlist page
-  - Settings page
-
-- [ ] **Search Results**
-  - Search results page
-  - Filter sidebar
-  - Map view integration
-  - List/grid view toggle
-
-#### 5.2 Navigation & Layout
-- [ ] **Navigation System**
-  - Main navigation menu
-  - Breadcrumbs
-  - Mobile navigation
-  - Search bar integration
-
-- [ ] **Responsive Design**
-  - Mobile-first design
-  - Tablet optimization
-  - Desktop enhancement
-  - Touch-friendly interactions
-
-### Phase 6: Advanced Features (Priority: MEDIUM)
-
-#### 6.1 Social Features
-- [ ] **Social Integration**
-  - Share restaurants on social media
-  - Follow other users
-  - User activity feed
-  - Restaurant check-ins
-
-- [ ] **Community Features**
-  - Restaurant discussions
-  - User badges and achievements
-  - Community guidelines
-  - Moderation tools
-
-#### 6.2 Business Features
-- [ ] **Restaurant Owner Features**
-  - Restaurant owner dashboard
-  - Review response system
-  - Business hours management
-  - Menu management
-
-- [ ] **Analytics**
-  - Restaurant analytics
-  - User behavior analytics
-  - Review analytics
-  - Search analytics
-
-### Phase 7: Performance & Optimization (Priority: MEDIUM)
-
-#### 7.1 Performance Optimization
-- [ ] **Frontend Optimization**
-  - Code splitting
-  - Lazy loading
-  - Image optimization
-  - Caching strategies
-
-- [ ] **Backend Optimization**
-  - Database query optimization
-  - API response caching
-  - Connection pooling
-  - Rate limiting
-
-#### 7.2 Monitoring & Logging
-- [ ] **Application Monitoring**
-  - Error tracking (Sentry)
-  - Performance monitoring
-  - Uptime monitoring
-  - User analytics
-
-- [ ] **Logging System**
-  - Structured logging
-  - Log aggregation
-  - Log analysis tools
-  - Audit trails
-
-### Phase 8: Deployment & DevOps (Priority: HIGH)
-
-#### 8.1 Production Deployment
-- [ ] **Docker Configuration**
-  - Multi-stage Docker builds
-  - Docker Compose for production
-  - Health checks
-  - Environment-specific configs
-
-- [ ] **CI/CD Pipeline**
-  - GitHub Actions setup
-  - Automated testing
-  - Automated deployment
-  - Environment management
-
-#### 8.2 Infrastructure
-- [ ] **Cloud Infrastructure**
-  - Cloud provider setup (AWS/GCP/Azure)
-  - Load balancer configuration
-  - Auto-scaling setup
-  - CDN configuration
-
-- [ ] **Database Management**
-  - Database backups
-  - Database migrations
-  - Database monitoring
-  - Connection pooling
-
-### Phase 9: Security & Compliance (Priority: HIGH)
-
-#### 9.1 Security Hardening
-- [ ] **Security Measures**
-  - HTTPS enforcement
-  - Security headers
-  - Content Security Policy
-  - XSS protection
-
-- [ ] **Data Protection**
-  - GDPR compliance
-  - Data encryption
-  - Privacy policy
-  - Terms of service
-
-#### 9.2 Access Control
-- [ ] **Role-Based Access Control**
-  - User roles and permissions
-  - Admin panel
-  - Moderation tools
-  - Content moderation
-
-### Phase 10: Testing & Quality Assurance (Priority: MEDIUM)
-
-#### 10.1 Testing Strategy
-- [ ] **Unit Testing**
-  - Frontend unit tests
-  - Backend unit tests
-  - API endpoint tests
-  - Database tests
-
-- [ ] **Integration Testing**
-  - End-to-end tests
-  - API integration tests
-  - Database integration tests
-  - Third-party service tests
-
-#### 10.2 Quality Assurance
-- [ ] **Code Quality**
-  - Linting and formatting
-  - Type checking
-  - Code coverage
-  - Performance testing
+| # | Decision |
+|---|----------|
+| Tags | Predefined list (seeded to DB), not free-form |
+| Tag filter mode | User-switchable: AND mode (all tags) OR mode (any tag) |
+| Comment search | Within a specific list (rated/wishlist) of a specific user (self or friend) only; separate views per user per list |
+| Geo filter | City + Country fields on Restaurant (extracted from Google Places address components); no lat/lng needed for MVP |
+| Wishlist ↔ Review | Mutually exclusive: creating a review auto-removes the restaurant from the user's wishlist (atomic in DB transaction) |
+| Friends | Mutual request/accept only — no one-way follow |
+| Content visibility | Friends-only — reviews and wishlist not public |
+| Review edit/delete | Both exposed in UI; no time limit on edits |
+| Google OAuth data | Store: google_id, email, name. Skip: profile photo |
+| Username | Optional; display falls back to Google email |
 
 ---
 
-## 🎯 [AI Suggestions] Additional Features
+## Current State (as of Mar 2026)
 
-### Advanced Features
-- [ ] **Real-time Features**
-  - Live review updates
-  - Real-time notifications
-  - WebSocket integration
-  - Push notifications
+### Done
+- [x] Nx monorepo (bun), Docker infra (PostgreSQL + Valkey)
+- [x] All 5 Connect-RPC services: `auth`, `users`, `restaurants`, `reviews`, `google_maps`
+- [x] Session auth (placeholder — username only, to be replaced by Google OAuth)
+- [x] Restaurant CRUD (unique by GoogleID + address)
+- [x] Reviews: create/update/delete, 1–5 stars, comment, free-form tags (to be migrated to predefined), one review per user per restaurant
+- [x] Google Places: autocomplete, details, text search
+- [x] ShadCN Svelte UI migration (branch: `rewrite-to-shad-cn`)
+- [x] UI: restaurant search, restaurant card, rating form, review summary, login modal
+- [x] CI: SonarQube
 
-- [ ] **AI/ML Integration**
-  - Review sentiment analysis
-  - Personalized recommendations
-  - Spam detection
-  - Content moderation
-
-- [ ] **Mobile App**
-  - React Native app
-  - PWA (Progressive Web App)
-  - Offline functionality
-  - Push notifications
-
-### Business Features
-- [ ] **Monetization**
-  - Premium features
-  - Restaurant advertising
-  - Sponsored listings
-  - Subscription model
-
-- [ ] **Analytics Dashboard**
-  - Restaurant performance metrics
-  - User engagement analytics
-  - Revenue tracking
-  - A/B testing
-
-### Technical Enhancements
-- [ ] **Microservices Architecture**
-  - Service decomposition
-  - API gateway
-  - Service discovery
-  - Distributed tracing
-
-- [ ] **Advanced Caching**
-  - Redis integration
-  - CDN optimization
-  - Browser caching
-  - API response caching
+### Known debt
+- Auth is username-only; needs Google OAuth
+- Tags are free-form strings; need migration to predefined tag table
+- Restaurant has no `city`/`country` fields
+- No routes beyond `/`
+- `TagProto` in protos is unused (tags stored as `repeated string` on `ReviewProto`)
+- Restaurant `Address` field has `json:"email"` tag (cosmetic bug)
 
 ---
 
-## 📊 Implementation Timeline
-
-### Week 1-2: Phase 1 (Authentication)
-- Complete Google OAuth integration
-- Implement user management
-- Set up security measures
-
-### Week 3-4: Phase 2 (Google Places)
-- Integrate Google Places API
-- Extend restaurant data models
-- Implement restaurant management
-
-### Week 5-6: Phase 3 (Reviews & Ratings)
-- Build review system
-- Implement rating functionality
-- Add wishlist features
-
-### Week 7-8: Phase 4 (Search & Discovery)
-- Implement search functionality
-- Add filtering system
-- Build discovery features
-
-### Week 9-10: Phase 5 (UI/UX)
-- Create core pages
-- Implement responsive design
-- Optimize user experience
-
-### Week 11-12: Phase 8 (Deployment)
-- Set up production infrastructure
-- Implement CI/CD pipeline
-- Configure monitoring
-
-### Week 13-14: Phase 9 (Security)
-- Implement security measures
-- Add compliance features
-- Set up access control
-
-### Week 15-16: Phase 10 (Testing)
-- Comprehensive testing
-- Quality assurance
-- Performance optimization
+## Implementation Phases
 
 ---
 
-## 🛠️ Technical Stack Recommendations
+### Phase 1 — Google OAuth
 
-### Frontend Enhancements
-- **State Management**: Zustand or Svelte stores
-- **Form Handling**: Superforms or similar
-- **Maps**: Google Maps API or Mapbox
-- **Image Handling**: Cloudinary or similar
-- **Notifications**: Web Push API
+**Why first**: Everything else requires authenticated users. Current auth is a placeholder.
 
-### Backend Enhancements
-- **Caching**: Redis
-- **Search**: Elasticsearch or PostgreSQL FTS
-- **File Storage**: AWS S3 or similar
-- **Email**: SendGrid or similar
-- **Monitoring**: Prometheus + Grafana
+#### Backend
+- [ ] `LoginRequest` proto: add `google_id_token` field (replaces `username`)
+- [ ] `AuthService.Login`: verify Google ID token (using Google tokeninfo endpoint or `google-auth-library`), extract `sub`/`email`/`name`, find-or-create User
+- [ ] On first login: create user with `google_id`, `email`, `name`; `username` = nil
+- [ ] On subsequent logins: find by `google_id`, issue session (existing flow)
+- [ ] Remove username-only login path from `AuthService`
+- [ ] Add auth middleware helper used by all mutations (returns `CodeUnauthenticated` if no valid session)
 
-### Infrastructure
-- **Hosting**: AWS/GCP/Azure
-- **CDN**: Cloudflare
-- **Database**: Managed PostgreSQL
-- **Monitoring**: DataDog or similar
-- **CI/CD**: GitHub Actions
+#### Frontend
+- [ ] Replace `LoginModal` with Google Sign-In button (Google Identity Services JS SDK, `credential_response` → ID token)
+- [ ] Send ID token to `auth.login()` RPC
+- [ ] Remove username input from login flow
+- [ ] Display user name (username ?? email) in Header
+
+**Proto files to edit**: `auth/v1/auth_service.proto`
+**Go files to edit**: `auth_service.go`, `user_model.go` (make username nullable)
 
 ---
 
-## 📝 Notes
+### Phase 2 — Data Model & Schema Extensions
 
-- **Priority Levels**: HIGH = Critical for MVP, MEDIUM = Important for full feature set, LOW = Nice to have
-- **Dependencies**: Some features depend on others being completed first
-- **Testing**: Each phase should include comprehensive testing
-- **Documentation**: Maintain up-to-date documentation throughout development
-- **Security**: Security should be considered at every phase, not just Phase 9
+**Why second**: Multiple subsequent phases depend on these models existing.
 
-This roadmap provides a structured approach to building a complete restaurant rating platform. Each phase builds upon the previous one, ensuring a solid foundation for the next set of features. 
+#### Tags (predefined)
+- [ ] New GORM model: `tag_model.go` — `Tag { ID, Slug, Label, Category?, CreatedAt }`
+- [ ] New proto: `tags/v1/tag.proto` (reuse/replace existing `TagProto`), `tags_service.proto` with `ListTags` RPC
+- [ ] New service: `TagsService` — `ListTags` (returns all tags, cached in Valkey)
+- [ ] DB seed: large predefined tag list (categories: cuisine type, vibe, price, dietary, service, occasion, etc.)
+- [ ] `ReviewProto.tags` stays as `repeated string` (slug values) — no schema change on Review
+- [ ] Frontend: replace free-text tag input with multi-select tag picker from `ListTags`
+
+#### Restaurant: city + country
+- [ ] Add `City string` and `Country string` to `restaurant_model.go`
+- [ ] Update `RestaurantProto`: add `city`, `country` fields
+- [ ] Update `CreateRestaurant` / find-or-create in `ReviewsService`: extract city + country from Google Places `formattedAddress` or `addressComponents`
+- [ ] Add `city` and `country` filter params to `ListRestaurants` (optional, for future use)
+
+#### Wishlist
+- [ ] New GORM model: `wishlist_item_model.go` — `WishlistItem { ID, UserID (indexed), RestaurantID (indexed), GooglePlacesID, CreatedAt }` — unique constraint on `(UserID, RestaurantID)`
+- [ ] New proto: `wishlist/v1/wishlist_item.proto`, `wishlist_service.proto` with: `AddToWishlist`, `RemoveFromWishlist`, `ListWishlist` (with filter/sort params)
+- [ ] New service: `WishlistService`
+- [ ] Mutation in `ReviewsService.CreateReview`: within the existing DB transaction, delete any wishlist entry for `(userID, restaurantID)` before inserting the review
+
+#### Friends
+- [ ] New GORM model: `friendship_model.go` — `Friendship { ID, RequesterID (indexed), AddresseeID (indexed), Status (pending/accepted/declined), CreatedAt, UpdatedAt }` — unique constraint on `(RequesterID, AddresseeID)`
+- [ ] New proto: `friends/v1/friendship.proto`, `friends_service.proto` with: `SendFriendRequest`, `AcceptFriendRequest`, `DeclineFriendRequest`, `Unfriend`, `ListFriends`, `ListPendingRequests`
+- [ ] New service: `FriendsService`
+
+**Proto files to create**: `tags/v1/`, `wishlist/v1/`, `friends/v1/`
+**Go files to create**: `tag_model.go`, `wishlist_item_model.go`, `friendship_model.go`, `tags_service.go`, `wishlist_service.go`, `friends_service.go`
+**Go files to edit**: `restaurant_model.go`, `reviews_service.go`, `main.go`
+
+---
+
+### Phase 3 — My Reviews Page (`/reviews`)
+
+**Requires**: Phase 1 (auth), Phase 2 (tags, city/country)
+
+#### Backend
+- [ ] `ListReviewsRequest` proto: add filter + sort params:
+  - `tag_slugs []string` + `tag_filter_mode enum { AND, OR }`
+  - `min_rating`, `max_rating float64`
+  - `comment_search string`
+  - `city string`, `country string`
+  - `sort_by enum { RATING_ASC, RATING_DESC, DATE_ASC, DATE_DESC }`
+- [ ] `ListReviews` service: apply filters via GORM (tags → JSON contains, comment → `ILIKE`, city/country → JOIN restaurant table)
+- [ ] Enforce: `user_id` in `ListReviewsRequest` must be the calling user OR a confirmed friend (check `Friendship` table)
+
+#### Frontend
+- [ ] Route: `/reviews`
+- [ ] Review card component: restaurant name, stars, comment excerpt, tag chips, date, Edit/Delete buttons
+- [ ] Filter sidebar / panel:
+  - Tag multi-select with AND/OR mode toggle
+  - Rating range slider (1–5)
+  - Comment keyword search input
+  - City / Country inputs
+  - Sort dropdown
+- [ ] Edit flow: opens `RatingForm` pre-filled with existing review
+- [ ] Delete flow: confirmation dialog → `DeleteReview` RPC → remove card
+
+---
+
+### Phase 4 — Wishlist Page (`/wishlist`)
+
+**Requires**: Phase 2 (wishlist model + service)
+
+#### Backend
+- [ ] `ListWishlistRequest` proto: add filter + sort params:
+  - `city string`, `country string`
+  - `tag_slugs []string` + `tag_filter_mode` (if wishlist items will support tags — see note below)
+  - `sort_by enum { DATE_ASC, DATE_DESC, NAME_ASC, NAME_DESC }`
+- [ ] `ListWishlist` service: join with Restaurant table for city/country filter
+
+> **Note**: Wishlist items don't have tags or comments themselves. Tag filtering on wishlist would need to filter by tags on the *restaurant* (i.e. tags from other users' reviews of that restaurant) — which is complex. For MVP, filter wishlist by city/country + sort only. Add tag filter post-MVP.
+
+#### Frontend
+- [ ] Route: `/wishlist`
+- [ ] On home search result: show "Add to Wishlist" button alongside "Review" button
+- [ ] Wishlist card: restaurant name, address, city/country, date added, "Remove" button, "Review now" button (triggers review flow + removes from wishlist)
+- [ ] Filter: city, country, sort
+
+---
+
+### Phase 5 — Friends (`/friends`, `/friends/[username]`)
+
+**Requires**: Phase 2 (friends model + service), Phase 3 + 4 (for browsing friend content)
+
+#### Backend
+- [ ] `ListUsers` RPC: add `username_search string` filter (for friend lookup by username)
+- [ ] `FriendsService` — all 6 RPCs
+- [ ] `ListReviews` + `ListWishlist`: when `target_user_id` is provided, verify caller is a confirmed friend of that user
+
+#### Frontend
+- [ ] Route: `/friends` — list of confirmed friends + pending requests (incoming/outgoing)
+  - Incoming requests: Accept / Decline buttons
+  - Outgoing pending: Cancel button
+  - Confirmed friends: "View profile" link + Unfriend button
+  - Search box: find user by username → "Send Friend Request" button
+- [ ] Route: `/friends/[username]` — friend's profile
+  - Two tabs: **Reviews** / **Wishlist**
+  - Same filter/sort UI as own reviews/wishlist pages (read-only — no edit/delete buttons)
+  - Uses same `ListReviews` / `ListWishlist` RPCs with `target_user_id`
+
+---
+
+### Phase 6 — Polish (post-MVP, nice to have)
+
+- [ ] Apple Sign-In
+- [ ] Profile page (`/profile`) — edit username, view own stats
+- [ ] Proper error + empty state pages
+- [ ] Mobile responsive layout
+- [ ] Rate limiting on API
+- [ ] Pagination on all list views (currently missing on reviews/wishlist)
+- [ ] Combined multi-friend view (aggregated reviews/wishlist from multiple friends)
+- [ ] Wishlist tag support (tags on wishlist items, or aggregate from restaurant reviews)
+
+---
+
+## Route Map (MVP)
+
+| Route | Auth required | Description |
+|-------|--------------|-------------|
+| `/` | No | Search + rate a restaurant (current) |
+| `/reviews` | Yes | My rated restaurants (filter + sort) |
+| `/wishlist` | Yes | My wishlist (filter + sort) |
+| `/friends` | Yes | Friend list + requests |
+| `/friends/[username]` | Yes (must be friends) | Friend's reviews + wishlist |
+
+---
+
+## Frontend Views
+
+### Global / Navigation
+- **Header** (all pages): logo, nav links (Home, My Reviews, Wishlist, Friends — auth-gated), user display name (username ?? email) + Logout. Links hidden when not logged in.
+- **Auth gate**: unauthenticated users hitting a protected route → redirect to `/` with login prompt
+
+---
+
+### `/` — Home (existing, extended)
+**Current**: Google Places search + rate flow.
+**Add**:
+- After search result appears: two action buttons — **"Rate it"** (opens RatingForm) and **"Add to Wishlist"**
+- If user already reviewed this restaurant: show existing ReviewSummary with Edit option instead of RatingForm
+- If restaurant is already wishlisted: show "Wishlisted ✓" with Remove option
+
+---
+
+### Login (no route — inline)
+- **One Tap**: auto-appears as Google's floating prompt for signed-in Google users
+- **Sign In With Google button**: always visible in Header when logged out; also shown in a modal on protected-route access
+- On success: modal/prompt closes, header updates to show user name
+
+---
+
+### `/reviews` — My Reviews
+**Layout**: filter panel (left sidebar on desktop, collapsible drawer on mobile) + scrollable card list (right)
+
+**Review card**:
+- Restaurant name + address
+- Star rating (visual, 1–5)
+- Comment excerpt (truncated, expand on click)
+- Tag chips
+- Date reviewed
+- **Edit** button → opens RatingForm pre-filled
+- **Delete** button → inline confirmation ("Delete this review?") → gone
+
+**Filter panel**:
+- Tag multi-select (searchable list of predefined tags) with AND / OR toggle
+- Rating range: min/max star selector
+- Keyword search in comments (debounced input)
+- City + Country text filters
+- Sort: Rating ↑, Rating ↓, Newest, Oldest
+
+**Empty state**: "You haven't rated any restaurants yet. [Search for one →]"
+
+---
+
+### `/wishlist` — My Wishlist
+**Layout**: same filter+list pattern as `/reviews`
+
+**Wishlist card**:
+- Restaurant name + address + city, country
+- Date added
+- **"Review now"** button → opens RatingForm; on submit, card disappears from wishlist
+- **Remove** button → inline confirmation
+
+**Filter panel**:
+- City + Country inputs
+- Sort: Newest, Oldest, Name A–Z, Name Z–A
+
+**Empty state**: "Your wishlist is empty. Find a restaurant to save for later. [Search →]"
+
+---
+
+### `/friends` — Friends
+**Layout**: two sections stacked
+
+**Section 1 — Pending requests**:
+- Incoming: avatar/name + "Accept" / "Decline" buttons
+- Outgoing: avatar/name + "Cancel request" button
+- Hidden if no pending requests
+
+**Section 2 — My friends**:
+- Search box: find user by username → if found, show name + "Send Friend Request" button
+- Friend list: each entry shows display name, username, **"View profile"** link, **"Unfriend"** button (with confirmation)
+
+**Empty state**: "No friends yet. Search for someone by username."
+
+---
+
+### `/friends/[username]` — Friend Profile
+**Header**: display name + username + "Unfriend" button
+
+**Tabs**: Reviews | Wishlist
+
+**Reviews tab** (read-only):
+- Same filter panel as `/reviews` (no Edit/Delete buttons on cards)
+- If friend has no reviews: "No reviews yet."
+
+**Wishlist tab** (read-only):
+- Same filter panel as `/wishlist`
+- If friend has no wishlist items: "Empty wishlist."
+
+**Access control**: if not friends with this user → show "You need to be friends to view this profile."
+
+---
+
+### Shared Components (new/updated)
+| Component | Description |
+|-----------|-------------|
+| `SocialSignIn.svelte` | Google button + One Tap init; slot for future Apple button |
+| `ReviewCard.svelte` | Reusable review card for `/reviews` + `/friends/[username]` tabs |
+| `WishlistCard.svelte` | Reusable wishlist card |
+| `FilterPanel.svelte` | Reusable filter sidebar; accepts config for which filters to show |
+| `TagPicker.svelte` | Multi-select from predefined tag list with AND/OR mode toggle |
+| `ConfirmButton.svelte` | Inline "are you sure?" pattern for Delete/Remove/Unfriend |
+| `EmptyState.svelte` | Reusable empty state with icon + message + optional CTA |
+
+---
+
+## Proto Changes Summary
+
+| Proto | Change |
+|-------|--------|
+| `auth/v1/auth_service.proto` | `LoginRequest`: replace `username` with `google_id_token` |
+| `restaurants/v1/restaurant.proto` | Add `city`, `country` fields |
+| `reviews/v1/reviews_service.proto` | `ListReviewsRequest`: add filter/sort params; add `target_user_id` |
+| `tags/v1/` | New — `Tag` message + `TagsService.ListTags` |
+| `wishlist/v1/` | New — `WishlistItem` message + `WishlistService` (Add, Remove, List) |
+| `friends/v1/` | New — `Friendship` message + `FriendsService` (6 RPCs) |
+| `users/v1/users_service.proto` | `ListUsersRequest`: add `username_search` |
