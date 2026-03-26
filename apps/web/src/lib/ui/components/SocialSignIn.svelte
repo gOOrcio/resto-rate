@@ -11,21 +11,37 @@
 
 	const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID as string;
 
+	const GIS_SRC = 'https://accounts.google.com/gsi/client';
+
 	onMount(() => {
 		if (!clientId) {
 			console.warn('[SocialSignIn] VITE_GOOGLE_CLIENT_ID is not set');
 			return;
 		}
 
+		// GIS already available (bootstrapped by the layout) — initialize and render directly.
+		if (window.google?.accounts?.id) {
+			initGIS();
+			return;
+		}
+
+		// Script may already be in-flight (injected by the layout) — reuse it.
+		const existing = document.querySelector<HTMLScriptElement>(`script[src="${GIS_SRC}"]`);
+		if (existing) {
+			existing.addEventListener('load', initGIS);
+			return () => existing.removeEventListener('load', initGIS);
+		}
+
+		// No script yet — load it.
 		const script = document.createElement('script');
-		script.src = 'https://accounts.google.com/gsi/client';
+		script.src = GIS_SRC;
 		script.async = true;
 		script.defer = true;
-		script.onload = initGIS;
+		script.addEventListener('load', initGIS);
 		document.head.appendChild(script);
 
 		return () => {
-			document.head.removeChild(script);
+			script.removeEventListener('load', initGIS);
 		};
 	});
 
