@@ -6,6 +6,12 @@ import "users/v1/user.proto";
 
 option go_package = "api/src/generated/auth/v1";
 
+enum AuthProvider {
+  AUTH_PROVIDER_UNSPECIFIED = 0;
+  AUTH_PROVIDER_GOOGLE = 1;
+  AUTH_PROVIDER_APPLE = 2; // reserved — not yet implemented
+}
+
 service AuthService {
   rpc Login(LoginRequest) returns (LoginResponse);
   rpc Logout(LogoutRequest) returns (LogoutResponse);
@@ -13,7 +19,8 @@ service AuthService {
 }
 
 message LoginRequest {
-  string username = 1;
+  AuthProvider provider = 1;
+  string id_token = 2;
 }
 
 message LoginResponse {
