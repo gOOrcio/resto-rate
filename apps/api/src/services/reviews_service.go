@@ -73,6 +73,12 @@ func (s *ReviewsService) CreateReview(
 			return result.Error
 		}
 
+		// Remove from wishlist if present (review supersedes wishlist)
+		if err := tx.Where("user_id = ? AND restaurant_id = ?", userID, restaurant.ID).
+			Delete(&models.WishlistItem{}).Error; err != nil {
+			return err
+		}
+
 		// Check for duplicate review
 		var existing models.Review
 		if err := tx.Where("restaurant_id = ? AND user_id = ?", restaurant.ID, userID).First(&existing).Error; err == nil {
