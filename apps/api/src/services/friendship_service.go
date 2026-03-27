@@ -257,14 +257,17 @@ func (s *FriendshipService) FindUserByHandle(
 	ctx context.Context,
 	req *connect.Request[v1.FindUserByHandleRequest],
 ) (*connect.Response[v1.FindUserByHandleResponse], error) {
-	_, err := getUserIDFromSession(ctx, req.Header(), s.Valkey)
-	if err != nil {
-		return nil, err
+	// Validate input before auth so callers get a clear error without needing a valid session.
+	handle := strings.ToLower(strings.TrimPrefix(req.Msg.Username, "@"))
+	if handle == "" {
+		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("username is required"))
+	}
+	if !isValidUsername(handle) {
+		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("invalid username"))
 	}
 
-	handle := strings.ToLower(strings.TrimPrefix(req.Msg.Username, "@"))
-	if !isValidUsername(handle) {
-		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("username is required"))
+	if _, err := getUserIDFromSession(ctx, req.Header(), s.Valkey); err != nil {
+		return nil, err
 	}
 
 	var user models.User

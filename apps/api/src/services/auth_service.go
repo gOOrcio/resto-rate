@@ -298,7 +298,10 @@ func (s *AuthService) issueSession(ctx context.Context, userID, token string) er
 	}
 	// Refresh TTL on the tracking set to prevent unbounded growth from expired individual tokens.
 	const sessionTTL = int64(24 * 60 * 60) // 24 h in seconds
-	s.Valkey.Do(ctx, s.Valkey.B().Expire().Key("user_sessions:"+userID).Seconds(sessionTTL).Build())
+	expireCmd := s.Valkey.B().Expire().Key("user_sessions:"+userID).Seconds(sessionTTL).Build()
+	if err := s.Valkey.Do(ctx, expireCmd).Error(); err != nil {
+		return fmt.Errorf("issueSession: EXPIRE user_sessions:%s: %w", userID, err)
+	}
 	return nil
 }
 

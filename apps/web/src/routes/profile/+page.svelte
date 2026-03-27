@@ -324,6 +324,7 @@
 					? 'bg-primary'
 					: 'bg-muted'}"
 				role="switch"
+				aria-label="Dark mode"
 				aria-checked={mode.current === 'dark'}
 				disabled={darkModeSaving}
 				onclick={toggleDarkMode}

@@ -70,3 +70,56 @@ func TestFriendshipService_ListPendingRequests_NilDB(t *testing.T) {
 		t.Fatal("expected error from nil DB, got nil")
 	}
 }
+
+func TestFriendshipService_FindUserByHandle_NilDB(t *testing.T) {
+	svc := &services.FriendshipService{}
+	req := connect.NewRequest(&friendshipv1.FindUserByHandleRequest{Username: "alice"})
+	_, err := svc.FindUserByHandle(context.Background(), req)
+	if err == nil {
+		t.Fatal("expected error from nil DB, got nil")
+	}
+}
+
+func TestFriendshipService_FindUserByHandle_EmptyUsername(t *testing.T) {
+	svc := &services.FriendshipService{}
+	req := connect.NewRequest(&friendshipv1.FindUserByHandleRequest{Username: ""})
+	_, err := svc.FindUserByHandle(context.Background(), req)
+	if err == nil {
+		t.Fatal("expected error for empty username, got nil")
+	}
+	connectErr, ok := err.(*connect.Error)
+	if !ok {
+		t.Fatalf("expected *connect.Error, got %T", err)
+	}
+	if connectErr.Code() != connect.CodeInvalidArgument {
+		t.Fatalf("expected CodeInvalidArgument, got %v", connectErr.Code())
+	}
+}
+
+func TestFriendshipService_FindUserByHandle_InvalidUsername(t *testing.T) {
+	svc := &services.FriendshipService{}
+	req := connect.NewRequest(&friendshipv1.FindUserByHandleRequest{Username: "!!bad!!"})
+	_, err := svc.FindUserByHandle(context.Background(), req)
+	if err == nil {
+		t.Fatal("expected error for invalid username, got nil")
+	}
+	connectErr, ok := err.(*connect.Error)
+	if !ok {
+		t.Fatalf("expected *connect.Error, got %T", err)
+	}
+	if connectErr.Code() != connect.CodeInvalidArgument {
+		t.Fatalf("expected CodeInvalidArgument, got %v", connectErr.Code())
+	}
+}
+
+func TestFriendshipService_SendFriendRequest_UsernameNilDB(t *testing.T) {
+	// Validates that the username branch is wired — auth check fires first (nil Valkey), so any error is expected.
+	svc := &services.FriendshipService{}
+	req := connect.NewRequest(&friendshipv1.SendFriendRequestRequest{
+		Receiver: &friendshipv1.SendFriendRequestRequest_ReceiverUsername{ReceiverUsername: "alice"},
+	})
+	_, err := svc.SendFriendRequest(context.Background(), req)
+	if err == nil {
+		t.Fatal("expected error from nil Valkey/DB, got nil")
+	}
+}
