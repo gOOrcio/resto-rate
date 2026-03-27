@@ -2,48 +2,72 @@
 	import clients from '$lib/client/client';
 	import type { Place } from '$lib/client/generated/google_maps/v1/google_maps_service_pb';
 	import type { ReviewProto } from '$lib/client/generated/reviews/v1/review_pb';
-	import { goto } from '$app/navigation';
+	import type { WishlistItemProto } from '$lib/client/generated/wishlist/v1/wishlist_item_pb';
 	import PlacePreviewCard from './PlacePreviewCard.svelte';
 	import RatingForm from './RatingForm.svelte';
 	import ReviewSummary from './ReviewSummary.svelte';
 	import RestaurantSearch from './RestaurantSearch.svelte';
 
 	let selectedPlace = $state<Place | null>(null);
-	let isCheckingReview = $state(false);
+	let isChecking = $state(false);
 	let currentReview = $state<ReviewProto | null>(null);
+	let currentWishlistItem = $state<WishlistItemProto | null>(null);
 	let isEditingReview = $state(false);
 	let showRatingForm = $state(false);
+	let wishlistLoading = $state(false);
 
 	async function handleSelect(place: Place) {
 		selectedPlace = place;
 		currentReview = null;
+		currentWishlistItem = null;
 		showRatingForm = false;
 		isEditingReview = false;
 
-		isCheckingReview = true;
+		isChecking = true;
 		try {
-			const res = await clients.reviews.listReviews({ googlePlacesId: place.name || '' });
-			currentReview = res.reviews?.[0] ?? null;
+			const googlePlacesId = place.name || '';
+			const [reviewRes, wishlistRes] = await Promise.all([
+				clients.reviews.listReviews({ googlePlacesId }),
+				clients.wishlist.listWishlist({ googlePlacesId })
+			]);
+			currentReview = reviewRes.reviews?.[0] ?? null;
+			currentWishlistItem = wishlistRes.items?.[0] ?? null;
 		} catch {
-			currentReview = null;
+			// leave both null — show the default action buttons
 		} finally {
-			isCheckingReview = false;
+			isChecking = false;
 		}
 	}
 
 	async function addToWishlist() {
 		if (!selectedPlace) return;
+		wishlistLoading = true;
 		try {
-			await clients.wishlist.addToWishlist({
+			const res = await clients.wishlist.addToWishlist({
 				googlePlacesId: selectedPlace.name || '',
 				restaurantName: selectedPlace.displayName?.text || selectedPlace.name || '',
 				restaurantAddress: selectedPlace.formattedAddress || '',
 				city: selectedPlace.postalAddress?.locality ?? '',
 				country: selectedPlace.postalAddress?.country ?? ''
 			});
-			goto('/wishlist');
+			currentWishlistItem = res.item ?? null;
 		} catch (e) {
 			console.error('Wishlist add error:', e);
+		} finally {
+			wishlistLoading = false;
+		}
+	}
+
+	async function removeFromWishlist() {
+		if (!selectedPlace) return;
+		wishlistLoading = true;
+		try {
+			await clients.wishlist.removeFromWishlist({ googlePlacesId: selectedPlace.name || '' });
+			currentWishlistItem = null;
+		} catch (e) {
+			console.error('Wishlist remove error:', e);
+		} finally {
+			wishlistLoading = false;
 		}
 	}
 </script>
@@ -64,10 +88,10 @@
 				</a>
 			{/if}
 
-			{#if isCheckingReview}
+			{#if isChecking}
 				<div class="flex items-center gap-2 text-sm text-gray-500">
 					<div class="h-4 w-4 animate-spin rounded-full border-2 border-gray-300 border-t-blue-500"></div>
-					Checking your review…
+					Checking your history…
 				</div>
 			{:else if currentReview && !isEditingReview}
 				<ReviewSummary
@@ -84,18 +108,30 @@
 					existingReview={currentReview}
 					onSubmit={(review) => {
 						currentReview = review;
+						currentWishlistItem = null;
 						isEditingReview = false;
 					}}
 				/>
 			{:else if !currentReview}
 				{#if !showRatingForm}
 					<div class="flex gap-3">
-						<button
-							class="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50"
-							onclick={addToWishlist}
-						>
-							☆ Save to wishlist
-						</button>
+						{#if currentWishlistItem}
+							<button
+								class="rounded-lg border border-green-300 bg-green-50 px-4 py-2 text-sm font-medium text-green-700 transition-colors hover:bg-green-100 disabled:opacity-50"
+								onclick={removeFromWishlist}
+								disabled={wishlistLoading}
+							>
+								★ Wishlisted — remove
+							</button>
+						{:else}
+							<button
+								class="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 disabled:opacity-50"
+								onclick={addToWishlist}
+								disabled={wishlistLoading}
+							>
+								☆ Save to wishlist
+							</button>
+						{/if}
 						<button
 							class="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700"
 							onclick={() => (showRatingForm = true)}
@@ -112,6 +148,7 @@
 						country={selectedPlace.postalAddress?.country ?? ''}
 						onSubmit={(review) => {
 							currentReview = review;
+							currentWishlistItem = null;
 							showRatingForm = false;
 						}}
 					/>
