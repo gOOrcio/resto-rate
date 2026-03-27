@@ -14,6 +14,8 @@ import (
 	"gorm.io/gorm"
 )
 
+const reviewOwnerFilter = "id = ? AND user_id = ?"
+
 type ReviewsService struct {
 	v1connect.UnimplementedReviewsServiceHandler
 	DB     *gorm.DB
@@ -161,7 +163,7 @@ func (s *ReviewsService) UpdateReview(
 	}
 
 	var review models.Review
-	if err := s.DB.WithContext(ctx).Preload("Restaurant").Preload("User").First(&review, "id = ? AND user_id = ?", req.Msg.Id, userID).Error; err != nil {
+	if err := s.DB.WithContext(ctx).Preload("Restaurant").Preload("User").First(&review, reviewOwnerFilter, req.Msg.Id, userID).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, connect.NewError(connect.CodeNotFound, errors.New("review not found"))
 		}
@@ -193,7 +195,7 @@ func (s *ReviewsService) GetReview(
 	}
 
 	var review models.Review
-	if err := s.DB.WithContext(ctx).Preload("Restaurant").Preload("User").First(&review, "id = ? AND user_id = ?", req.Msg.Id, userID).Error; err != nil {
+	if err := s.DB.WithContext(ctx).Preload("Restaurant").Preload("User").First(&review, reviewOwnerFilter, req.Msg.Id, userID).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, connect.NewError(connect.CodeNotFound, errors.New("review not found"))
 		}
@@ -216,7 +218,7 @@ func (s *ReviewsService) DeleteReview(
 		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("id is required"))
 	}
 
-	result := s.DB.WithContext(ctx).Where("id = ? AND user_id = ?", req.Msg.Id, userID).Delete(&models.Review{})
+	result := s.DB.WithContext(ctx).Where(reviewOwnerFilter, req.Msg.Id, userID).Delete(&models.Review{})
 	if result.Error != nil {
 		return nil, result.Error
 	}

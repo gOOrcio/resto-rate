@@ -52,13 +52,7 @@ func (s *FriendshipService) SendFriendRequest(
 		return nil, err
 	}
 
-	// Compute the unordered pair key (same logic as BeforeCreate).
-	var pairKey string
-	if senderID < receiver.ID {
-		pairKey = senderID + ":" + receiver.ID
-	} else {
-		pairKey = receiver.ID + ":" + senderID
-	}
+	pairKey := canonicalPairKey(senderID, receiver.ID)
 
 	// Check for an existing request between this pair.
 	var existing models.FriendRequest
@@ -242,6 +236,15 @@ func (s *FriendshipService) ListPendingRequests(
 	}
 
 	return connect.NewResponse(&v1.ListPendingRequestsResponse{Requests: protos}), nil
+}
+
+// canonicalPairKey returns a deterministic, unordered key for a user pair
+// so that (A,B) and (B,A) produce the same key.
+func canonicalPairKey(a, b string) string {
+	if a < b {
+		return a + ":" + b
+	}
+	return b + ":" + a
 }
 
 // derefStr safely dereferences a string pointer, returning "" for nil.
