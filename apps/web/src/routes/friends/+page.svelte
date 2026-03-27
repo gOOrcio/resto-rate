@@ -41,12 +41,14 @@
 		addLoading = true;
 		addError = '';
 		addSuccess = '';
-		const isEmail = val.includes('@');
+		// A leading @ means username; @ elsewhere means email address.
+		const isEmail = val.includes('@') && !val.startsWith('@');
+		const username = val.replace(/^@/, '').toLowerCase();
 		try {
 			await client.friendship.sendFriendRequest({
 				receiver: isEmail
 					? { case: 'receiverEmail', value: val }
-					: { case: 'receiverUsername', value: val.replace(/^@/, '') }
+					: { case: 'receiverUsername', value: username }
 			});
 			addSuccess = `Friend request sent to ${val}`;
 			addInput = '';

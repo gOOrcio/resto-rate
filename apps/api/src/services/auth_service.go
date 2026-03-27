@@ -233,12 +233,23 @@ func (s *AuthService) DeleteMyAccount(
 	}
 
 	// Wipe all sessions for this user
-	if err := s.wipeAllSessions(ctx, userID); err != nil {
+	if err := s.wipeAllSessions(ctx, userID, token); err != nil {
 		return nil, connect.NewError(connect.CodeInternal, err)
 	}
 
-	// Delete the user (hard delete; DB cascade constraints handle related rows)
-	if err := s.DB.WithContext(ctx).Delete(&models.User{}, "id = ?", userID).Error; err != nil {
+	// Delete the user and dependent rows in a transaction (no DB-level cascade on these FKs).
+	if err := s.DB.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		if err := tx.Where("user_id = ?", userID).Delete(&models.Review{}).Error; err != nil {
+			return err
+		}
+		if err := tx.Where("user_id = ?", userID).Delete(&models.WishlistItem{}).Error; err != nil {
+			return err
+		}
+		if err := tx.Where("sender_id = ? OR receiver_id = ?", userID, userID).Delete(&models.FriendRequest{}).Error; err != nil {
+			return err
+		}
+		return tx.Delete(&models.User{}, "id = ?", userID).Error
+	}); err != nil {
 		return nil, connect.NewError(connect.CodeInternal, err)
 	}
 
@@ -265,7 +276,7 @@ func (s *AuthService) SignOutAllDevices(
 		return nil, connect.NewError(connect.CodeUnauthenticated, errors.New("invalid session data"))
 	}
 
-	if err := s.wipeAllSessions(ctx, userID); err != nil {
+	if err := s.wipeAllSessions(ctx, userID, token); err != nil {
 		return nil, connect.NewError(connect.CodeInternal, err)
 	}
 
@@ -291,15 +302,21 @@ func (s *AuthService) issueSession(ctx context.Context, userID, token string) er
 	return nil
 }
 
-// wipeAllSessions deletes every session for the given user from Valkey.
-func (s *AuthService) wipeAllSessions(ctx context.Context, userID string) error {
+// wipeAllSessions deletes every tracked session for the given user from Valkey.
+// currentToken is always deleted regardless of whether the tracking set exists,
+// ensuring the caller's own session is invalidated even for pre-tracking users.
+func (s *AuthService) wipeAllSessions(ctx context.Context, userID, currentToken string) error {
 	smembersResult := s.Valkey.Do(ctx, s.Valkey.B().Smembers().Key("user_sessions:"+userID).Build())
-	tokens, err := smembersResult.AsStrSlice()
-	if err != nil {
-		// Key may not exist for users who logged in before session tracking was added — treat as empty.
-		tokens = []string{}
+	tracked, _ := smembersResult.AsStrSlice()
+
+	// Deduplicate: always include the current token.
+	toDelete := make(map[string]struct{}, len(tracked)+1)
+	toDelete[currentToken] = struct{}{}
+	for _, t := range tracked {
+		toDelete[t] = struct{}{}
 	}
-	for _, t := range tokens {
+
+	for t := range toDelete {
 		if err := s.Valkey.Do(ctx, s.Valkey.B().Del().Key("session:"+t).Build()).Error(); err != nil {
 			return fmt.Errorf("wipeAllSessions: DEL session:%s: %w", t, err)
 		}

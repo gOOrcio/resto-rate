@@ -28,7 +28,8 @@
 		const next = mode.current !== 'dark';
 		setMode(next ? 'dark' : 'light');
 		try {
-			await client.auth.updateMyProfile({ setIsDarkModeEnabled: true, isDarkModeEnabled: next });
+			const res = await client.auth.updateMyProfile({ setIsDarkModeEnabled: true, isDarkModeEnabled: next });
+			if (res.user) auth.setUser(res.user);
 		} catch {
 			// revert on failure
 			setMode(next ? 'light' : 'dark');

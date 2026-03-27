@@ -6,6 +6,7 @@ import (
 	"api/src/internal/models"
 	"context"
 	"errors"
+	"strings"
 
 	"connectrpc.com/connect"
 	"github.com/valkey-io/valkey-go"
@@ -41,7 +42,11 @@ func (s *FriendshipService) SendFriendRequest(
 			return nil, err
 		}
 	case req.Msg.GetReceiverUsername() != "":
-		if err := s.DB.WithContext(ctx).Where("username = ?", req.Msg.GetReceiverUsername()).First(&receiver).Error; err != nil {
+		handle := strings.ToLower(strings.TrimPrefix(req.Msg.GetReceiverUsername(), "@"))
+		if !isValidUsername(handle) {
+			return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("invalid username"))
+		}
+		if err := s.DB.WithContext(ctx).Where("username = ?", handle).First(&receiver).Error; err != nil {
 			if errors.Is(err, gorm.ErrRecordNotFound) {
 				return nil, connect.NewError(connect.CodeNotFound, errors.New("user not found"))
 			}
@@ -257,12 +262,13 @@ func (s *FriendshipService) FindUserByHandle(
 		return nil, err
 	}
 
-	if req.Msg.Username == "" {
+	handle := strings.ToLower(strings.TrimPrefix(req.Msg.Username, "@"))
+	if !isValidUsername(handle) {
 		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("username is required"))
 	}
 
 	var user models.User
-	if err := s.DB.WithContext(ctx).Where("username = ?", req.Msg.Username).First(&user).Error; err != nil {
+	if err := s.DB.WithContext(ctx).Where("username = ?", handle).First(&user).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, connect.NewError(connect.CodeNotFound, errors.New("user not found"))
 		}

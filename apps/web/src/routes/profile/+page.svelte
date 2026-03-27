@@ -29,6 +29,7 @@
 	let cityDebounce: ReturnType<typeof setTimeout> | null = null;
 	let cityLoading = $state(false);
 	let showCitySuggestions = $state(false);
+	let citySearchSeq = 0;
 	let citySaving = $state(false);
 	let citySuccess = $state(false);
 
@@ -103,6 +104,7 @@
 	}
 
 	async function searchCity(val: string) {
+		const seq = ++citySearchSeq;
 		try {
 			const res = await client.googleMaps.autocompletePlaces({
 				input: val,
@@ -110,12 +112,14 @@
 				sessionToken: citySessionToken,
 				includeQueryPrediction: false
 			});
+			if (seq !== citySearchSeq) return; // stale response — a newer search is in flight
 			citySuggestions = (res.suggestions || []).filter((s) => s.placePrediction);
 			showCitySuggestions = citySuggestions.length > 0;
 		} catch {
+			if (seq !== citySearchSeq) return;
 			citySuggestions = [];
 		} finally {
-			cityLoading = false;
+			if (seq === citySearchSeq) cityLoading = false;
 		}
 	}
 
