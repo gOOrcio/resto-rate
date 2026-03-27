@@ -2,7 +2,9 @@ package main
 
 import (
 	"api/src/internal/models"
+	"context"
 	"errors"
+	"fmt"
 	"net/http"
 	"time"
 
@@ -10,6 +12,26 @@ import (
 	"github.com/valkey-io/valkey-go"
 	"gorm.io/gorm"
 )
+
+// findOrCreateDevUser looks up a user by email; creates one with Name="Dev User" if not found.
+func findOrCreateDevUser(ctx context.Context, db *gorm.DB, email string) (models.User, error) {
+	var user models.User
+	err := db.WithContext(ctx).Where("email = ?", email).First(&user).Error
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		user = models.User{
+			Email: models.StringPtr(email),
+			Name:  "Dev User",
+		}
+		if createErr := db.WithContext(ctx).Create(&user).Error; createErr != nil {
+			return models.User{}, fmt.Errorf("failed to create user: %w", createErr)
+		}
+		return user, nil
+	}
+	if err != nil {
+		return models.User{}, fmt.Errorf("db error: %w", err)
+	}
+	return user, nil
+}
 
 // devLoginHandler handles POST /dev/login.
 // It finds or creates a dev user by email (default: dev@restorate.local),
@@ -29,19 +51,9 @@ func devLoginHandler(db *gorm.DB, kv valkey.Client) http.Handler {
 
 		ctx := r.Context()
 
-		var user models.User
-		err := db.WithContext(ctx).Where("email = ?", email).First(&user).Error
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			user = models.User{
-				Email: models.StringPtr(email),
-				Name:  "Dev User",
-			}
-			if createErr := db.WithContext(ctx).Create(&user).Error; createErr != nil {
-				http.Error(w, "failed to create user", http.StatusInternalServerError)
-				return
-			}
-		} else if err != nil {
-			http.Error(w, "db error", http.StatusInternalServerError)
+		user, findErr := findOrCreateDevUser(ctx, db, email)
+		if findErr != nil {
+			http.Error(w, findErr.Error(), http.StatusInternalServerError)
 			return
 		}
 

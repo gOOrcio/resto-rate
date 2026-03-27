@@ -54,7 +54,7 @@ func (s *ReviewsService) CreateReview(
 	}
 
 	if req.Msg.GooglePlacesId == "" {
-		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("google_places_id is required"))
+		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New(errGooglePlacesIDRequired))
 	}
 	if req.Msg.Rating < 1 || req.Msg.Rating > 5 {
 		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("rating must be between 1 and 5"))
@@ -109,7 +109,7 @@ func (s *ReviewsService) CreateReview(
 	var currentUser models.User
 	if err := s.DB.WithContext(ctx).First(&currentUser, "id = ?", userID).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil, connect.NewError(connect.CodeNotFound, errors.New("user not found"))
+			return nil, connect.NewError(connect.CodeNotFound, errors.New(errUserNotFound))
 		}
 		return nil, connect.NewError(connect.CodeInternal, err)
 	}
@@ -131,7 +131,7 @@ func (s *ReviewsService) ListReviews(
 	}
 
 	if s.DB == nil {
-		return nil, connect.NewError(connect.CodeInternal, errors.New("database not initialized"))
+		return nil, connect.NewError(connect.CodeInternal, errors.New(errDatabaseNotInitialized))
 	}
 
 	callerID, err := getUserIDFromSession(ctx, req.Header(), s.Valkey)
@@ -164,22 +164,7 @@ func (s *ReviewsService) ListReviews(
 	}
 
 	// Tag filter
-	if len(req.Msg.TagSlugs) > 0 {
-		if req.Msg.TagFilterMode == v1.TagFilterMode_TAG_FILTER_MODE_AND {
-			for _, slug := range req.Msg.TagSlugs {
-				query = query.Where("reviews.tags LIKE ?", fmt.Sprintf(`%%"%s"%%`, slug))
-			}
-		} else {
-			// OR (default): at least one specified tag must appear
-			conditions := make([]string, len(req.Msg.TagSlugs))
-			args := make([]interface{}, len(req.Msg.TagSlugs))
-			for i, slug := range req.Msg.TagSlugs {
-				conditions[i] = "reviews.tags LIKE ?"
-				args[i] = fmt.Sprintf(`%%"%s"%%`, slug)
-			}
-			query = query.Where("("+strings.Join(conditions, " OR ")+")", args...)
-		}
-	}
+	query = applyTagFilter(query, req.Msg.TagSlugs, req.Msg.TagFilterMode)
 
 	// Rating range
 	if req.Msg.MinRating > 0 {
@@ -203,16 +188,7 @@ func (s *ReviewsService) ListReviews(
 	}
 
 	// Sort order
-	switch req.Msg.SortBy {
-	case v1.ReviewSortBy_REVIEW_SORT_BY_DATE_ASC:
-		query = query.Order("reviews.created_at ASC")
-	case v1.ReviewSortBy_REVIEW_SORT_BY_RATING_DESC:
-		query = query.Order("reviews.rating DESC")
-	case v1.ReviewSortBy_REVIEW_SORT_BY_RATING_ASC:
-		query = query.Order("reviews.rating ASC")
-	default: // UNSPECIFIED and DATE_DESC both → newest first
-		query = query.Order("reviews.created_at DESC")
-	}
+	query = applyReviewSort(query, req.Msg.SortBy)
 
 	var reviews []models.Review
 	if err := query.Find(&reviews).Error; err != nil {
@@ -237,7 +213,7 @@ func (s *ReviewsService) UpdateReview(
 	}
 
 	if req.Msg.Id == "" {
-		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("id is required"))
+		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New(errIDRequired))
 	}
 
 	if req.Msg.Rating < 1 || req.Msg.Rating > 5 {
@@ -247,7 +223,7 @@ func (s *ReviewsService) UpdateReview(
 	var review models.Review
 	if err := s.DB.WithContext(ctx).Preload("Restaurant").Preload("User").First(&review, reviewOwnerFilter, req.Msg.Id, userID).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil, connect.NewError(connect.CodeNotFound, errors.New("review not found"))
+			return nil, connect.NewError(connect.CodeNotFound, errors.New(errReviewNotFound))
 		}
 		return nil, err
 	}
@@ -273,13 +249,13 @@ func (s *ReviewsService) GetReview(
 	}
 
 	if req.Msg.Id == "" {
-		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("id is required"))
+		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New(errIDRequired))
 	}
 
 	var review models.Review
 	if err := s.DB.WithContext(ctx).Preload("Restaurant").Preload("User").First(&review, reviewOwnerFilter, req.Msg.Id, userID).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil, connect.NewError(connect.CodeNotFound, errors.New("review not found"))
+			return nil, connect.NewError(connect.CodeNotFound, errors.New(errReviewNotFound))
 		}
 		return nil, err
 	}
@@ -297,7 +273,7 @@ func (s *ReviewsService) DeleteReview(
 	}
 
 	if req.Msg.Id == "" {
-		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("id is required"))
+		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New(errIDRequired))
 	}
 
 	result := s.DB.WithContext(ctx).Where(reviewOwnerFilter, req.Msg.Id, userID).Delete(&models.Review{})
@@ -305,7 +281,7 @@ func (s *ReviewsService) DeleteReview(
 		return nil, result.Error
 	}
 	if result.RowsAffected == 0 {
-		return nil, connect.NewError(connect.CodeNotFound, errors.New("review not found"))
+		return nil, connect.NewError(connect.CodeNotFound, errors.New(errReviewNotFound))
 	}
 
 	return connect.NewResponse(&v1.DeleteReviewResponse{Success: true}), nil
@@ -321,7 +297,7 @@ func (s *ReviewsService) ListRestaurantReviews(
 	}
 
 	if req.Msg.GooglePlacesId == "" {
-		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("google_places_id is required"))
+		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New(errGooglePlacesIDRequired))
 	}
 
 	friendIDs, err := getFriendIDs(ctx, s.DB, userID)
@@ -397,6 +373,41 @@ func assertFriendship(ctx context.Context, db *gorm.DB, callerID, targetID strin
 		return connect.NewError(connect.CodePermissionDenied, errors.New("you must be friends to view this content"))
 	}
 	return nil
+}
+
+// applyTagFilter adds WHERE clauses for tag filtering based on mode (AND/OR).
+func applyTagFilter(query *gorm.DB, slugs []string, mode v1.TagFilterMode) *gorm.DB {
+	if len(slugs) == 0 {
+		return query
+	}
+	if mode == v1.TagFilterMode_TAG_FILTER_MODE_AND {
+		for _, slug := range slugs {
+			query = query.Where("reviews.tags LIKE ?", fmt.Sprintf(`%%"%s"%%`, slug))
+		}
+		return query
+	}
+	// OR (default): at least one specified tag must appear
+	conditions := make([]string, len(slugs))
+	args := make([]interface{}, len(slugs))
+	for i, slug := range slugs {
+		conditions[i] = "reviews.tags LIKE ?"
+		args[i] = fmt.Sprintf(`%%"%s"%%`, slug)
+	}
+	return query.Where("("+strings.Join(conditions, " OR ")+")", args...)
+}
+
+// applyReviewSort adds an ORDER BY clause based on the sort field.
+func applyReviewSort(query *gorm.DB, sortBy v1.ReviewSortBy) *gorm.DB {
+	switch sortBy {
+	case v1.ReviewSortBy_REVIEW_SORT_BY_DATE_ASC:
+		return query.Order("reviews.created_at ASC")
+	case v1.ReviewSortBy_REVIEW_SORT_BY_RATING_DESC:
+		return query.Order("reviews.rating DESC")
+	case v1.ReviewSortBy_REVIEW_SORT_BY_RATING_ASC:
+		return query.Order("reviews.rating ASC")
+	default: // UNSPECIFIED and DATE_DESC → newest first
+		return query.Order("reviews.created_at DESC")
+	}
 }
 
 // Ensure RestaurantProto import is used
