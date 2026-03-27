@@ -16,10 +16,7 @@
 			"executor": "nx:run-commands",
 			"options": {
 				"command": "buf generate --template apps/web/buf.gen.yaml",
-				"cwd": ".",
-				"env": {
-					"NODE_OPTIONS": "--no-experimental-webstorage"
-				}
+				"cwd": "."
 			}
 		},
 		"generate": {

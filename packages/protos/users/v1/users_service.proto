@@ -3,6 +3,7 @@ syntax = "proto3";
 package users.v1;
 
 import "users/v1/user.proto";
+
 option go_package = "api/src/generated/users/v1";
 
 service UsersService {

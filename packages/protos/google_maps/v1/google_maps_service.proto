@@ -170,10 +170,10 @@ message SearchAlongRouteParameters {
 message SearchTextResponse {
   // A list of places that meet the user's text search criteria.
   repeated Place places = 1;
-  
+
   // A list of routing summaries where each entry associates to the corresponding place.
   repeated RoutingSummary routing_summaries = 2;
-  
+
   // A list of contextual contents where each entry associates to the corresponding place.
   repeated ContextualContent contextual_contents = 3;
 }
@@ -181,190 +181,190 @@ message SearchTextResponse {
 message Place {
   // This Place's resource name, in `places/{place_id}` format.
   string name = 1;
-  
+
   // The unique identifier of a place.
   string id = 2;
-  
+
   // The localized name of the place, suitable as a short human-readable description.
   LocalizedText display_name = 31;
-  
+
   // A set of type tags for this result.
   repeated string types = 5;
-  
+
   // The primary type of the given result.
   string primary_type = 50;
-  
+
   // The display name of the primary type, localized to the request language if applicable.
   LocalizedText primary_type_display_name = 32;
-  
+
   // A human-readable phone number for the place, in national format.
   string national_phone_number = 7;
-  
+
   // A human-readable phone number for the place, in international format.
   string international_phone_number = 8;
-  
+
   // A full, human-readable address for this place.
   string formatted_address = 9;
-  
+
   // A short, human-readable address for this place.
   string short_formatted_address = 51;
-  
+
   // The address in postal address format.
   PostalAddress postal_address = 90;
-  
+
   // The position of this place.
   LatLng location = 12;
-  
+
   // A viewport suitable for displaying the place on an average-sized map.
   Viewport viewport = 13;
-  
+
   // A rating between 1.0 and 5.0, based on user reviews of this place.
   double rating = 14;
-  
+
   // A URL providing more information about this place.
   string google_maps_uri = 15;
-  
+
   // The authoritative website for this place.
   string website_uri = 16;
-  
+
   // List of reviews about this place, sorted by relevance.
   repeated Review reviews = 53;
-  
+
   // The regular hours of operation.
   OpeningHours regular_opening_hours = 21;
-  
+
   // Number of minutes this place's timezone is currently offset from UTC.
   int32 utc_offset_minutes = 22;
-  
+
   // IANA Time Zone Database time zone.
   TimeZone time_zone = 88;
-  
+
   // Information about photos of this place.
   repeated Photo photos = 54;
-  
+
   // The place's address in adr microformat.
   string adr_format_address = 24;
-  
+
   // The business status for the place.
   BusinessStatus business_status = 25;
-  
+
   // Price level of the place.
   PriceLevel price_level = 26;
-  
+
   // A set of data provider that must be shown with this result.
   repeated Attribution attributions = 27;
-  
+
   // The total number of reviews for this place.
   int32 user_rating_count = 28;
-  
+
   // A truncated URL to an icon mask.
   string icon_mask_base_uri = 29;
-  
+
   // Background color for icon_mask in hex format.
   string icon_background_color = 30;
-  
+
   // Specifies if the business supports takeout.
   bool takeout = 33;
-  
+
   // Specifies if the business supports delivery.
   bool delivery = 34;
-  
+
   // Specifies if the business supports indoor or outdoor seating options.
   bool dine_in = 35;
-  
+
   // Specifies if the business supports curbside pickup.
   bool curbside_pickup = 36;
-  
+
   // Specifies if the place supports reservations.
   bool reservable = 38;
-  
+
   // Specifies if the place serves breakfast.
   bool serves_breakfast = 39;
-  
+
   // Specifies if the place serves lunch.
   bool serves_lunch = 40;
-  
+
   // Specifies if the place serves dinner.
   bool serves_dinner = 41;
-  
+
   // Specifies if the place serves beer.
   bool serves_beer = 42;
-  
+
   // Specifies if the place serves wine.
   bool serves_wine = 43;
-  
+
   // Specifies if the place serves brunch.
   bool serves_brunch = 44;
-  
+
   // Specifies if the place serves vegetarian food.
   bool serves_vegetarian_food = 45;
-  
+
   // The hours of operation for the next seven days.
   OpeningHours current_opening_hours = 46;
-  
+
   // Contains an array of entries for the next seven days including information about secondary hours.
   repeated OpeningHours current_secondary_opening_hours = 47;
-  
+
   // Contains an array of entries for information about regular secondary hours.
   repeated OpeningHours regular_secondary_opening_hours = 49;
-  
+
   // Contains a summary of the place.
   LocalizedText editorial_summary = 52;
-  
+
   // Place provides outdoor seating.
   bool outdoor_seating = 55;
-  
+
   // Place provides live music.
   bool live_music = 56;
-  
+
   // Place has a children's menu.
   bool menu_for_children = 57;
-  
+
   // Place serves cocktails.
   bool serves_cocktails = 58;
-  
+
   // Place serves dessert.
   bool serves_dessert = 59;
-  
+
   // Place serves coffee.
   bool serves_coffee = 60;
-  
+
   // Place is good for children.
   bool good_for_children = 62;
-  
+
   // Place allows dogs.
   bool allows_dogs = 63;
-  
+
   // Place has restroom.
   bool restroom = 64;
-  
+
   // Place accommodates groups.
   bool good_for_groups = 65;
-  
+
   // Place is suitable for watching sports.
   bool good_for_watching_sports = 66;
-  
+
   // Payment options the place accepts.
   PaymentOptions payment_options = 67;
-  
+
   // Options of parking provided by the place.
   ParkingOptions parking_options = 70;
-  
+
   // A list of sub-destinations related to the place.
   repeated SubDestination sub_destinations = 71;
-  
+
   // Information about the accessibility options a place offers.
   AccessibilityOptions accessibility_options = 72;
-  
+
   // The most recent information about fuel options in a gas station.
   FuelOptions fuel_options = 78;
-  
+
   // Information of ev charging options.
   EVChargeOptions ev_charge_options = 79;
-  
+
   // AI-generated summary of the place.
   GenerativeSummary generative_summary = 80;
-  
+
   // List of places in which the current place is located.
   repeated ContainingPlace containing_places = 82;
   // Indicates whether the place is a pure service area business.
