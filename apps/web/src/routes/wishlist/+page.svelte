@@ -7,7 +7,6 @@
 	import type { WishlistItemProto } from '$lib/client/generated/wishlist/v1/wishlist_item_pb';
 	import type { ReviewProto } from '$lib/client/generated/reviews/v1/review_pb';
 	import type { Place } from '$lib/client/generated/google_maps/v1/google_maps_service_pb';
-	import { Button } from '$lib/components/ui/button/index.js';
 	import ExpandableRestaurantInfo from '$lib/ui/components/ExpandableRestaurantInfo.svelte';
 	import RatingForm from '$lib/ui/components/RatingForm.svelte';
 	import RestaurantSearch from '$lib/ui/components/RestaurantSearch.svelte';
@@ -21,6 +20,7 @@
 	let searchedPlace = $state<Place | null>(null);
 	let searchAction = $state<'review' | null>(null);
 	let savingToWishlist = $state(false);
+	let showSearch = $state(false);
 
 	// Filter state
 	let city = $state('');
@@ -68,9 +68,9 @@
 				city: searchedPlace.postalAddress?.locality ?? '',
 				country: searchedPlace.postalAddress?.country ?? ''
 			});
-			// Reload the wishlist to show the new item
 			await loadWishlist();
 			searchedPlace = null;
+			showSearch = false;
 		} catch (e) {
 			console.error('Failed to add to wishlist:', e);
 		} finally {
@@ -79,11 +79,10 @@
 	}
 
 	function handleSearchReview(review: ReviewProto) {
-		// Item was reviewed — remove from wishlist list (backend auto-removes)
-		// and close the search panel
 		items = items.filter((i) => i.googlePlacesId !== review.googlePlacesId);
 		searchedPlace = null;
 		searchAction = null;
+		showSearch = false;
 	}
 
 	async function loadWishlist() {
@@ -115,7 +114,6 @@
 		}
 	}
 
-	// Reactive reload when filters change (only after auth + mount)
 	$effect(() => {
 		if (!mounted) return;
 		void [city, country, sortBy];
@@ -131,22 +129,113 @@
 	});
 </script>
 
-<div class="container mx-auto max-w-3xl space-y-6 p-6">
-	<h2 class="text-2xl font-semibold text-blue-800">My Wishlist</h2>
+<div class="mx-auto max-w-6xl space-y-6 px-4 py-8 sm:px-6">
+	<!-- Page header -->
+	<div class="flex items-start justify-between gap-4">
+		<div>
+			<h1 class="font-display text-3xl font-semibold text-foreground">My Wishlist</h1>
+			{#if !loading}
+				<p class="mt-1 text-sm text-muted-foreground">
+					{items.length === 0 && activeFilterCount === 0
+						? 'No places saved yet'
+						: `${items.length} place${items.length === 1 ? '' : 's'} saved`}
+				</p>
+			{/if}
+		</div>
+		<button
+			class="shrink-0 rounded-md border border-border px-3 py-1.5 text-sm font-medium text-foreground transition-colors hover:bg-muted"
+			onclick={() => { showSearch = !showSearch; searchedPlace = null; searchAction = null; }}
+		>
+			{showSearch ? 'Cancel' : '+ Add place'}
+		</button>
+	</div>
+
+	<!-- Add place panel -->
+	{#if showSearch}
+		<div class="card-reveal rounded-lg border border-border bg-card p-5">
+			<p class="mb-3 text-sm font-medium text-foreground">Search for a restaurant to save</p>
+			<RestaurantSearch
+				placeholder="Restaurant name or address…"
+				onSelect={handleSearchSelect}
+			/>
+			{#if searchedPlace}
+				<div class="mt-4 space-y-3 border-t border-border pt-4">
+					<div>
+						<p class="font-medium text-foreground">
+							{searchedPlace.displayName?.text || searchedPlace.name || ''}
+						</p>
+						<p class="text-sm text-muted-foreground">{searchedPlace.formattedAddress || ''}</p>
+					</div>
+
+					{#if !searchAction}
+						<div class="flex flex-wrap gap-2">
+							<button
+								class="rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-50"
+								onclick={saveToWishlist}
+								disabled={savingToWishlist}
+							>
+								{savingToWishlist ? 'Saving…' : 'Save to wishlist'}
+							</button>
+							<button
+								class="rounded-md border border-border px-3 py-1.5 text-sm font-medium text-foreground transition-colors hover:bg-muted"
+								onclick={() => (searchAction = 'review')}
+							>
+								Write a review instead
+							</button>
+							<button
+								class="text-sm text-muted-foreground hover:text-foreground"
+								onclick={() => (searchedPlace = null)}
+							>
+								Clear
+							</button>
+						</div>
+					{:else if searchAction === 'review'}
+						<RatingForm
+							googlePlacesId={searchedPlace.name || ''}
+							restaurantName={searchedPlace.displayName?.text || ''}
+							restaurantAddress={searchedPlace.formattedAddress || ''}
+							onSubmit={handleSearchReview}
+						/>
+						<button
+							class="text-sm text-muted-foreground hover:text-foreground"
+							onclick={() => (searchAction = null)}
+						>
+							Back
+						</button>
+					{/if}
+				</div>
+			{/if}
+		</div>
+	{/if}
 
 	<!-- Filter bar -->
 	<div class="flex flex-wrap items-center gap-2">
+		<input
+			type="text"
+			bind:value={city}
+			placeholder="Filter by city…"
+			class="w-36 rounded-md border border-border bg-card px-3 py-1.5 text-sm text-foreground placeholder:text-muted-foreground focus:ring-1 focus:ring-ring focus:outline-none"
+		/>
+		<input
+			type="text"
+			bind:value={country}
+			placeholder="Filter by country…"
+			class="w-40 rounded-md border border-border bg-card px-3 py-1.5 text-sm text-foreground placeholder:text-muted-foreground focus:ring-1 focus:ring-ring focus:outline-none"
+		/>
 		{#if activeFilterCount > 0}
-			<Button variant="ghost" size="sm" onclick={clearFilters}
-				>Clear filters ({activeFilterCount})</Button
+			<button
+				class="text-sm text-muted-foreground hover:text-foreground"
+				onclick={clearFilters}
 			>
+				Clear
+			</button>
 		{/if}
 		<div class="ml-auto flex items-center gap-2">
-			<label for="wishlist-sort" class="text-sm text-gray-600">Sort:</label>
+			<label for="wishlist-sort" class="text-sm text-muted-foreground">Sort</label>
 			<select
 				id="wishlist-sort"
 				bind:value={sortBy}
-				class="rounded-md border border-gray-300 px-2 py-1 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
+				class="rounded-md border border-border bg-card px-2 py-1 text-sm text-foreground focus:ring-1 focus:ring-ring focus:outline-none"
 			>
 				<option value="date-desc">Newest first</option>
 				<option value="date-asc">Oldest first</option>
@@ -154,112 +243,61 @@
 				<option value="name-desc">Name Z–A</option>
 			</select>
 		</div>
-		<div class="flex w-full gap-3">
-			<div class="flex-1">
-				<input
-					type="text"
-					bind:value={city}
-					placeholder="Filter by city…"
-					class="w-full rounded-md border border-gray-300 px-3 py-1.5 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
-				/>
-			</div>
-			<div class="flex-1">
-				<input
-					type="text"
-					bind:value={country}
-					placeholder="Filter by country…"
-					class="w-full rounded-md border border-gray-300 px-3 py-1.5 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
-				/>
-			</div>
-		</div>
 	</div>
 
-	<section class="space-y-3">
-		<h3 class="text-lg font-medium text-gray-800">Find a restaurant</h3>
-		<RestaurantSearch
-			placeholder="Search to add to wishlist or review…"
-			onSelect={handleSearchSelect}
-		/>
-		{#if searchedPlace}
-			<div class="space-y-3 rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
-				<div>
-					<p class="font-medium text-gray-900">
-						{searchedPlace.displayName?.text || searchedPlace.name || ''}
-					</p>
-					<p class="text-sm text-gray-500">{searchedPlace.formattedAddress || ''}</p>
-				</div>
-
-				{#if !searchAction}
-					<div class="flex gap-2">
-						<Button onclick={saveToWishlist} disabled={savingToWishlist}>
-							{savingToWishlist ? 'Saving…' : '☆ Save to wishlist'}
-						</Button>
-						<Button variant="secondary" onclick={() => (searchAction = 'review')}>
-							📝 Add review
-						</Button>
-						<Button variant="ghost" onclick={() => (searchedPlace = null)}>Cancel</Button>
-					</div>
-				{:else if searchAction === 'review'}
-					<RatingForm
-						googlePlacesId={searchedPlace.name || ''}
-						restaurantName={searchedPlace.displayName?.text || ''}
-						restaurantAddress={searchedPlace.formattedAddress || ''}
-						onSubmit={handleSearchReview}
-					/>
-					<Button variant="ghost" size="sm" onclick={() => (searchAction = null)}>Back</Button>
-				{/if}
-			</div>
-		{/if}
-	</section>
-
+	<!-- Content -->
 	{#if loading}
-		<div class="flex items-center gap-2 text-sm text-gray-500">
-			<div
-				class="h-4 w-4 animate-spin rounded-full border-2 border-gray-300 border-t-blue-500"
-			></div>
+		<div class="flex items-center gap-2 py-8 text-sm text-muted-foreground">
+			<div class="h-4 w-4 animate-spin rounded-full border-2 border-border border-t-primary"></div>
 			Loading…
 		</div>
 	{:else if items.length === 0}
-		<p class="text-sm text-gray-500">
-			{#if activeFilterCount > 0}
-				No wishlist items match the current filters. <button
-					type="button"
-					onclick={clearFilters}
-					class="text-blue-600 underline hover:no-underline">Clear filters</button
-				>
-			{:else}
-				Your wishlist is empty. Search for a restaurant above to add one.
-			{/if}
-		</p>
+		<div class="py-16 text-center">
+			<p class="text-muted-foreground">
+				{#if activeFilterCount > 0}
+					No wishlist items match the current filters.
+					<button type="button" onclick={clearFilters} class="underline hover:no-underline">
+						Clear filters
+					</button>
+				{:else}
+					Your wishlist is empty. Add a place to get started.
+				{/if}
+			</p>
+		</div>
 	{:else}
-		<ul class="space-y-3">
-			{#each items as item (item.id)}
-				<li class="space-y-3 rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
-					<ExpandableRestaurantInfo
-						googlePlacesId={item.googlePlacesId}
-						name={item.restaurantName}
-						address={item.restaurantAddress}
-						city={item.city}
-						country={item.country}
-					/>
-
+		<ul class="grid grid-cols-1 items-start gap-4 sm:grid-cols-2 lg:gap-5">
+			{#each items as item, i (item.id)}
+				<li
+					class="card-reveal flex flex-col rounded-lg border border-border bg-card"
+					style="animation-delay: {Math.min(i * 50, 300)}ms"
+				>
 					{#if ratingId !== item.id}
-						<div class="flex gap-2 border-t border-gray-100 pt-1">
-							<Button
-								variant="outline"
-								size="sm"
-								class="text-red-600 hover:border-red-300 hover:text-red-700"
+						<div class="p-5">
+							<ExpandableRestaurantInfo
+								googlePlacesId={item.googlePlacesId}
+								name={item.restaurantName}
+								address={item.restaurantAddress}
+								city={item.city}
+								country={item.country}
+							/>
+						</div>
+						<div class="flex items-center justify-between border-t border-border px-5 py-3">
+							<button
+								class="rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground transition-opacity hover:opacity-90"
+								onclick={() => (ratingId = item.id)}
+							>
+								Rate this place
+							</button>
+							<button
+								class="text-xs text-muted-foreground transition-colors hover:text-destructive disabled:opacity-40"
 								disabled={removing.has(item.googlePlacesId)}
 								onclick={() => remove(item.googlePlacesId)}
 							>
 								{removing.has(item.googlePlacesId) ? 'Removing…' : 'Remove'}
-							</Button>
-							<Button variant="secondary" size="sm" onclick={() => (ratingId = item.id)}>
-								Rate this place
-							</Button>
+							</button>
 						</div>
 					{:else}
-						<div class="space-y-3 border-t border-gray-100 pt-2">
+						<div class="flex flex-col gap-3 p-5">
 							<RatingForm
 								googlePlacesId={item.googlePlacesId}
 								restaurantName={item.restaurantName}
@@ -269,7 +307,12 @@
 									ratingId = null;
 								}}
 							/>
-							<Button variant="ghost" size="sm" onclick={() => (ratingId = null)}>Cancel</Button>
+							<button
+								class="text-sm text-muted-foreground hover:text-foreground"
+								onclick={() => (ratingId = null)}
+							>
+								Cancel
+							</button>
 						</div>
 					{/if}
 				</li>

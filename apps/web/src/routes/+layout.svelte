@@ -3,13 +3,30 @@
 	import Footer from '$lib/ui/navigation/Footer.svelte';
 	import Header from '$lib/ui/navigation/Header.svelte';
 	import { onMount } from 'svelte';
+	import { fly } from 'svelte/transition';
+	import { page } from '$app/state';
 	import client from '$lib/client/client';
 	import { auth } from '$lib/state/auth.svelte';
+	import { theme } from '$lib/state/theme.svelte';
 	import { AuthProvider } from '$lib/client/generated/auth/v1/auth_service_pb';
 
 	let { children } = $props();
 
 	const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID as string;
+	let reducedMotion = $state(false);
+
+	// Only apply/persist after init() has read stored preference — prevents
+	// overwriting localStorage with the default false value on first render.
+	$effect(() => {
+		if (!theme.initialized) return;
+		if (theme.dark) {
+			document.documentElement.classList.add('dark');
+			localStorage.setItem('theme', 'dark');
+		} else {
+			document.documentElement.classList.remove('dark');
+			localStorage.setItem('theme', 'light');
+		}
+	});
 
 	async function handleCredentialResponse(response: { credential: string }) {
 		try {
@@ -26,6 +43,9 @@
 	}
 
 	onMount(async () => {
+		reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+		theme.init();
+
 		let isAuthenticated = false;
 		try {
 			const res = await client.auth.getCurrentUser({});
@@ -39,11 +59,9 @@
 
 		if (isAuthenticated || !clientId) return;
 
-		// Bootstrap GIS: load script, initialize, then show One Tap for unauthenticated users.
 		const GIS_SRC = 'https://accounts.google.com/gsi/client';
 		const existing = document.querySelector<HTMLScriptElement>(`script[src="${GIS_SRC}"]`);
 		if (existing) {
-			// Script already injected (e.g. by SocialSignIn) — GIS is either ready or still loading.
 			if (window.google?.accounts?.id) {
 				window.google.accounts.id.initialize({ client_id: clientId, callback: handleCredentialResponse });
 				window.google.accounts.id.prompt();
@@ -73,14 +91,27 @@
 	});
 </script>
 
-<div
-	class="flex min-h-screen flex-col bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50"
->
+<svelte:head>
+	<link rel="preconnect" href="https://fonts.googleapis.com" />
+	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous" />
+	<link
+		href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&family=Playfair+Display:wght@500;600;700&display=swap"
+		rel="stylesheet"
+	/>
+</svelte:head>
+
+<div class="flex min-h-screen flex-col bg-background">
 	<Header />
 
-	<main class="flex-grow">
-		{@render children()}
-	</main>
+	{#key page.url.pathname}
+		<main
+			class="flex-grow"
+			in:fly={reducedMotion ? { duration: 0 } : { y: 8, duration: 200, delay: 140 }}
+			out:fly={reducedMotion ? { duration: 0 } : { y: -6, duration: 140 }}
+		>
+			{@render children()}
+		</main>
+	{/key}
 
 	<Footer />
 </div>
