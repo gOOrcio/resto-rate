@@ -5,6 +5,7 @@
 	import client from '$lib/client/client';
 	import type { ReviewProto } from '$lib/client/generated/reviews/v1/review_pb';
 	import { Star } from '@lucide/svelte';
+	import { Button } from '$lib/components/ui/button/index.js';
 
 	const googlePlacesId = $derived(decodeURIComponent(page.params.googlePlacesId ?? ''));
 
@@ -16,21 +17,50 @@
 	let restaurantCountry = $state('');
 	let loading = $state(true);
 	let error = $state('');
+	let isWishlisted = $state(false);
+	let wishlistLoading = $state(false);
 
 	async function loadReviews() {
 		try {
-			const res = await client.reviews.listRestaurantReviews({ googlePlacesId });
-			reviews = res.reviews;
-			averageRating = res.averageRating;
-			restaurantName = res.restaurantName;
-			restaurantAddress = res.restaurantAddress;
-			restaurantCity = res.restaurantCity;
-			restaurantCountry = res.restaurantCountry;
+			const [reviewsRes, wishlistRes] = await Promise.all([
+				client.reviews.listRestaurantReviews({ googlePlacesId }),
+				client.wishlist.listWishlist({ googlePlacesId }).catch(() => ({ items: [] })),
+			]);
+			reviews = reviewsRes.reviews;
+			averageRating = reviewsRes.averageRating;
+			restaurantName = reviewsRes.restaurantName;
+			restaurantAddress = reviewsRes.restaurantAddress;
+			restaurantCity = reviewsRes.restaurantCity;
+			restaurantCountry = reviewsRes.restaurantCountry;
+			isWishlisted = (wishlistRes.items?.length ?? 0) > 0;
 		} catch (e) {
 			console.error('Failed to load restaurant reviews:', e);
 			error = 'Failed to load reviews.';
 		} finally {
 			loading = false;
+		}
+	}
+
+	async function toggleWishlist() {
+		wishlistLoading = true;
+		try {
+			if (isWishlisted) {
+				await client.wishlist.removeFromWishlist({ googlePlacesId });
+				isWishlisted = false;
+			} else {
+				await client.wishlist.addToWishlist({
+					googlePlacesId,
+					restaurantName,
+					restaurantAddress,
+					city: restaurantCity,
+					country: restaurantCountry,
+				});
+				isWishlisted = true;
+			}
+		} catch (e) {
+			console.error('Wishlist toggle error:', e);
+		} finally {
+			wishlistLoading = false;
 		}
 	}
 
@@ -53,13 +83,32 @@
 	{:else}
 		<!-- Restaurant header -->
 		<div class="rounded-lg border border-gray-200 bg-white p-5 shadow-sm">
-			<h2 class="text-2xl font-semibold text-blue-800">{restaurantName || 'Restaurant'}</h2>
-			{#if restaurantAddress}
-				<p class="mt-1 text-sm text-gray-500">{restaurantAddress}</p>
-			{/if}
-			{#if restaurantCity || restaurantCountry}
-				<p class="text-xs text-gray-400">{[restaurantCity, restaurantCountry].filter(Boolean).join(', ')}</p>
-			{/if}
+			<div class="flex items-start justify-between gap-4">
+				<div class="min-w-0 flex-1">
+					<h2 class="text-2xl font-semibold text-blue-800">{restaurantName || 'Restaurant'}</h2>
+					{#if restaurantAddress}
+						<p class="mt-1 text-sm text-gray-500">{restaurantAddress}</p>
+					{/if}
+					{#if restaurantCity || restaurantCountry}
+						<p class="text-xs text-gray-400">{[restaurantCity, restaurantCountry].filter(Boolean).join(', ')}</p>
+					{/if}
+				</div>
+				<Button
+					variant={isWishlisted ? 'outline' : 'secondary'}
+					size="sm"
+					onclick={toggleWishlist}
+					disabled={wishlistLoading}
+					class="shrink-0 gap-1.5"
+				>
+					{#if wishlistLoading}
+						<div class="h-3.5 w-3.5 animate-spin rounded-full border-2 border-current border-t-transparent"></div>
+					{:else if isWishlisted}
+						★ Wishlisted
+					{:else}
+						☆ Wishlist
+					{/if}
+				</Button>
+			</div>
 			{#if reviews.length > 0}
 				<div class="mt-3 flex items-center gap-2">
 					<div class="flex items-center gap-0.5">
