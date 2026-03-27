@@ -20,21 +20,32 @@
 	let isWishlisted = $state(false);
 	let wishlistLoading = $state(false);
 
-	async function loadReviews() {
+	async function loadRestaurantData() {
 		try {
-			const [reviewsRes, wishlistRes] = await Promise.all([
+			const [reviewsResult, wishlistResult] = await Promise.allSettled([
 				client.reviews.listRestaurantReviews({ googlePlacesId }),
-				client.wishlist.listWishlist({ googlePlacesId }).catch(() => ({ items: [] })),
+				client.wishlist.listWishlist({ googlePlacesId }),
 			]);
+
+			if (reviewsResult.status === 'rejected') {
+				throw reviewsResult.reason;
+			}
+
+			const reviewsRes = reviewsResult.value;
 			reviews = reviewsRes.reviews;
 			averageRating = reviewsRes.averageRating;
 			restaurantName = reviewsRes.restaurantName;
 			restaurantAddress = reviewsRes.restaurantAddress;
 			restaurantCity = reviewsRes.restaurantCity;
 			restaurantCountry = reviewsRes.restaurantCountry;
-			isWishlisted = (wishlistRes.items?.length ?? 0) > 0;
+
+			if (wishlistResult.status === 'fulfilled') {
+				isWishlisted = (wishlistResult.value.items?.length ?? 0) > 0;
+			} else {
+				console.error('Failed to load wishlist state:', wishlistResult.reason);
+			}
 		} catch (e) {
-			console.error('Failed to load restaurant reviews:', e);
+			console.error('Failed to load restaurant data:', e);
 			error = 'Failed to load reviews.';
 		} finally {
 			loading = false;
@@ -65,7 +76,7 @@
 	}
 
 	onMount(() => {
-		if (auth.isLoggedIn) loadReviews();
+		if (auth.isLoggedIn) loadRestaurantData();
 		else loading = false;
 	});
 </script>
@@ -99,9 +110,12 @@
 					onclick={toggleWishlist}
 					disabled={wishlistLoading}
 					class="shrink-0 gap-1.5"
+					aria-pressed={isWishlisted}
+					aria-busy={wishlistLoading}
 				>
 					{#if wishlistLoading}
 						<div class="h-3.5 w-3.5 animate-spin rounded-full border-2 border-current border-t-transparent"></div>
+						<span class="sr-only">Updating wishlist…</span>
 					{:else if isWishlisted}
 						★ Wishlisted
 					{:else}
