@@ -101,6 +101,7 @@ func (s *ReviewsService) CreateReview(
 		return nil, txErr
 	}
 
+	review.Restaurant = restaurant
 	return connect.NewResponse(&v1.CreateReviewResponse{
 		Review:     review.ToProto(),
 		Restaurant: restaurant.ToProto(),
@@ -151,7 +152,7 @@ func (s *ReviewsService) UpdateReview(
 	}
 
 	var review models.Review
-	if err := s.DB.WithContext(ctx).First(&review, "id = ? AND user_id = ?", req.Msg.Id, userID).Error; err != nil {
+	if err := s.DB.WithContext(ctx).Preload("Restaurant").First(&review, "id = ? AND user_id = ?", req.Msg.Id, userID).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, connect.NewError(connect.CodeNotFound, errors.New("review not found"))
 		}
@@ -183,7 +184,7 @@ func (s *ReviewsService) GetReview(
 	}
 
 	var review models.Review
-	if err := s.DB.WithContext(ctx).First(&review, "id = ? AND user_id = ?", req.Msg.Id, userID).Error; err != nil {
+	if err := s.DB.WithContext(ctx).Preload("Restaurant").First(&review, "id = ? AND user_id = ?", req.Msg.Id, userID).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, connect.NewError(connect.CodeNotFound, errors.New("review not found"))
 		}
