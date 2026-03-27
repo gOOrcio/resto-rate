@@ -78,11 +78,39 @@
 			error = e instanceof Error ? e.message : 'Sign in failed, please try again';
 		}
 	}
+
+	async function devLogin() {
+		error = null;
+		try {
+			const apiUrl = import.meta.env.VITE_API_URL ?? 'http://localhost:3001';
+			const resp = await fetch(`${apiUrl}/dev/login`, {
+				method: 'POST',
+				credentials: 'include',
+			});
+			if (!resp.ok) throw new Error(`Dev login failed: ${resp.status}`);
+			const res = await client.auth.getCurrentUser({});
+			if (res.user) {
+				auth.setUser(res.user);
+				onSuccess?.();
+			}
+		} catch (e: unknown) {
+			error = e instanceof Error ? e.message : 'Dev login failed';
+		}
+	}
 </script>
 
 <div class="flex flex-col items-center gap-3">
 	<!-- Sign In With Google button (GIS renders into this div) -->
 	<div bind:this={buttonContainer} class="w-full max-w-xs"></div>
+
+	{#if import.meta.env.DEV}
+		<button
+			class="w-full max-w-xs rounded-md border border-dashed border-border px-4 py-2 text-sm text-muted-foreground transition-colors hover:border-primary hover:text-primary"
+			onclick={devLogin}
+		>
+			Dev: sign in as test user
+		</button>
+	{/if}
 
 	{#if error}
 		<p class="text-sm text-red-600">{error}</p>
