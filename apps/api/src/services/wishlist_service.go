@@ -111,9 +111,18 @@ func (s *WishlistService) ListWishlist(
 		return nil, connect.NewError(connect.CodeInternal, errors.New("database not initialized"))
 	}
 
-	userID, err := getUserIDFromSession(ctx, req.Header(), s.Valkey)
+	callerID, err := getUserIDFromSession(ctx, req.Header(), s.Valkey)
 	if err != nil {
 		return nil, err
+	}
+
+	// Determine which user's wishlist to return
+	targetUserID := callerID
+	if req.Msg.TargetUserId != "" && req.Msg.TargetUserId != callerID {
+		if err := assertFriendship(ctx, s.DB, callerID, req.Msg.TargetUserId); err != nil {
+			return nil, err
+		}
+		targetUserID = req.Msg.TargetUserId
 	}
 
 	needsJoin := req.Msg.City != "" || req.Msg.Country != "" ||
@@ -122,7 +131,7 @@ func (s *WishlistService) ListWishlist(
 
 	query := s.DB.WithContext(ctx).
 		Preload("Restaurant").
-		Where("wishlist_items.user_id = ?", userID)
+		Where("wishlist_items.user_id = ?", targetUserID)
 
 	if needsJoin {
 		query = query.Joins("JOIN restaurants ON restaurants.id = wishlist_items.restaurant_id")

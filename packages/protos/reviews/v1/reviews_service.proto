@@ -83,6 +83,8 @@ message ListReviewsRequest {
   string city = 7;
   string country = 8;
   ReviewSortBy sort_by = 9;
+  // When set, returns this user's reviews (caller must be a confirmed friend)
+  string target_user_id = 10;
 }
 
 message ListReviewsResponse {
