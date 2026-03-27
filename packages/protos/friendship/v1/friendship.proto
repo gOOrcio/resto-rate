@@ -5,9 +5,10 @@ package friendship.v1;
 option go_package = "api/src/generated/friendship/v1";
 
 enum FriendRequestStatus {
-  PENDING = 0;
-  ACCEPTED = 1;
-  DECLINED = 2;
+  FRIEND_REQUEST_STATUS_UNSPECIFIED = 0;
+  PENDING = 1;
+  ACCEPTED = 2;
+  DECLINED = 3;
 }
 
 message FriendRequestProto {

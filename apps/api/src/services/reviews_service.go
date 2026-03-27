@@ -103,7 +103,12 @@ func (s *ReviewsService) CreateReview(
 
 	// Load the current user so author_name is populated in the proto.
 	var currentUser models.User
-	_ = s.DB.WithContext(ctx).First(&currentUser, "id = ?", userID).Error
+	if err := s.DB.WithContext(ctx).First(&currentUser, "id = ?", userID).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, connect.NewError(connect.CodeNotFound, errors.New("user not found"))
+		}
+		return nil, connect.NewError(connect.CodeInternal, err)
+	}
 	review.Restaurant = restaurant
 	review.User = currentUser
 	return connect.NewResponse(&v1.CreateReviewResponse{
@@ -270,9 +275,9 @@ func (s *ReviewsService) ListRestaurantReviews(
 	}
 
 	// Populate restaurant metadata: prefer from reviews, fall back to a DB lookup.
-	var restauMeta *models.Restaurant
+	var restaurantMeta *models.Restaurant
 	if len(reviews) > 0 {
-		restauMeta = &reviews[0].Restaurant
+		restaurantMeta = &reviews[0].Restaurant
 	} else {
 		var r models.Restaurant
 		if err := s.DB.WithContext(ctx).Where("google_id = ?", req.Msg.GooglePlacesId).First(&r).Error; err != nil {
@@ -280,14 +285,14 @@ func (s *ReviewsService) ListRestaurantReviews(
 				return nil, err
 			}
 		} else {
-			restauMeta = &r
+			restaurantMeta = &r
 		}
 	}
-	if restauMeta != nil {
-		resp.RestaurantName = restauMeta.Name
-		resp.RestaurantAddress = restauMeta.Address
-		resp.RestaurantCity = restauMeta.City
-		resp.RestaurantCountry = restauMeta.Country
+	if restaurantMeta != nil {
+		resp.RestaurantName = restaurantMeta.Name
+		resp.RestaurantAddress = restaurantMeta.Address
+		resp.RestaurantCity = restaurantMeta.City
+		resp.RestaurantCountry = restaurantMeta.Country
 	}
 
 	return connect.NewResponse(resp), nil

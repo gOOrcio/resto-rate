@@ -42,8 +42,10 @@ func (f *FriendRequest) BeforeCreate(tx *gorm.DB) (err error) {
 }
 
 func (f *FriendRequest) ToProto() *friendshippb.FriendRequestProto {
-	status := friendshippb.FriendRequestStatus_PENDING
+	status := friendshippb.FriendRequestStatus_FRIEND_REQUEST_STATUS_UNSPECIFIED
 	switch f.Status {
+	case FriendRequestStatusPending:
+		status = friendshippb.FriendRequestStatus_PENDING
 	case FriendRequestStatusAccepted:
 		status = friendshippb.FriendRequestStatus_ACCEPTED
 	case FriendRequestStatusDeclined:
