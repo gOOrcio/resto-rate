@@ -25,7 +25,7 @@ func (r *Review) BeforeCreate(tx *gorm.DB) (err error) {
 }
 
 // ToProto converts a Review to its proto representation.
-// Restaurant must be preloaded (or assigned) for RestaurantName to be populated.
+// Restaurant must be preloaded (or assigned) for restaurant fields to be populated.
 func (r *Review) ToProto() *reviewspb.ReviewProto {
 	tags := r.Tags
 	if tags == nil {
@@ -41,6 +41,9 @@ func (r *Review) ToProto() *reviewspb.ReviewProto {
 		Tags:           tags,
 		CreatedAt:      r.CreatedAt.Unix(),
 		UpdatedAt:      r.UpdatedAt.Unix(),
-		RestaurantName: r.Restaurant.Name,
+		RestaurantName:    r.Restaurant.Name,
+		RestaurantAddress: r.Restaurant.Address,
+		RestaurantCity:    r.Restaurant.City,
+		RestaurantCountry: r.Restaurant.Country,
 	}
 }

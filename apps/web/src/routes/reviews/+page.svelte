@@ -82,6 +82,12 @@
 								{#if review.restaurantName}
 									<p class="truncate font-medium text-gray-900">{review.restaurantName}</p>
 								{/if}
+								{#if review.restaurantAddress}
+									<p class="truncate text-sm text-gray-500">{review.restaurantAddress}</p>
+								{/if}
+								{#if review.restaurantCity || review.restaurantCountry}
+									<p class="text-xs text-gray-400">{[review.restaurantCity, review.restaurantCountry].filter(Boolean).join(', ')}</p>
+								{/if}
 							</div>
 							<div class="flex shrink-0 gap-1">
 								<Button variant="outline" size="sm" onclick={() => (editingId = review.id)}>
