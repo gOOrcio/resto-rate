@@ -7,7 +7,9 @@ import (
 	"api/src/internal/models"
 	"context"
 	"errors"
+	"fmt"
 	"net/http"
+	"strings"
 
 	"connectrpc.com/connect"
 	"github.com/valkey-io/valkey-go"
@@ -123,16 +125,87 @@ func (s *ReviewsService) ListReviews(
 	ctx context.Context,
 	req *connect.Request[v1.ListReviewsRequest],
 ) (*connect.Response[v1.ListReviewsResponse], error) {
+	// Validate rating range first (cheap, no DB or auth needed)
+	if req.Msg.MinRating > 0 && req.Msg.MaxRating > 0 && req.Msg.MinRating > req.Msg.MaxRating {
+		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("min_rating must not exceed max_rating"))
+	}
+
+	if s.DB == nil {
+		return nil, connect.NewError(connect.CodeInternal, errors.New("database not initialized"))
+	}
+
 	userID, err := getUserIDFromSession(ctx, req.Header(), s.Valkey)
 	if err != nil {
 		return nil, err
 	}
 
-	var reviews []models.Review
-	query := s.DB.WithContext(ctx).Preload("Restaurant").Preload("User").Where("user_id = ?", userID)
-	if req.Msg.GooglePlacesId != "" {
-		query = query.Where("google_places_id = ?", req.Msg.GooglePlacesId)
+	needsRestaurantJoin := req.Msg.City != "" || req.Msg.Country != ""
+
+	query := s.DB.WithContext(ctx).Preload("User").Where("reviews.user_id = ?", userID)
+
+	if needsRestaurantJoin {
+		query = query.Joins("JOIN restaurants ON restaurants.id = reviews.restaurant_id").
+			Preload("Restaurant")
+	} else {
+		query = query.Preload("Restaurant")
 	}
+
+	if req.Msg.GooglePlacesId != "" {
+		query = query.Where("reviews.google_places_id = ?", req.Msg.GooglePlacesId)
+	}
+
+	// Tag filter
+	if len(req.Msg.TagSlugs) > 0 {
+		if req.Msg.TagFilterMode == v1.TagFilterMode_TAG_FILTER_MODE_AND {
+			for _, slug := range req.Msg.TagSlugs {
+				query = query.Where("reviews.tags LIKE ?", fmt.Sprintf(`%%"%s"%%`, slug))
+			}
+		} else {
+			// OR (default): at least one specified tag must appear
+			conditions := make([]string, len(req.Msg.TagSlugs))
+			args := make([]interface{}, len(req.Msg.TagSlugs))
+			for i, slug := range req.Msg.TagSlugs {
+				conditions[i] = "reviews.tags LIKE ?"
+				args[i] = fmt.Sprintf(`%%"%s"%%`, slug)
+			}
+			query = query.Where("("+strings.Join(conditions, " OR ")+")", args...)
+		}
+	}
+
+	// Rating range
+	if req.Msg.MinRating > 0 {
+		query = query.Where("reviews.rating >= ?", req.Msg.MinRating)
+	}
+	if req.Msg.MaxRating > 0 {
+		query = query.Where("reviews.rating <= ?", req.Msg.MaxRating)
+	}
+
+	// Comment keyword search (case-insensitive)
+	if req.Msg.CommentSearch != "" {
+		query = query.Where("reviews.comment ILIKE ?", "%"+req.Msg.CommentSearch+"%")
+	}
+
+	// City / country filter (requires restaurant join above)
+	if req.Msg.City != "" {
+		query = query.Where("restaurants.city ILIKE ?", "%"+req.Msg.City+"%")
+	}
+	if req.Msg.Country != "" {
+		query = query.Where("restaurants.country ILIKE ?", "%"+req.Msg.Country+"%")
+	}
+
+	// Sort order
+	switch req.Msg.SortBy {
+	case v1.ReviewSortBy_REVIEW_SORT_BY_DATE_ASC:
+		query = query.Order("reviews.created_at ASC")
+	case v1.ReviewSortBy_REVIEW_SORT_BY_RATING_DESC:
+		query = query.Order("reviews.rating DESC")
+	case v1.ReviewSortBy_REVIEW_SORT_BY_RATING_ASC:
+		query = query.Order("reviews.rating ASC")
+	default: // UNSPECIFIED and DATE_DESC both → newest first
+		query = query.Order("reviews.created_at DESC")
+	}
+
+	var reviews []models.Review
 	if err := query.Find(&reviews).Error; err != nil {
 		return nil, err
 	}

@@ -7,6 +7,20 @@ import "reviews/v1/review.proto";
 
 option go_package = "api/src/generated/reviews/v1";
 
+enum ReviewSortBy {
+  REVIEW_SORT_BY_UNSPECIFIED = 0;
+  REVIEW_SORT_BY_DATE_DESC = 1;
+  REVIEW_SORT_BY_DATE_ASC = 2;
+  REVIEW_SORT_BY_RATING_DESC = 3;
+  REVIEW_SORT_BY_RATING_ASC = 4;
+}
+
+enum TagFilterMode {
+  TAG_FILTER_MODE_UNSPECIFIED = 0;
+  TAG_FILTER_MODE_OR = 1;
+  TAG_FILTER_MODE_AND = 2;
+}
+
 service ReviewsService {
   rpc CreateReview(CreateReviewRequest) returns (CreateReviewResponse);
   rpc GetReview(GetReviewRequest) returns (GetReviewResponse);
@@ -61,6 +75,14 @@ message DeleteReviewResponse {
 
 message ListReviewsRequest {
   string google_places_id = 1;
+  repeated string tag_slugs = 2;
+  TagFilterMode tag_filter_mode = 3;
+  double min_rating = 4;
+  double max_rating = 5;
+  string comment_search = 6;
+  string city = 7;
+  string country = 8;
+  ReviewSortBy sort_by = 9;
 }
 
 message ListReviewsResponse {

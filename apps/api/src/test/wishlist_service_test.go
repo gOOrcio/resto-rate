@@ -39,3 +39,15 @@ func TestWishlistService_ListWishlist_NilDB(t *testing.T) {
 		t.Fatal("expected error from nil DB, got nil")
 	}
 }
+
+func TestWishlistService_ListWishlist_NilDB_WithFilters(t *testing.T) {
+	svc := &services.WishlistService{}
+	req := connect.NewRequest(&wishlistv1.ListWishlistRequest{
+		City:   "Paris",
+		SortBy: wishlistv1.WishlistSortBy_WISHLIST_SORT_BY_NAME_ASC,
+	})
+	_, err := svc.ListWishlist(context.Background(), req)
+	if err == nil {
+		t.Fatal("expected error from nil DB, got nil")
+	}
+}

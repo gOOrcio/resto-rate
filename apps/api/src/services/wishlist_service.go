@@ -116,16 +116,42 @@ func (s *WishlistService) ListWishlist(
 		return nil, err
 	}
 
+	needsJoin := req.Msg.City != "" || req.Msg.Country != "" ||
+		req.Msg.SortBy == wishlistv1.WishlistSortBy_WISHLIST_SORT_BY_NAME_ASC ||
+		req.Msg.SortBy == wishlistv1.WishlistSortBy_WISHLIST_SORT_BY_NAME_DESC
+
 	query := s.DB.WithContext(ctx).
 		Preload("Restaurant").
-		Where("user_id = ?", userID)
+		Where("wishlist_items.user_id = ?", userID)
+
+	if needsJoin {
+		query = query.Joins("JOIN restaurants ON restaurants.id = wishlist_items.restaurant_id")
+	}
 
 	if req.Msg.GooglePlacesId != "" {
-		query = query.Where("google_places_id = ?", req.Msg.GooglePlacesId)
+		query = query.Where("wishlist_items.google_places_id = ?", req.Msg.GooglePlacesId)
+	}
+
+	if req.Msg.City != "" {
+		query = query.Where("restaurants.city ILIKE ?", "%"+req.Msg.City+"%")
+	}
+	if req.Msg.Country != "" {
+		query = query.Where("restaurants.country ILIKE ?", "%"+req.Msg.Country+"%")
+	}
+
+	switch req.Msg.SortBy {
+	case wishlistv1.WishlistSortBy_WISHLIST_SORT_BY_DATE_ASC:
+		query = query.Order("wishlist_items.created_at ASC")
+	case wishlistv1.WishlistSortBy_WISHLIST_SORT_BY_NAME_ASC:
+		query = query.Order("restaurants.name ASC")
+	case wishlistv1.WishlistSortBy_WISHLIST_SORT_BY_NAME_DESC:
+		query = query.Order("restaurants.name DESC")
+	default: // UNSPECIFIED and DATE_DESC → newest first
+		query = query.Order("wishlist_items.created_at DESC")
 	}
 
 	var items []models.WishlistItem
-	if err := query.Order("created_at desc").Find(&items).Error; err != nil {
+	if err := query.Find(&items).Error; err != nil {
 		return nil, err
 	}
 

@@ -3,6 +3,7 @@
 	import { goto } from '$app/navigation';
 	import { auth } from '$lib/state/auth.svelte';
 	import client from '$lib/client/client';
+	import { WishlistSortBy } from '$lib/client/generated/wishlist/v1/wishlist_service_pb';
 	import type { WishlistItemProto } from '$lib/client/generated/wishlist/v1/wishlist_item_pb';
 	import type { ReviewProto } from '$lib/client/generated/reviews/v1/review_pb';
 	import type { Place } from '$lib/client/generated/google_maps/v1/google_maps_service_pb';
@@ -15,10 +16,41 @@
 	let loading = $state(true);
 	let removing = $state<Set<string>>(new Set());
 	let ratingId = $state<string | null>(null);
+	let mounted = $state(false);
 
 	let searchedPlace = $state<Place | null>(null);
 	let searchAction = $state<'review' | null>(null);
 	let savingToWishlist = $state(false);
+
+	// Filter state
+	let city = $state('');
+	let country = $state('');
+	let sortBy = $state('date-desc');
+
+	let activeFilterCount = $derived(
+		(city.trim() !== '' ? 1 : 0) +
+			(country.trim() !== '' ? 1 : 0) +
+			(sortBy !== 'date-desc' ? 1 : 0)
+	);
+
+	function clearFilters() {
+		city = '';
+		country = '';
+		sortBy = 'date-desc';
+	}
+
+	function toSortByEnum(s: string): WishlistSortBy {
+		switch (s) {
+			case 'date-asc':
+				return WishlistSortBy.DATE_ASC;
+			case 'name-asc':
+				return WishlistSortBy.NAME_ASC;
+			case 'name-desc':
+				return WishlistSortBy.NAME_DESC;
+			default:
+				return WishlistSortBy.DATE_DESC;
+		}
+	}
 
 	function handleSearchSelect(place: Place) {
 		searchedPlace = place;
@@ -55,8 +87,13 @@
 	}
 
 	async function loadWishlist() {
+		loading = true;
 		try {
-			const res = await client.wishlist.listWishlist({});
+			const res = await client.wishlist.listWishlist({
+				city,
+				country,
+				sortBy: toSortByEnum(sortBy)
+			});
 			items = res.items ?? [];
 		} catch (e) {
 			console.error('Failed to load wishlist:', e);
@@ -78,17 +115,64 @@
 		}
 	}
 
+	// Reactive reload when filters change (only after auth + mount)
+	$effect(() => {
+		if (!mounted) return;
+		void [city, country, sortBy];
+		loadWishlist();
+	});
+
 	onMount(() => {
 		if (!auth.isLoggedIn) {
 			goto('/?login=1');
 			return;
 		}
-		loadWishlist();
+		mounted = true;
 	});
 </script>
 
 <div class="container mx-auto max-w-3xl space-y-6 p-6">
 	<h2 class="text-2xl font-semibold text-blue-800">My Wishlist</h2>
+
+	<!-- Filter bar -->
+	<div class="flex flex-wrap items-center gap-2">
+		{#if activeFilterCount > 0}
+			<Button variant="ghost" size="sm" onclick={clearFilters}
+				>Clear filters ({activeFilterCount})</Button
+			>
+		{/if}
+		<div class="ml-auto flex items-center gap-2">
+			<label for="wishlist-sort" class="text-sm text-gray-600">Sort:</label>
+			<select
+				id="wishlist-sort"
+				bind:value={sortBy}
+				class="rounded-md border border-gray-300 px-2 py-1 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
+			>
+				<option value="date-desc">Newest first</option>
+				<option value="date-asc">Oldest first</option>
+				<option value="name-asc">Name A–Z</option>
+				<option value="name-desc">Name Z–A</option>
+			</select>
+		</div>
+		<div class="flex w-full gap-3">
+			<div class="flex-1">
+				<input
+					type="text"
+					bind:value={city}
+					placeholder="Filter by city…"
+					class="w-full rounded-md border border-gray-300 px-3 py-1.5 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
+				/>
+			</div>
+			<div class="flex-1">
+				<input
+					type="text"
+					bind:value={country}
+					placeholder="Filter by country…"
+					class="w-full rounded-md border border-gray-300 px-3 py-1.5 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
+				/>
+			</div>
+		</div>
+	</div>
 
 	<section class="space-y-3">
 		<h3 class="text-lg font-medium text-gray-800">Find a restaurant</h3>
@@ -137,7 +221,15 @@
 		</div>
 	{:else if items.length === 0}
 		<p class="text-sm text-gray-500">
-			Your wishlist is empty. Search for a restaurant above to add one.
+			{#if activeFilterCount > 0}
+				No wishlist items match the current filters. <button
+					type="button"
+					onclick={clearFilters}
+					class="text-blue-600 underline hover:no-underline">Clear filters</button
+				>
+			{:else}
+				Your wishlist is empty. Search for a restaurant above to add one.
+			{/if}
 		</p>
 	{:else}
 		<ul class="space-y-3">
