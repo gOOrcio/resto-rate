@@ -117,7 +117,7 @@ func (s *ReviewsService) ListReviews(
 	}
 
 	var reviews []models.Review
-	query := s.DB.WithContext(ctx).Where("user_id = ?", userID)
+	query := s.DB.WithContext(ctx).Preload("Restaurant").Where("user_id = ?", userID)
 	if req.Msg.GooglePlacesId != "" {
 		query = query.Where("google_places_id = ?", req.Msg.GooglePlacesId)
 	}
