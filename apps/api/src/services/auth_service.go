@@ -35,6 +35,8 @@ type AuthService struct {
 	SecureCookie   bool
 }
 
+const sessionPrefix = "session:"
+
 func NewAuthService(db *gorm.DB, kv valkey.Client, googleClientID string, secureCookie bool) *AuthService {
 	return &AuthService{DB: db, Valkey: kv, GoogleClientID: googleClientID, SecureCookie: secureCookie}
 }
@@ -69,7 +71,7 @@ func (s *AuthService) Login(
 	}
 
 	token := uuid.New().String()
-	setCmd := s.Valkey.B().Set().Key("session:"+token).Value(user.ID).Ex(24 * time.Hour).Build()
+	setCmd := s.Valkey.B().Set().Key(sessionPrefix + token).Value(user.ID).Ex(24 * time.Hour).Build()
 	if err := s.Valkey.Do(ctx, setCmd).Error(); err != nil {
 		return nil, connect.NewError(connect.CodeInternal, err)
 	}
@@ -87,7 +89,7 @@ func (s *AuthService) Logout(
 ) (*connect.Response[authv1.LogoutResponse], error) {
 	token := sessionToken(req.Header())
 	if token != "" {
-		s.Valkey.Do(ctx, s.Valkey.B().Del().Key("session:"+token).Build())
+		s.Valkey.Do(ctx, s.Valkey.B().Del().Key(sessionPrefix+token).Build())
 	}
 
 	res := connect.NewResponse(&authv1.LogoutResponse{Success: true})
@@ -104,7 +106,7 @@ func (s *AuthService) GetCurrentUser(
 		return nil, connect.NewError(connect.CodeUnauthenticated, errors.New("no session"))
 	}
 
-	result := s.Valkey.Do(ctx, s.Valkey.B().Get().Key("session:"+token).Build())
+	result := s.Valkey.Do(ctx, s.Valkey.B().Get().Key(sessionPrefix+token).Build())
 	if result.Error() != nil {
 		return nil, connect.NewError(connect.CodeUnauthenticated, errors.New("session expired or invalid"))
 	}

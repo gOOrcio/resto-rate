@@ -19,6 +19,9 @@ type RestaurantsService struct {
 	DB *gorm.DB
 }
 
+const idFilter = "id = ?"
+const restaurantNotFound = "restaurant with ID %s not found"
+
 func NewRestaurantsService(db *gorm.DB) *RestaurantsService {
 	return &RestaurantsService{DB: db}
 }
@@ -66,12 +69,12 @@ func (s *RestaurantsService) GetRestaurant(
 	}
 
 	var restaurant models.Restaurant
-	if err := s.DB.WithContext(ctx).First(&restaurant, "id = ?", req.Msg.Id).Error; err != nil {
+	if err := s.DB.WithContext(ctx).First(&restaurant, idFilter, req.Msg.Id).Error; err != nil {
 		if ctx.Err() != nil {
 			return nil, ctx.Err()
 		}
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil, fmt.Errorf("restaurant with ID %s not found", req.Msg.Id)
+			return nil, fmt.Errorf(restaurantNotFound, req.Msg.Id)
 		}
 		return nil, err
 	}
@@ -127,12 +130,12 @@ func (s *RestaurantsService) DeleteRestaurant(
 	}
 
 	var restaurant models.Restaurant
-	if err := s.DB.WithContext(ctx).First(&restaurant, "id = ?", req.Msg.Id).Error; err != nil {
+	if err := s.DB.WithContext(ctx).First(&restaurant, idFilter, req.Msg.Id).Error; err != nil {
 		if ctx.Err() != nil {
 			return nil, ctx.Err()
 		}
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil, fmt.Errorf("restaurant with ID %s not found", req.Msg.Id)
+			return nil, fmt.Errorf(restaurantNotFound, req.Msg.Id)
 		}
 		return nil, err
 	}
@@ -202,9 +205,9 @@ func (s *RestaurantsService) ListRestaurants(
 
 func (s *RestaurantsService) findRestaurantByIDWithContext(ctx context.Context, id string) (*models.Restaurant, error) {
 	var restaurant models.Restaurant
-	if err := s.DB.WithContext(ctx).First(&restaurant, "id = ?", id).Error; err != nil {
+	if err := s.DB.WithContext(ctx).First(&restaurant, idFilter, id).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil, fmt.Errorf("restaurant with ID %s not found", id)
+			return nil, fmt.Errorf(restaurantNotFound, id)
 		}
 		return nil, err
 	}

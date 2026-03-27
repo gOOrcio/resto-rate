@@ -16,6 +16,8 @@ import (
 	"google.golang.org/grpc/metadata"
 )
 
+const googleFieldMask = "X-Goog-FieldMask"
+
 type GooglePlacesAPIService struct {
 	v1connect.UnimplementedGoogleMapsServiceHandler
 	client *places.Client
@@ -71,7 +73,7 @@ func (s *GooglePlacesAPIService) GetPlace(
 
 	if len(req.Msg.RequestedFields) > 0 {
 		mask := mappers.BuildFieldMask(req.Msg.RequestedFields)
-		ctx = metadata.NewOutgoingContext(ctx, metadata.New(map[string]string{"X-Goog-FieldMask": mask}))
+		ctx = metadata.NewOutgoingContext(ctx, metadata.New(map[string]string{googleFieldMask: mask}))
 	}
 
 	out, err := s.client.GetPlace(ctx, pbReq)
@@ -97,7 +99,7 @@ func (s *GooglePlacesAPIService) GetRestaurantDetails(
 	}
 
 	mask := mappers.BuildFieldMask(predefinedRestaurantDetails())
-	ctx = metadata.NewOutgoingContext(ctx, metadata.New(map[string]string{"X-Goog-FieldMask": mask}))
+	ctx = metadata.NewOutgoingContext(ctx, metadata.New(map[string]string{googleFieldMask: mask}))
 
 	out, err := s.client.GetPlace(ctx, pbReq)
 	if err != nil {
@@ -126,7 +128,7 @@ func (s *GooglePlacesAPIService) SearchText(
 
 	if len(req.Msg.RequestedFields) > 0 {
 		mask := mappers.BuildFieldMask(req.Msg.RequestedFields)
-		ctx = metadata.NewOutgoingContext(ctx, metadata.New(map[string]string{"X-Goog-FieldMask": mask}))
+		ctx = metadata.NewOutgoingContext(ctx, metadata.New(map[string]string{googleFieldMask: mask}))
 	}
 
 	out, err := s.client.SearchText(ctx, pbReq)
@@ -155,7 +157,7 @@ func (s *GooglePlacesAPIService) SearchRestaurants(
 	}
 
 	ctx = metadata.NewOutgoingContext(ctx, metadata.New(map[string]string{
-		"X-Goog-FieldMask": mappers.BuildFieldMask(predefinedRestaurantDetails()),
+		googleFieldMask: mappers.BuildFieldMask(predefinedRestaurantDetails()),
 	}))
 
 	out, err := s.client.SearchText(ctx, pbReq)
