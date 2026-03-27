@@ -164,22 +164,7 @@ func (s *ReviewsService) ListReviews(
 	}
 
 	// Tag filter
-	if len(req.Msg.TagSlugs) > 0 {
-		if req.Msg.TagFilterMode == v1.TagFilterMode_TAG_FILTER_MODE_AND {
-			for _, slug := range req.Msg.TagSlugs {
-				query = query.Where("reviews.tags LIKE ?", fmt.Sprintf(`%%"%s"%%`, slug))
-			}
-		} else {
-			// OR (default): at least one specified tag must appear
-			conditions := make([]string, len(req.Msg.TagSlugs))
-			args := make([]interface{}, len(req.Msg.TagSlugs))
-			for i, slug := range req.Msg.TagSlugs {
-				conditions[i] = "reviews.tags LIKE ?"
-				args[i] = fmt.Sprintf(`%%"%s"%%`, slug)
-			}
-			query = query.Where("("+strings.Join(conditions, " OR ")+")", args...)
-		}
-	}
+	query = applyTagFilter(query, req.Msg.TagSlugs, req.Msg.TagFilterMode)
 
 	// Rating range
 	if req.Msg.MinRating > 0 {
@@ -203,16 +188,7 @@ func (s *ReviewsService) ListReviews(
 	}
 
 	// Sort order
-	switch req.Msg.SortBy {
-	case v1.ReviewSortBy_REVIEW_SORT_BY_DATE_ASC:
-		query = query.Order("reviews.created_at ASC")
-	case v1.ReviewSortBy_REVIEW_SORT_BY_RATING_DESC:
-		query = query.Order("reviews.rating DESC")
-	case v1.ReviewSortBy_REVIEW_SORT_BY_RATING_ASC:
-		query = query.Order("reviews.rating ASC")
-	default: // UNSPECIFIED and DATE_DESC both → newest first
-		query = query.Order("reviews.created_at DESC")
-	}
+	query = applyReviewSort(query, req.Msg.SortBy)
 
 	var reviews []models.Review
 	if err := query.Find(&reviews).Error; err != nil {
@@ -397,6 +373,41 @@ func assertFriendship(ctx context.Context, db *gorm.DB, callerID, targetID strin
 		return connect.NewError(connect.CodePermissionDenied, errors.New("you must be friends to view this content"))
 	}
 	return nil
+}
+
+// applyTagFilter adds WHERE clauses for tag filtering based on mode (AND/OR).
+func applyTagFilter(query *gorm.DB, slugs []string, mode v1.TagFilterMode) *gorm.DB {
+	if len(slugs) == 0 {
+		return query
+	}
+	if mode == v1.TagFilterMode_TAG_FILTER_MODE_AND {
+		for _, slug := range slugs {
+			query = query.Where("reviews.tags LIKE ?", fmt.Sprintf(`%%"%s"%%`, slug))
+		}
+		return query
+	}
+	// OR (default): at least one specified tag must appear
+	conditions := make([]string, len(slugs))
+	args := make([]interface{}, len(slugs))
+	for i, slug := range slugs {
+		conditions[i] = "reviews.tags LIKE ?"
+		args[i] = fmt.Sprintf(`%%"%s"%%`, slug)
+	}
+	return query.Where("("+strings.Join(conditions, " OR ")+")", args...)
+}
+
+// applyReviewSort adds an ORDER BY clause based on the sort field.
+func applyReviewSort(query *gorm.DB, sortBy v1.ReviewSortBy) *gorm.DB {
+	switch sortBy {
+	case v1.ReviewSortBy_REVIEW_SORT_BY_DATE_ASC:
+		return query.Order("reviews.created_at ASC")
+	case v1.ReviewSortBy_REVIEW_SORT_BY_RATING_DESC:
+		return query.Order("reviews.rating DESC")
+	case v1.ReviewSortBy_REVIEW_SORT_BY_RATING_ASC:
+		return query.Order("reviews.rating ASC")
+	default: // UNSPECIFIED and DATE_DESC → newest first
+		return query.Order("reviews.created_at DESC")
+	}
 }
 
 // Ensure RestaurantProto import is used
