@@ -193,12 +193,6 @@ func (s *AuthService) GetMyStats(
 		return nil, err
 	}
 
-	type statsRow struct {
-		ReviewCount  int64
-		WishlistCount int64
-		FriendCount  int64
-	}
-
 	var reviewCount, wishlistCount, friendCount int64
 
 	if err := s.DB.WithContext(ctx).Table("reviews").Where("user_id = ?", userID).Count(&reviewCount).Error; err != nil {
@@ -243,7 +237,7 @@ func (s *AuthService) DeleteMyAccount(
 		return nil, connect.NewError(connect.CodeInternal, err)
 	}
 
-	// Delete the user (cascade via DB constraints / GORM soft-delete)
+	// Delete the user (hard delete; DB cascade constraints handle related rows)
 	if err := s.DB.WithContext(ctx).Delete(&models.User{}, "id = ?", userID).Error; err != nil {
 		return nil, connect.NewError(connect.CodeInternal, err)
 	}
@@ -286,8 +280,14 @@ func (s *AuthService) issueSession(ctx context.Context, userID, token string) er
 	if err := s.Valkey.Do(ctx, setCmd).Error(); err != nil {
 		return err
 	}
-	// Track in the user's session set (for sign-out-all)
-	s.Valkey.Do(ctx, s.Valkey.B().Sadd().Key("user_sessions:"+userID).Member(token).Build())
+	// Track in the user's session set (for sign-out-all). Return error so callers know sessions won't be wipeable.
+	saddCmd := s.Valkey.B().Sadd().Key("user_sessions:"+userID).Member(token).Build()
+	if err := s.Valkey.Do(ctx, saddCmd).Error(); err != nil {
+		return err
+	}
+	// Refresh TTL on the tracking set to prevent unbounded growth from expired individual tokens.
+	const sessionTTL = int64(24 * 60 * 60) // 24 h in seconds
+	s.Valkey.Do(ctx, s.Valkey.B().Expire().Key("user_sessions:"+userID).Seconds(sessionTTL).Build())
 	return nil
 }
 
@@ -296,13 +296,17 @@ func (s *AuthService) wipeAllSessions(ctx context.Context, userID string) error 
 	smembersResult := s.Valkey.Do(ctx, s.Valkey.B().Smembers().Key("user_sessions:"+userID).Build())
 	tokens, err := smembersResult.AsStrSlice()
 	if err != nil {
-		// Key may not exist (old sessions pre-tracking) — treat as empty
+		// Key may not exist for users who logged in before session tracking was added — treat as empty.
 		tokens = []string{}
 	}
 	for _, t := range tokens {
-		s.Valkey.Do(ctx, s.Valkey.B().Del().Key("session:"+t).Build())
+		if err := s.Valkey.Do(ctx, s.Valkey.B().Del().Key("session:"+t).Build()).Error(); err != nil {
+			return fmt.Errorf("wipeAllSessions: DEL session:%s: %w", t, err)
+		}
 	}
-	s.Valkey.Do(ctx, s.Valkey.B().Del().Key("user_sessions:"+userID).Build())
+	if err := s.Valkey.Do(ctx, s.Valkey.B().Del().Key("user_sessions:"+userID).Build()).Error(); err != nil {
+		return fmt.Errorf("wipeAllSessions: DEL user_sessions:%s: %w", userID, err)
+	}
 	return nil
 }
 

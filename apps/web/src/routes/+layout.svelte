@@ -40,10 +40,8 @@
 			const res = await client.auth.getCurrentUser({});
 			if (res.user) {
 				auth.setUser(res.user);
-				// Sync dark mode from backend preference only if user has explicitly set it
-				if (res.user.isDarkModeEnabled !== undefined) {
-					setMode(res.user.isDarkModeEnabled ? 'dark' : 'light');
-				}
+				// Sync dark mode preference from backend
+				setMode(res.user.isDarkModeEnabled ? 'dark' : 'light');
 				isAuthenticated = true;
 			}
 		} catch {

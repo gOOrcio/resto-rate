@@ -4,7 +4,7 @@
 	import * as Sheet from '$lib/components/ui/sheet/index.js';
 	import * as DropdownMenu from '$lib/components/ui/dropdown-menu/index.js';
 	import { auth } from '$lib/state/auth.svelte';
-	import { mode, toggleMode } from '$lib/state/theme.svelte';
+	import { mode, setMode } from '$lib/state/theme.svelte';
 	import SocialSignIn from '$lib/ui/components/SocialSignIn.svelte';
 	import client from '$lib/client/client';
 
@@ -22,6 +22,17 @@
 				if (el.open) el.close();
 			}
 		};
+	}
+
+	async function toggleDarkMode() {
+		const next = mode.current !== 'dark';
+		setMode(next ? 'dark' : 'light');
+		try {
+			await client.auth.updateMyProfile({ setIsDarkModeEnabled: true, isDarkModeEnabled: next });
+		} catch {
+			// revert on failure
+			setMode(next ? 'light' : 'dark');
+		}
 	}
 
 	async function handleLogout() {
@@ -113,7 +124,7 @@
 							</DropdownMenu.Item>
 							<DropdownMenu.Separator />
 							<DropdownMenu.Label>Preferences</DropdownMenu.Label>
-							<DropdownMenu.Item onclick={() => toggleMode()}>
+							<DropdownMenu.Item onclick={toggleDarkMode}>
 								{mode.current === 'dark' ? 'Light mode' : 'Dark mode'}
 							</DropdownMenu.Item>
 						</DropdownMenu.Content>
@@ -166,7 +177,7 @@
 							<hr class="border-border" />
 							<button
 								class="text-left text-sm text-muted-foreground hover:text-foreground"
-								onclick={() => toggleMode()}
+								onclick={toggleDarkMode}
 							>
 								{mode.current === 'dark' ? 'Light mode' : 'Dark mode'}
 							</button>
