@@ -4,6 +4,7 @@ import (
 	"api/src/internal/models"
 	"context"
 	"errors"
+	"fmt"
 	"net/http"
 	"time"
 
@@ -13,7 +14,7 @@ import (
 )
 
 // findOrCreateDevUser looks up a user by email; creates one with Name="Dev User" if not found.
-func findOrCreateDevUser(db *gorm.DB, ctx context.Context, email string) (models.User, error) {
+func findOrCreateDevUser(ctx context.Context, db *gorm.DB, email string) (models.User, error) {
 	var user models.User
 	err := db.WithContext(ctx).Where("email = ?", email).First(&user).Error
 	if errors.Is(err, gorm.ErrRecordNotFound) {
@@ -21,9 +22,15 @@ func findOrCreateDevUser(db *gorm.DB, ctx context.Context, email string) (models
 			Email: models.StringPtr(email),
 			Name:  "Dev User",
 		}
-		return user, db.WithContext(ctx).Create(&user).Error
+		if createErr := db.WithContext(ctx).Create(&user).Error; createErr != nil {
+			return models.User{}, fmt.Errorf("failed to create user: %w", createErr)
+		}
+		return user, nil
 	}
-	return user, err
+	if err != nil {
+		return models.User{}, fmt.Errorf("db error: %w", err)
+	}
+	return user, nil
 }
 
 // devLoginHandler handles POST /dev/login.
@@ -44,9 +51,9 @@ func devLoginHandler(db *gorm.DB, kv valkey.Client) http.Handler {
 
 		ctx := r.Context()
 
-		user, err := findOrCreateDevUser(db, ctx, email)
-		if err != nil {
-			http.Error(w, "db error", http.StatusInternalServerError)
+		user, findErr := findOrCreateDevUser(ctx, db, email)
+		if findErr != nil {
+			http.Error(w, findErr.Error(), http.StatusInternalServerError)
 			return
 		}
 

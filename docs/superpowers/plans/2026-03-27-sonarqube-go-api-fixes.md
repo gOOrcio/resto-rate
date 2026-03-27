@@ -93,7 +93,7 @@ Place `assign_gate_to_project` and `assign_profile_to_project` function definiti
 - [ ] **Step 3: Run provision.sh against SonarQube**
 
 ```bash
-export SONAR_TOKEN=squ_bcacb5fcfd823abad4b2e0fc8cfbf08986265cd3
+export SONAR_TOKEN=$SONAR_TOKEN
 export SONAR_HOST_URL=https://sonarqube.mati-lab.online
 bash ~/Projects/sonarqube-sandbox/sonar-config/provision.sh
 ```
@@ -115,7 +115,7 @@ Gate 'Mati-Lab Default' already exists, re-applying conditions...
 - [ ] **Step 4: Verify gate + profile assigned via REST API**
 
 ```bash
-curl -sf -u "squ_bcacb5fcfd823abad4b2e0fc8cfbf08986265cd3:" \
+curl -sf -u "$SONAR_TOKEN:" \
   "https://sonarqube.mati-lab.online/api/qualitygates/get_by_project?project=resto-rate-api" \
   | python3 -c "import sys,json; g=json.load(sys.stdin); print('Gate:', g['qualityGate']['name'])"
 ```
@@ -123,7 +123,7 @@ curl -sf -u "squ_bcacb5fcfd823abad4b2e0fc8cfbf08986265cd3:" \
 Expected: `Gate: Mati-Lab Default`
 
 ```bash
-curl -sf -u "squ_bcacb5fcfd823abad4b2e0fc8cfbf08986265cd3:" \
+curl -sf -u "$SONAR_TOKEN:" \
   "https://sonarqube.mati-lab.online/api/qualityprofiles/search?project=resto-rate-api&language=go" \
   | python3 -c "import sys,json; p=json.load(sys.stdin)['profiles']; print('Profile:', p[0]['name'] if p else 'none')"
 ```
@@ -564,7 +564,7 @@ sonar-scanner \
   -Dsonar.sources=apps/api/src \
   -Dsonar.go.coverage.reportPaths=apps/api/coverage.out \
   -Dsonar.host.url=https://sonarqube.mati-lab.online \
-  -Dsonar.token=squ_bcacb5fcfd823abad4b2e0fc8cfbf08986265cd3
+  -Dsonar.token=$SONAR_TOKEN
 ```
 
 Expected: scan completes, task ID printed.
@@ -573,7 +573,7 @@ Expected: scan completes, task ID printed.
 
 ```bash
 sleep 15
-curl -sf -u "squ_bcacb5fcfd823abad4b2e0fc8cfbf08986265cd3:" \
+curl -sf -u "$SONAR_TOKEN:" \
   "https://sonarqube.mati-lab.online/api/qualitygates/project_status?projectKey=resto-rate-api" \
   | python3 -c "
 import sys, json
