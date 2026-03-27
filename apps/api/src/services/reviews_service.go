@@ -65,6 +65,8 @@ func (s *ReviewsService) CreateReview(
 			Attrs(models.Restaurant{
 				Name:    req.Msg.RestaurantName,
 				Address: req.Msg.RestaurantAddress,
+				City:    req.Msg.City,
+				Country: req.Msg.Country,
 			}).
 			FirstOrCreate(&restaurant)
 		if result.Error != nil {

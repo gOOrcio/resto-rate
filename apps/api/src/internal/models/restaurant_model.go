@@ -12,6 +12,8 @@ type Restaurant struct {
 	GoogleID  string    `gorm:"uniqueIndex" json:"googleId"`
 	Address   string    `gorm:"uniqueIndex" json:"email"`
 	Name      string    `gorm:"not null" json:"name"`
+	City      string    `gorm:"index"`
+	Country   string    `gorm:"index"`
 	CreatedAt time.Time `gorm:"autoCreateTime" json:"createdAt"`
 	UpdatedAt time.Time `gorm:"autoUpdateTime" json:"updatedAt"`
 }
@@ -29,6 +31,8 @@ func (r *Restaurant) ToProto() *restaurantpb.RestaurantProto {
 		GooglePlacesId: r.GoogleID,
 		Address:        r.Address,
 		Name:           r.Name,
+		City:           r.City,
+		Country:        r.Country,
 		CreatedAt:      r.CreatedAt.Unix(),
 		UpdatedAt:      r.UpdatedAt.Unix(),
 	}

@@ -22,6 +22,8 @@ message CreateReviewRequest {
   string comment = 4;
   double rating = 5;
   repeated string tags = 6;
+  string city = 7;
+  string country = 8;
 }
 
 message CreateReviewResponse {

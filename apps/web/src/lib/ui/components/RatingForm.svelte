@@ -1,20 +1,25 @@
 <script lang="ts">
 	import { Button } from '$lib/components/ui/button/index.js';
 	import { Label } from '$lib/components/ui/label/index.js';
-	import { Star, X } from '@lucide/svelte';
+	import { Star } from '@lucide/svelte';
 	import client from '$lib/client/client';
+	import TagPicker from './TagPicker.svelte';
 	import type { ReviewProto } from '$lib/client/generated/reviews/v1/review_pb';
 
 	const {
 		googlePlacesId,
 		restaurantName,
 		restaurantAddress,
+		city = '',
+		country = '',
 		existingReview,
 		onSubmit
 	} = $props<{
 		googlePlacesId: string;
 		restaurantName: string;
 		restaurantAddress: string;
+		city?: string;
+		country?: string;
 		existingReview?: ReviewProto;
 		onSubmit: (review: ReviewProto) => void;
 	}>();
@@ -23,31 +28,11 @@
 	let hoverRating = $state(0);
 	let comment = $state(existingReview?.comment ?? '');
 	let tags = $state<string[]>(existingReview?.tags ? [...existingReview.tags] : []);
-	let tagInput = $state('');
 	let loading = $state(false);
 	let error = $state<string | null>(null);
 
 	const isEdit = $derived(!!existingReview?.id);
 	const displayRating = $derived(hoverRating || rating);
-
-	function addTag() {
-		const t = tagInput.trim().replace(/,$/, '');
-		if (t && !tags.includes(t)) {
-			tags = [...tags, t];
-		}
-		tagInput = '';
-	}
-
-	function removeTag(tag: string) {
-		tags = tags.filter((t) => t !== tag);
-	}
-
-	function handleTagKeydown(e: KeyboardEvent) {
-		if (e.key === 'Enter' || e.key === ',') {
-			e.preventDefault();
-			addTag();
-		}
-	}
 
 	async function handleSubmit() {
 		if (rating < 1) {
@@ -70,6 +55,8 @@
 					googlePlacesId,
 					restaurantName,
 					restaurantAddress,
+					city,
+					country,
 					comment,
 					rating,
 					tags
@@ -126,32 +113,8 @@
 
 	<!-- Tags -->
 	<div class="mb-5">
-		<Label for="tag-input" class="mb-1 block text-sm">Tags (optional)</Label>
-		<div class="flex flex-wrap gap-1.5 mb-2">
-			{#each tags as tag}
-				<span class="flex items-center gap-1 rounded-full bg-blue-100 px-2.5 py-0.5 text-xs font-medium text-blue-700">
-					{tag}
-					<button
-						type="button"
-						onclick={() => removeTag(tag)}
-						class="text-blue-500 hover:text-blue-700"
-						aria-label="Remove tag {tag}"
-					>
-						<X class="h-3 w-3" />
-					</button>
-				</span>
-			{/each}
-		</div>
-		<input
-			id="tag-input"
-			type="text"
-			bind:value={tagInput}
-			onkeydown={handleTagKeydown}
-			onblur={addTag}
-			placeholder="Type a tag and press Enter"
-			class="w-full rounded-lg border border-gray-300 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-		/>
-		<p class="mt-1 text-xs text-gray-400">Press Enter or comma to add a tag</p>
+		<Label class="mb-1 block text-sm">Tags (optional)</Label>
+		<TagPicker bind:selected={tags} />
 	</div>
 
 	{#if error}
