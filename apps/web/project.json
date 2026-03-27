@@ -52,8 +52,13 @@
     },
     "check": {
       "executor": "nx:run-commands",
+      "dependsOn": ["protos:generate:web"],
       "options": {
-        "command": "svelte-check --tsconfig ./tsconfig.json",
+        "commands": [
+          "bunx paraglide-js compile --project ./project.inlang --outdir ./src/lib/paraglide",
+          "svelte-check --tsconfig ./tsconfig.json"
+        ],
+        "parallel": false,
         "cwd": "apps/web"
       }
     },

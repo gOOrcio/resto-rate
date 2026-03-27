@@ -2,8 +2,8 @@ syntax = "proto3";
 
 package reviews.v1;
 
-import "reviews/v1/review.proto";
 import "restaurants/v1/restaurant.proto";
+import "reviews/v1/review.proto";
 
 option go_package = "api/src/generated/reviews/v1";
 
