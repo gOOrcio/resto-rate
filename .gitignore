@@ -58,3 +58,4 @@ valkey.conf
 .claude
 .worktrees
 /.agents/
+**/.scannerwork
