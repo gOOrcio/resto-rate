@@ -183,7 +183,6 @@
 			goto('/?login=1');
 			return;
 		}
-		// Load friend info (for the profile header)
 		try {
 			const res = await client.friendship.listFriends({});
 			friend = res.friends.find((f) => f.userId === targetUserId) ?? null;
@@ -197,32 +196,32 @@
 	});
 </script>
 
-<div class="container mx-auto max-w-3xl space-y-6 p-6">
+<div class="mx-auto max-w-3xl space-y-6 px-4 py-8 sm:px-6">
 	<!-- Profile header -->
 	<div class="flex items-start justify-between">
 		<div>
 			{#if friend}
-				<h2 class="text-2xl font-semibold text-blue-800">{friend.name}</h2>
-				<p class="text-sm text-gray-500">
+				<h2 class="font-display text-3xl font-semibold text-foreground">{friend.name}</h2>
+				<p class="text-sm text-muted-foreground">
 					{#if friend.username}{friend.username} · {/if}{friend.email}
 				</p>
 			{:else if !mounted}
-				<div class="h-7 w-48 animate-pulse rounded bg-gray-200"></div>
+				<div class="h-7 w-48 animate-pulse rounded bg-muted"></div>
 			{:else}
-				<h2 class="text-2xl font-semibold text-blue-800">Friend's Profile</h2>
+				<h2 class="font-display text-3xl font-semibold text-foreground">Friend's Profile</h2>
 			{/if}
 		</div>
 		<Button variant="outline" size="sm" href="/friends">← Back to friends</Button>
 	</div>
 
 	{#if notFriends}
-		<div class="rounded-lg border border-amber-200 bg-amber-50 p-6 text-center">
-			<p class="font-medium text-amber-800">You need to be friends to view this profile.</p>
+		<div class="rounded-lg border border-border bg-muted p-6 text-center">
+			<p class="font-medium text-foreground">You need to be friends to view this profile.</p>
 			<Button class="mt-4" href="/friends">Go to Friends</Button>
 		</div>
 	{:else}
 		<!-- Tabs -->
-		<div class="border-b border-gray-200">
+		<div class="border-b border-border">
 			<nav role="tablist" aria-label="Friend profile sections" class="-mb-px flex gap-6">
 				<button
 					type="button"
@@ -232,8 +231,8 @@
 					aria-selected={activeTab === 'reviews'}
 					onclick={() => (activeTab = 'reviews')}
 					class="border-b-2 pb-3 text-sm font-medium transition-colors {activeTab === 'reviews'
-						? 'border-blue-600 text-blue-600'
-						: 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'}"
+						? 'border-primary text-primary'
+						: 'border-transparent text-muted-foreground hover:border-border hover:text-foreground'}"
 				>
 					Reviews
 				</button>
@@ -245,8 +244,8 @@
 					aria-selected={activeTab === 'wishlist'}
 					onclick={() => (activeTab = 'wishlist')}
 					class="border-b-2 pb-3 text-sm font-medium transition-colors {activeTab === 'wishlist'
-						? 'border-blue-600 text-blue-600'
-						: 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'}"
+						? 'border-primary text-primary'
+						: 'border-transparent text-muted-foreground hover:border-border hover:text-foreground'}"
 				>
 					Wishlist
 				</button>
@@ -256,7 +255,6 @@
 		<!-- Reviews tab -->
 		{#if activeTab === 'reviews'}
 		<div role="tabpanel" id="panel-reviews" aria-labelledby="tab-reviews">
-			<!-- Reviews filter bar -->
 			<div class="space-y-3">
 				<div class="flex flex-wrap items-center gap-2">
 					<Button
@@ -270,11 +268,11 @@
 						<Button variant="ghost" size="sm" onclick={clearReviewFilters}>Clear all</Button>
 					{/if}
 					<div class="ml-auto flex items-center gap-2">
-						<label for="review-sort" class="text-sm text-gray-600">Sort:</label>
+						<label for="review-sort" class="text-sm text-muted-foreground">Sort</label>
 						<select
 							id="review-sort"
 							bind:value={reviewSortBy}
-							class="rounded-md border border-gray-300 px-2 py-1 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
+							class="rounded-md border border-border bg-card px-2 py-1 text-sm text-foreground focus:ring-1 focus:ring-ring focus:outline-none"
 						>
 							<option value="date-desc">Newest first</option>
 							<option value="date-asc">Oldest first</option>
@@ -285,18 +283,18 @@
 				</div>
 
 				{#if showReviewFilters}
-					<div class="space-y-4 rounded-lg border border-gray-200 bg-gray-50 p-4">
+					<div class="space-y-4 rounded-lg border border-border bg-muted/40 p-4">
 						<!-- Tags + AND/OR toggle -->
 						<div>
 							<div class="mb-1 flex items-center gap-3">
-								<span class="text-sm font-medium text-gray-700">Tags</span>
-								<div class="flex items-center gap-0.5 rounded-full border border-gray-300 bg-white p-0.5">
+								<span class="text-sm font-medium text-foreground">Tags</span>
+								<div class="flex items-center gap-0.5 rounded-full border border-border bg-card p-0.5">
 									<button
 										type="button"
 										onclick={() => (tagMode = 'or')}
 										class="rounded-full px-2.5 py-0.5 text-xs font-medium transition-colors {tagMode === 'or'
-											? 'bg-blue-600 text-white'
-											: 'text-gray-600 hover:bg-gray-100'}"
+											? 'bg-primary text-primary-foreground'
+											: 'text-muted-foreground hover:text-foreground'}"
 									>
 										Any (OR)
 									</button>
@@ -304,8 +302,8 @@
 										type="button"
 										onclick={() => (tagMode = 'and')}
 										class="rounded-full px-2.5 py-0.5 text-xs font-medium transition-colors {tagMode === 'and'
-											? 'bg-blue-600 text-white'
-											: 'text-gray-600 hover:bg-gray-100'}"
+											? 'bg-primary text-primary-foreground'
+											: 'text-muted-foreground hover:text-foreground'}"
 									>
 										All (AND)
 									</button>
@@ -316,20 +314,20 @@
 
 						<!-- Rating range -->
 						<div class="flex flex-wrap items-center gap-2">
-							<span class="text-sm font-medium text-gray-700">Rating:</span>
+							<span class="text-sm font-medium text-foreground">Rating</span>
 							<select
 								bind:value={minRating}
-								class="rounded-md border border-gray-300 px-2 py-1 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
+								class="rounded-md border border-border bg-card px-2 py-1 text-sm text-foreground focus:ring-1 focus:ring-ring focus:outline-none"
 							>
 								<option value={0}>Min ★</option>
 								{#each [1, 2, 3, 4, 5] as n}
 									<option value={n}>{n} ★</option>
 								{/each}
 							</select>
-							<span class="text-sm text-gray-500">to</span>
+							<span class="text-sm text-muted-foreground">to</span>
 							<select
 								bind:value={maxRating}
-								class="rounded-md border border-gray-300 px-2 py-1 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
+								class="rounded-md border border-border bg-card px-2 py-1 text-sm text-foreground focus:ring-1 focus:ring-ring focus:outline-none"
 							>
 								<option value={0}>Max ★</option>
 								{#each [1, 2, 3, 4, 5] as n}
@@ -337,13 +335,13 @@
 								{/each}
 							</select>
 							{#if ratingRangeError}
-								<p class="w-full text-xs text-red-600">{ratingRangeError}</p>
+								<p class="w-full text-xs text-destructive">{ratingRangeError}</p>
 							{/if}
 						</div>
 
 						<!-- Comment search -->
 						<div>
-							<label for="review-comment-search" class="mb-1 block text-sm font-medium text-gray-700">
+							<label for="review-comment-search" class="mb-1 block text-sm font-medium text-foreground">
 								Comment contains
 							</label>
 							<input
@@ -351,30 +349,30 @@
 								type="text"
 								bind:value={commentRaw}
 								placeholder="Search in comments…"
-								class="w-full rounded-md border border-gray-300 px-3 py-1.5 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
+								class="w-full rounded-md border border-border bg-card px-3 py-1.5 text-sm text-foreground placeholder:text-muted-foreground focus:ring-1 focus:ring-ring focus:outline-none"
 							/>
 						</div>
 
 						<!-- City + Country -->
 						<div class="grid grid-cols-2 gap-3">
 							<div>
-								<label for="review-city" class="mb-1 block text-sm font-medium text-gray-700">City</label>
+								<label for="review-city" class="mb-1 block text-sm font-medium text-foreground">City</label>
 								<input
 									id="review-city"
 									type="text"
 									bind:value={reviewCity}
 									placeholder="e.g. Paris"
-									class="w-full rounded-md border border-gray-300 px-3 py-1.5 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
+									class="w-full rounded-md border border-border bg-card px-3 py-1.5 text-sm text-foreground placeholder:text-muted-foreground focus:ring-1 focus:ring-ring focus:outline-none"
 								/>
 							</div>
 							<div>
-								<label for="review-country" class="mb-1 block text-sm font-medium text-gray-700">Country</label>
+								<label for="review-country" class="mb-1 block text-sm font-medium text-foreground">Country</label>
 								<input
 									id="review-country"
 									type="text"
 									bind:value={reviewCountry}
 									placeholder="e.g. France"
-									class="w-full rounded-md border border-gray-300 px-3 py-1.5 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
+									class="w-full rounded-md border border-border bg-card px-3 py-1.5 text-sm text-foreground placeholder:text-muted-foreground focus:ring-1 focus:ring-ring focus:outline-none"
 								/>
 							</div>
 						</div>
@@ -383,15 +381,15 @@
 			</div>
 
 			{#if reviewsLoading}
-				<div class="flex items-center gap-2 text-sm text-gray-500">
-					<div class="h-4 w-4 animate-spin rounded-full border-2 border-gray-300 border-t-blue-500"></div>
+				<div class="flex items-center gap-2 py-8 text-sm text-muted-foreground">
+					<div class="h-4 w-4 animate-spin rounded-full border-2 border-border border-t-primary"></div>
 					Loading…
 				</div>
 			{:else if reviews.length === 0}
-				<p class="text-sm text-gray-500">
+				<p class="text-sm text-muted-foreground">
 					{#if activeReviewFilterCount > 0}
 						No reviews match the current filters.
-						<button type="button" onclick={clearReviewFilters} class="text-blue-600 underline hover:no-underline">
+						<button type="button" onclick={clearReviewFilters} class="underline hover:no-underline">
 							Clear filters
 						</button>
 					{:else}
@@ -401,7 +399,7 @@
 			{:else}
 				<ul class="space-y-3">
 					{#each reviews as review (review.id)}
-						<li class="space-y-3 rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
+						<li class="card-reveal space-y-3 rounded-lg border border-border bg-card p-4">
 							<ExpandableRestaurantInfo
 								googlePlacesId={review.googlePlacesId}
 								name={review.restaurantName}
@@ -410,28 +408,28 @@
 								country={review.restaurantCountry}
 							/>
 
-							<div class="space-y-2 border-t border-gray-100 pt-3">
+							<div class="space-y-2 border-t border-border pt-3">
 								<div class="flex items-center gap-2">
 									<div class="flex gap-0.5">
 										{#each Array(5) as _, i}
 											<Star
 												class="h-4 w-4 {i < review.rating
 													? 'fill-amber-400 text-amber-400'
-													: 'fill-none text-gray-300'}"
+													: 'fill-none text-muted-foreground/40'}"
 											/>
 										{/each}
 									</div>
-									<span class="text-sm font-semibold text-gray-800">{review.rating.toFixed(1)}</span>
+									<span class="text-sm font-semibold text-foreground">{review.rating.toFixed(1)}</span>
 								</div>
 
 								{#if review.comment}
-									<p class="text-sm leading-relaxed text-gray-600">{review.comment}</p>
+									<p class="text-sm leading-relaxed text-muted-foreground">{review.comment}</p>
 								{/if}
 
 								{#if review.tags && review.tags.length > 0}
 									<div class="flex flex-wrap gap-1.5">
 										{#each review.tags as tag}
-											<span class="rounded-full bg-blue-100 px-2.5 py-0.5 text-xs font-medium text-blue-700">
+											<span class="rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-medium text-primary">
 												{tag}
 											</span>
 										{/each}
@@ -441,7 +439,7 @@
 								{#if review.googlePlacesId}
 									<a
 										href="/restaurants/{encodeURIComponent(review.googlePlacesId)}"
-										class="text-xs text-blue-600 hover:underline"
+										class="text-xs text-muted-foreground hover:text-foreground hover:underline"
 									>
 										See all reviews →
 									</a>
@@ -457,7 +455,6 @@
 		<!-- Wishlist tab -->
 		{#if activeTab === 'wishlist'}
 		<div role="tabpanel" id="panel-wishlist" aria-labelledby="tab-wishlist">
-			<!-- Wishlist filter bar -->
 			<div class="flex flex-wrap items-center gap-2">
 				{#if activeWishlistFilterCount > 0}
 					<Button variant="ghost" size="sm" onclick={clearWishlistFilters}>
@@ -465,11 +462,11 @@
 					</Button>
 				{/if}
 				<div class="ml-auto flex items-center gap-2">
-					<label for="wishlist-sort" class="text-sm text-gray-600">Sort:</label>
+					<label for="wishlist-sort" class="text-sm text-muted-foreground">Sort</label>
 					<select
 						id="wishlist-sort"
 						bind:value={wishlistSortBy}
-						class="rounded-md border border-gray-300 px-2 py-1 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
+						class="rounded-md border border-border bg-card px-2 py-1 text-sm text-foreground focus:ring-1 focus:ring-ring focus:outline-none"
 					>
 						<option value="date-desc">Newest first</option>
 						<option value="date-asc">Oldest first</option>
@@ -482,27 +479,27 @@
 						type="text"
 						bind:value={wishlistCity}
 						placeholder="Filter by city…"
-						class="flex-1 rounded-md border border-gray-300 px-3 py-1.5 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
+						class="flex-1 rounded-md border border-border bg-card px-3 py-1.5 text-sm text-foreground placeholder:text-muted-foreground focus:ring-1 focus:ring-ring focus:outline-none"
 					/>
 					<input
 						type="text"
 						bind:value={wishlistCountry}
 						placeholder="Filter by country…"
-						class="flex-1 rounded-md border border-gray-300 px-3 py-1.5 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
+						class="flex-1 rounded-md border border-border bg-card px-3 py-1.5 text-sm text-foreground placeholder:text-muted-foreground focus:ring-1 focus:ring-ring focus:outline-none"
 					/>
 				</div>
 			</div>
 
 			{#if wishlistLoading}
-				<div class="flex items-center gap-2 text-sm text-gray-500">
-					<div class="h-4 w-4 animate-spin rounded-full border-2 border-gray-300 border-t-blue-500"></div>
+				<div class="flex items-center gap-2 py-8 text-sm text-muted-foreground">
+					<div class="h-4 w-4 animate-spin rounded-full border-2 border-border border-t-primary"></div>
 					Loading…
 				</div>
 			{:else if wishlistItems.length === 0}
-				<p class="text-sm text-gray-500">
+				<p class="text-sm text-muted-foreground">
 					{#if activeWishlistFilterCount > 0}
 						No wishlist items match the current filters.
-						<button type="button" onclick={clearWishlistFilters} class="text-blue-600 underline hover:no-underline">
+						<button type="button" onclick={clearWishlistFilters} class="underline hover:no-underline">
 							Clear filters
 						</button>
 					{:else}
@@ -512,7 +509,7 @@
 			{:else}
 				<ul class="space-y-3">
 					{#each wishlistItems as item (item.id)}
-						<li class="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
+						<li class="card-reveal rounded-lg border border-border bg-card p-4">
 							<ExpandableRestaurantInfo
 								googlePlacesId={item.googlePlacesId}
 								name={item.restaurantName}

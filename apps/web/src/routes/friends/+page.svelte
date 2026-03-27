@@ -106,18 +106,18 @@
 	});
 </script>
 
-<div class="container mx-auto max-w-3xl space-y-8 p-6">
-	<h2 class="text-2xl font-semibold text-blue-800">Friends</h2>
+<div class="mx-auto max-w-3xl space-y-8 px-4 py-8 sm:px-6">
+	<h2 class="font-display text-3xl font-semibold text-foreground">Friends</h2>
 
 	{#if loading}
-		<div class="flex items-center gap-2 text-sm text-gray-500">
-			<div class="h-4 w-4 animate-spin rounded-full border-2 border-gray-300 border-t-blue-500"></div>
+		<div class="flex items-center gap-2 py-8 text-sm text-muted-foreground">
+			<div class="h-4 w-4 animate-spin rounded-full border-2 border-border border-t-primary"></div>
 			Loading…
 		</div>
 	{:else}
 		<!-- Add Friend -->
 		<section>
-			<h3 class="mb-3 text-lg font-medium text-gray-800">Add a friend</h3>
+			<h3 class="mb-3 text-lg font-medium text-foreground">Add a friend</h3>
 			<form
 				class="flex gap-2"
 				onsubmit={(e) => {
@@ -137,25 +137,25 @@
 				</Button>
 			</form>
 			{#if addError}
-				<p class="mt-2 text-sm text-red-600">{addError}</p>
+				<p class="mt-2 text-sm text-destructive">{addError}</p>
 			{/if}
 			{#if addSuccess}
-				<p class="mt-2 text-sm text-green-600">{addSuccess}</p>
+				<p class="mt-2 text-sm text-primary">{addSuccess}</p>
 			{/if}
 		</section>
 
 		<!-- Pending Requests -->
 		{#if pendingRequests.length > 0}
 			<section>
-				<h3 class="mb-3 text-lg font-medium text-gray-800">
-					Pending requests <span class="ml-1 rounded-full bg-blue-100 px-2 py-0.5 text-xs font-semibold text-blue-700">{pendingRequests.length}</span>
+				<h3 class="mb-3 text-lg font-medium text-foreground">
+					Pending requests <span class="ml-1 rounded-full bg-primary/10 px-2 py-0.5 text-xs font-semibold text-primary">{pendingRequests.length}</span>
 				</h3>
 				<ul class="space-y-2">
 					{#each pendingRequests as req (req.id)}
-						<li class="flex items-center justify-between rounded-lg border border-gray-200 bg-white p-3 shadow-sm">
+						<li class="flex items-center justify-between rounded-lg border border-border bg-card p-3">
 							<div>
-								<p class="font-medium text-gray-900">{req.senderName}</p>
-								<p class="text-sm text-gray-500">{req.senderEmail}</p>
+								<p class="font-medium text-foreground">{req.senderName}</p>
+								<p class="text-sm text-muted-foreground">{req.senderEmail}</p>
 							</div>
 							<div class="flex gap-2">
 								<Button
@@ -170,7 +170,7 @@
 									size="sm"
 									disabled={declining.has(req.id)}
 									onclick={() => decline(req.id)}
-									class="text-red-600 hover:border-red-300 hover:text-red-700"
+									class="text-destructive hover:border-destructive/50 hover:text-destructive"
 								>
 									{declining.has(req.id) ? 'Declining…' : 'Decline'}
 								</Button>
@@ -183,16 +183,16 @@
 
 		<!-- Friends List -->
 		<section>
-			<h3 class="mb-3 text-lg font-medium text-gray-800">My Friends ({friends.length})</h3>
+			<h3 class="mb-3 text-lg font-medium text-foreground">My Friends ({friends.length})</h3>
 			{#if friends.length === 0}
-				<p class="text-sm text-gray-500">No friends yet. Send a request above to get started.</p>
+				<p class="text-sm text-muted-foreground">No friends yet. Send a request above to get started.</p>
 			{:else}
 				<ul class="space-y-2">
 					{#each friends as friend (friend.userId)}
-						<li class="flex items-center justify-between rounded-lg border border-gray-200 bg-white p-3 shadow-sm">
+						<li class="flex items-center justify-between rounded-lg border border-border bg-card p-3">
 							<div>
-								<p class="font-medium text-gray-900">{friend.name}</p>
-								<p class="text-sm text-gray-500">{friend.email}</p>
+								<p class="font-medium text-foreground">{friend.name}</p>
+								<p class="text-sm text-muted-foreground">{friend.email}</p>
 							</div>
 							<div class="flex gap-2">
 								<Button
@@ -207,7 +207,7 @@
 									size="sm"
 									disabled={removing.has(friend.userId)}
 									onclick={() => removeFriend(friend.userId)}
-									class="text-red-600 hover:border-red-300 hover:text-red-700"
+									class="text-destructive hover:border-destructive/50 hover:text-destructive"
 								>
 									{removing.has(friend.userId) ? 'Removing…' : 'Remove'}
 								</Button>
