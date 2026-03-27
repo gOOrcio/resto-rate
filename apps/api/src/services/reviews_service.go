@@ -24,12 +24,12 @@ func NewReviewsService(db *gorm.DB, kv valkey.Client) *ReviewsService {
 	return &ReviewsService{DB: db, Valkey: kv}
 }
 
-func (s *ReviewsService) getUserIDFromSession(ctx context.Context, h http.Header) (string, error) {
+func getUserIDFromSession(ctx context.Context, h http.Header, kv valkey.Client) (string, error) {
 	token := sessionToken(h)
 	if token == "" {
 		return "", connect.NewError(connect.CodeUnauthenticated, errors.New("authentication required"))
 	}
-	result := s.Valkey.Do(ctx, s.Valkey.B().Get().Key("session:"+token).Build())
+	result := kv.Do(ctx, kv.B().Get().Key("session:"+token).Build())
 	if result.Error() != nil {
 		return "", connect.NewError(connect.CodeUnauthenticated, errors.New("session expired"))
 	}
@@ -44,7 +44,7 @@ func (s *ReviewsService) CreateReview(
 	ctx context.Context,
 	req *connect.Request[v1.CreateReviewRequest],
 ) (*connect.Response[v1.CreateReviewResponse], error) {
-	userID, err := s.getUserIDFromSession(ctx, req.Header())
+	userID, err := getUserIDFromSession(ctx, req.Header(), s.Valkey)
 	if err != nil {
 		return nil, err
 	}
@@ -71,6 +71,12 @@ func (s *ReviewsService) CreateReview(
 			FirstOrCreate(&restaurant)
 		if result.Error != nil {
 			return result.Error
+		}
+
+		// Remove from wishlist if present (review supersedes wishlist)
+		if err := tx.Where("user_id = ? AND restaurant_id = ?", userID, restaurant.ID).
+			Delete(&models.WishlistItem{}).Error; err != nil {
+			return err
 		}
 
 		// Check for duplicate review
@@ -105,7 +111,7 @@ func (s *ReviewsService) ListReviews(
 	ctx context.Context,
 	req *connect.Request[v1.ListReviewsRequest],
 ) (*connect.Response[v1.ListReviewsResponse], error) {
-	userID, err := s.getUserIDFromSession(ctx, req.Header())
+	userID, err := getUserIDFromSession(ctx, req.Header(), s.Valkey)
 	if err != nil {
 		return nil, err
 	}
@@ -131,7 +137,7 @@ func (s *ReviewsService) UpdateReview(
 	ctx context.Context,
 	req *connect.Request[v1.UpdateReviewRequest],
 ) (*connect.Response[v1.UpdateReviewResponse], error) {
-	userID, err := s.getUserIDFromSession(ctx, req.Header())
+	userID, err := getUserIDFromSession(ctx, req.Header(), s.Valkey)
 	if err != nil {
 		return nil, err
 	}
@@ -167,7 +173,7 @@ func (s *ReviewsService) GetReview(
 	ctx context.Context,
 	req *connect.Request[v1.GetReviewRequest],
 ) (*connect.Response[v1.GetReviewResponse], error) {
-	userID, err := s.getUserIDFromSession(ctx, req.Header())
+	userID, err := getUserIDFromSession(ctx, req.Header(), s.Valkey)
 	if err != nil {
 		return nil, err
 	}
@@ -191,7 +197,7 @@ func (s *ReviewsService) DeleteReview(
 	ctx context.Context,
 	req *connect.Request[v1.DeleteReviewRequest],
 ) (*connect.Response[v1.DeleteReviewResponse], error) {
-	userID, err := s.getUserIDFromSession(ctx, req.Header())
+	userID, err := getUserIDFromSession(ctx, req.Header(), s.Valkey)
 	if err != nil {
 		return nil, err
 	}

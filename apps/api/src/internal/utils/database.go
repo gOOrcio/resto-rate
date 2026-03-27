@@ -99,6 +99,10 @@ func CreateSchema(db *gorm.DB) error {
 		return err
 	}
 
+	if err := db.AutoMigrate(&models.WishlistItem{}); err != nil {
+		return err
+	}
+
 	slog.Info("Database schema created successfully")
 	return nil
 }
