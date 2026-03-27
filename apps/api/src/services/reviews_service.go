@@ -382,14 +382,17 @@ func (s *ReviewsService) ListRestaurantReviews(
 	return connect.NewResponse(resp), nil
 }
 
-// assertFriendship returns CodePermissionDenied if callerID is not a confirmed friend of targetID.
+// assertFriendship returns CodePermissionDenied if callerID is not a confirmed friend of targetID,
+// or CodeInternal if the DB query itself fails.
 func assertFriendship(ctx context.Context, db *gorm.DB, callerID, targetID string) error {
 	var count int64
-	db.WithContext(ctx).Model(&models.FriendRequest{}).
+	if err := db.WithContext(ctx).Model(&models.FriendRequest{}).
 		Where(
 			"((sender_id = ? AND receiver_id = ?) OR (sender_id = ? AND receiver_id = ?)) AND status = ?",
 			callerID, targetID, targetID, callerID, models.FriendRequestStatusAccepted,
-		).Count(&count)
+		).Count(&count).Error; err != nil {
+		return connect.NewError(connect.CodeInternal, err)
+	}
 	if count == 0 {
 		return connect.NewError(connect.CodePermissionDenied, errors.New("you must be friends to view this content"))
 	}

@@ -9,6 +9,7 @@
 	import type { ReviewProto } from '$lib/client/generated/reviews/v1/review_pb';
 	import type { WishlistItemProto } from '$lib/client/generated/wishlist/v1/wishlist_item_pb';
 	import type { FriendProto } from '$lib/client/generated/friendship/v1/friendship_pb';
+	import { ConnectError, Code } from '@connectrpc/connect';
 	import { Star } from '@lucide/svelte';
 	import { Button } from '$lib/components/ui/button/index.js';
 	import ExpandableRestaurantInfo from '$lib/ui/components/ExpandableRestaurantInfo.svelte';
@@ -101,18 +102,18 @@
 			});
 			reviews = res.reviews ?? [];
 		} catch (e: unknown) {
-			const msg = (e as Error).message ?? '';
-			if (msg.includes('permission_denied') || msg.includes('PermissionDenied')) {
+			if (ConnectError.from(e).code === Code.PermissionDenied) {
 				notFriends = true;
+			} else {
+				console.error('Failed to load reviews:', e);
 			}
-			console.error('Failed to load reviews:', e);
 		} finally {
 			reviewsLoading = false;
 		}
 	}
 
 	$effect(() => {
-		if (!mounted || activeTab !== 'reviews') return;
+		if (!mounted || activeTab !== 'reviews' || notFriends) return;
 		if (ratingRangeError) return;
 		void [tagSlugs, tagMode, minRating, maxRating, commentSearch, reviewCity, reviewCountry, reviewSortBy];
 		loadReviews();
@@ -161,18 +162,18 @@
 			});
 			wishlistItems = res.items ?? [];
 		} catch (e: unknown) {
-			const msg = (e as Error).message ?? '';
-			if (msg.includes('permission_denied') || msg.includes('PermissionDenied')) {
+			if (ConnectError.from(e).code === Code.PermissionDenied) {
 				notFriends = true;
+			} else {
+				console.error('Failed to load wishlist:', e);
 			}
-			console.error('Failed to load wishlist:', e);
 		} finally {
 			wishlistLoading = false;
 		}
 	}
 
 	$effect(() => {
-		if (!mounted || activeTab !== 'wishlist') return;
+		if (!mounted || activeTab !== 'wishlist' || notFriends) return;
 		void [wishlistCity, wishlistCountry, wishlistSortBy];
 		loadWishlist();
 	});
@@ -222,9 +223,13 @@
 	{:else}
 		<!-- Tabs -->
 		<div class="border-b border-gray-200">
-			<nav class="-mb-px flex gap-6">
+			<nav role="tablist" aria-label="Friend profile sections" class="-mb-px flex gap-6">
 				<button
 					type="button"
+					role="tab"
+					id="tab-reviews"
+					aria-controls="panel-reviews"
+					aria-selected={activeTab === 'reviews'}
 					onclick={() => (activeTab = 'reviews')}
 					class="border-b-2 pb-3 text-sm font-medium transition-colors {activeTab === 'reviews'
 						? 'border-blue-600 text-blue-600'
@@ -234,6 +239,10 @@
 				</button>
 				<button
 					type="button"
+					role="tab"
+					id="tab-wishlist"
+					aria-controls="panel-wishlist"
+					aria-selected={activeTab === 'wishlist'}
 					onclick={() => (activeTab = 'wishlist')}
 					class="border-b-2 pb-3 text-sm font-medium transition-colors {activeTab === 'wishlist'
 						? 'border-blue-600 text-blue-600'
@@ -246,6 +255,7 @@
 
 		<!-- Reviews tab -->
 		{#if activeTab === 'reviews'}
+		<div role="tabpanel" id="panel-reviews" aria-labelledby="tab-reviews">
 			<!-- Reviews filter bar -->
 			<div class="space-y-3">
 				<div class="flex flex-wrap items-center gap-2">
@@ -441,10 +451,12 @@
 					{/each}
 				</ul>
 			{/if}
+		</div>
 		{/if}
 
 		<!-- Wishlist tab -->
 		{#if activeTab === 'wishlist'}
+		<div role="tabpanel" id="panel-wishlist" aria-labelledby="tab-wishlist">
 			<!-- Wishlist filter bar -->
 			<div class="flex flex-wrap items-center gap-2">
 				{#if activeWishlistFilterCount > 0}
@@ -512,6 +524,7 @@
 					{/each}
 				</ul>
 			{/if}
+		</div>
 		{/if}
 	{/if}
 </div>
