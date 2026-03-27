@@ -12,6 +12,7 @@ type Review struct {
 	RestaurantID   string     `gorm:"not null;index;uniqueIndex:idx_review_restaurant_user"`
 	UserID         string     `gorm:"not null;index;uniqueIndex:idx_review_restaurant_user"`
 	Restaurant     Restaurant `gorm:"foreignKey:RestaurantID"`
+	User           User       `gorm:"foreignKey:UserID"`
 	GooglePlacesID string     `gorm:"index"`
 	Comment        string
 	Rating         float64  `gorm:"not null"`
@@ -45,5 +46,6 @@ func (r *Review) ToProto() *reviewspb.ReviewProto {
 		RestaurantAddress: r.Restaurant.Address,
 		RestaurantCity:    r.Restaurant.City,
 		RestaurantCountry: r.Restaurant.Country,
+		AuthorName:        r.User.Name,
 	}
 }

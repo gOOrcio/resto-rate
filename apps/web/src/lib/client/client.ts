@@ -7,6 +7,7 @@ import { AuthService } from '$lib/client/generated/auth/v1/auth_service_pb';
 import { ReviewsService } from '$lib/client/generated/reviews/v1/reviews_service_pb';
 import { TagsService } from '$lib/client/generated/tags/v1/tags_service_pb';
 import { WishlistService } from '$lib/client/generated/wishlist/v1/wishlist_service_pb';
+import { FriendshipService } from '$lib/client/generated/friendship/v1/friendship_service_pb';
 
 const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001';
 const transport = createConnectTransport({
@@ -23,5 +24,6 @@ const auth = createClient(AuthService, transport);
 const reviews = createClient(ReviewsService, transport);
 const tags = createClient(TagsService, transport);
 const wishlist = createClient(WishlistService, transport);
+const friendship = createClient(FriendshipService, transport);
 
-export default { restaurants, users, googleMaps, auth, reviews, tags, wishlist };
+export default { restaurants, users, googleMaps, auth, reviews, tags, wishlist, friendship };

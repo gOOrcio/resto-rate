@@ -8,6 +8,7 @@ import (
 	tagsv1connect "api/src/generated/tags/v1/v1connect"
 	usersv1connect "api/src/generated/users/v1/v1connect"
 	wishlistv1connect "api/src/generated/wishlist/v1/v1connect"
+	friendshipv1connect "api/src/generated/friendship/v1/v1connect"
 	"api/src/internal/cache"
 	"api/src/internal/utils"
 	"api/src/services"
@@ -192,6 +193,11 @@ func initializeServiceHandlers(db *gorm.DB, valkeyClient valkey.Client, googleCl
 			path, handler := wishlistv1connect.NewWishlistServiceHandler(svc, connect.WithInterceptors(prometheusInterceptor))
 			return ServiceRegistration{Path: path, Handler: handler}
 		}(),
+		func() ServiceRegistration {
+			svc := services.NewFriendshipService(db, valkeyClient)
+			path, handler := friendshipv1connect.NewFriendshipServiceHandler(svc, connect.WithInterceptors(prometheusInterceptor))
+			return ServiceRegistration{Path: path, Handler: handler}
+		}(),
 	}
 }
 
@@ -257,6 +263,7 @@ func optionallySetupGRPCReflection(mux *http.ServeMux) {
 			reviewsv1connect.ReviewsServiceName,
 			tagsv1connect.TagsServiceName,
 			wishlistv1connect.WishlistServiceName,
+			friendshipv1connect.FriendshipServiceName,
 		)
 		mux.Handle(grpcreflect.NewHandlerV1(reflector))
 		mux.Handle(grpcreflect.NewHandlerV1Alpha(reflector))

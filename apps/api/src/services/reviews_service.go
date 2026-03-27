@@ -14,6 +14,8 @@ import (
 	"gorm.io/gorm"
 )
 
+const reviewOwnerFilter = "id = ? AND user_id = ?"
+
 type ReviewsService struct {
 	v1connect.UnimplementedReviewsServiceHandler
 	DB     *gorm.DB
@@ -101,7 +103,16 @@ func (s *ReviewsService) CreateReview(
 		return nil, txErr
 	}
 
+	// Load the current user so author_name is populated in the proto.
+	var currentUser models.User
+	if err := s.DB.WithContext(ctx).First(&currentUser, "id = ?", userID).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, connect.NewError(connect.CodeNotFound, errors.New("user not found"))
+		}
+		return nil, connect.NewError(connect.CodeInternal, err)
+	}
 	review.Restaurant = restaurant
+	review.User = currentUser
 	return connect.NewResponse(&v1.CreateReviewResponse{
 		Review:     review.ToProto(),
 		Restaurant: restaurant.ToProto(),
@@ -118,7 +129,7 @@ func (s *ReviewsService) ListReviews(
 	}
 
 	var reviews []models.Review
-	query := s.DB.WithContext(ctx).Preload("Restaurant").Where("user_id = ?", userID)
+	query := s.DB.WithContext(ctx).Preload("Restaurant").Preload("User").Where("user_id = ?", userID)
 	if req.Msg.GooglePlacesId != "" {
 		query = query.Where("google_places_id = ?", req.Msg.GooglePlacesId)
 	}
@@ -152,7 +163,7 @@ func (s *ReviewsService) UpdateReview(
 	}
 
 	var review models.Review
-	if err := s.DB.WithContext(ctx).Preload("Restaurant").First(&review, "id = ? AND user_id = ?", req.Msg.Id, userID).Error; err != nil {
+	if err := s.DB.WithContext(ctx).Preload("Restaurant").Preload("User").First(&review, reviewOwnerFilter, req.Msg.Id, userID).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, connect.NewError(connect.CodeNotFound, errors.New("review not found"))
 		}
@@ -184,7 +195,7 @@ func (s *ReviewsService) GetReview(
 	}
 
 	var review models.Review
-	if err := s.DB.WithContext(ctx).Preload("Restaurant").First(&review, "id = ? AND user_id = ?", req.Msg.Id, userID).Error; err != nil {
+	if err := s.DB.WithContext(ctx).Preload("Restaurant").Preload("User").First(&review, reviewOwnerFilter, req.Msg.Id, userID).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, connect.NewError(connect.CodeNotFound, errors.New("review not found"))
 		}
@@ -207,7 +218,7 @@ func (s *ReviewsService) DeleteReview(
 		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("id is required"))
 	}
 
-	result := s.DB.WithContext(ctx).Where("id = ? AND user_id = ?", req.Msg.Id, userID).Delete(&models.Review{})
+	result := s.DB.WithContext(ctx).Where(reviewOwnerFilter, req.Msg.Id, userID).Delete(&models.Review{})
 	if result.Error != nil {
 		return nil, result.Error
 	}
@@ -216,6 +227,77 @@ func (s *ReviewsService) DeleteReview(
 	}
 
 	return connect.NewResponse(&v1.DeleteReviewResponse{Success: true}), nil
+}
+
+func (s *ReviewsService) ListRestaurantReviews(
+	ctx context.Context,
+	req *connect.Request[v1.ListRestaurantReviewsRequest],
+) (*connect.Response[v1.ListRestaurantReviewsResponse], error) {
+	userID, err := getUserIDFromSession(ctx, req.Header(), s.Valkey)
+	if err != nil {
+		return nil, err
+	}
+
+	if req.Msg.GooglePlacesId == "" {
+		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("google_places_id is required"))
+	}
+
+	friendIDs, err := getFriendIDs(ctx, s.DB, userID)
+	if err != nil {
+		return nil, err
+	}
+
+	visibleUserIDs := append(friendIDs, userID)
+
+	var reviews []models.Review
+	if err := s.DB.WithContext(ctx).
+		Preload("Restaurant").
+		Preload("User").
+		Where("google_places_id = ? AND user_id IN ?", req.Msg.GooglePlacesId, visibleUserIDs).
+		Order("created_at DESC").
+		Find(&reviews).Error; err != nil {
+		return nil, err
+	}
+
+	protos := make([]*v1.ReviewProto, len(reviews))
+	var totalRating float64
+	for i, r := range reviews {
+		protos[i] = r.ToProto()
+		totalRating += r.Rating
+	}
+
+	var avgRating float64
+	if len(reviews) > 0 {
+		avgRating = totalRating / float64(len(reviews))
+	}
+
+	resp := &v1.ListRestaurantReviewsResponse{
+		Reviews:       protos,
+		AverageRating: avgRating,
+	}
+
+	// Populate restaurant metadata: prefer from reviews, fall back to a DB lookup.
+	var restaurantMeta *models.Restaurant
+	if len(reviews) > 0 {
+		restaurantMeta = &reviews[0].Restaurant
+	} else {
+		var r models.Restaurant
+		if err := s.DB.WithContext(ctx).Where("google_id = ?", req.Msg.GooglePlacesId).First(&r).Error; err != nil {
+			if !errors.Is(err, gorm.ErrRecordNotFound) {
+				return nil, err
+			}
+		} else {
+			restaurantMeta = &r
+		}
+	}
+	if restaurantMeta != nil {
+		resp.RestaurantName = restaurantMeta.Name
+		resp.RestaurantAddress = restaurantMeta.Address
+		resp.RestaurantCity = restaurantMeta.City
+		resp.RestaurantCountry = restaurantMeta.Country
+	}
+
+	return connect.NewResponse(resp), nil
 }
 
 // Ensure RestaurantProto import is used

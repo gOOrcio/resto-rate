@@ -7,8 +7,31 @@ on:
     branches: [main, master]
 
 jobs:
+  changes:
+    name: Detect changed paths
+    runs-on: ubuntu-latest
+    outputs:
+      api: ${{ github.event_name == 'push' || steps.filter.outputs.api == 'true' }}
+      web: ${{ github.event_name == 'push' || steps.filter.outputs.web == 'true' }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            api:
+              - 'apps/api/**'
+              - 'packages/protos/**'
+              - '.github/workflows/sonar.yml'
+            web:
+              - 'apps/web/**'
+              - 'packages/protos/**'
+              - '.github/workflows/sonar.yml'
+
   sonarqube-api:
     name: SonarQube Scan — Go API
+    needs: changes
+    if: needs.changes.outputs.api == 'true'
     runs-on: ubuntu-latest
     permissions:
       pull-requests: write
@@ -49,21 +72,35 @@ jobs:
         run: go test ./... -coverprofile=coverage.out -covermode=atomic
         continue-on-error: true
 
+      - name: Compute SonarQube branch args
+        id: sonar_args_api
+        run: |
+          if [[ "$EVENT" == "pull_request" ]]; then
+            echo "args=-Dsonar.pullrequest.key=${PR_NUMBER} -Dsonar.pullrequest.branch=${PR_BRANCH} -Dsonar.pullrequest.base=${PR_BASE}" >> "$GITHUB_OUTPUT"
+          else
+            echo "args=-Dsonar.branch.name=${REF_NAME}" >> "$GITHUB_OUTPUT"
+          fi
+        env:
+          EVENT: ${{ github.event_name }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          PR_BRANCH: ${{ github.head_ref }}
+          PR_BASE: ${{ github.base_ref }}
+          REF_NAME: ${{ github.ref_name }}
+
       - uses: sonarsource/sonarqube-scan-action@v3
         with:
           projectBaseDir: apps/api
           args: >
             -Dsonar.projectKey=resto-rate-api
             -Dsonar.host.url=https://sonarqube.mati-lab.online
-            ${{ github.event_name == 'pull_request' &&
-              format('-Dsonar.pullrequest.key={0} -Dsonar.pullrequest.branch={1} -Dsonar.pullrequest.base={2}',
-                github.event.pull_request.number, github.head_ref, github.base_ref) ||
-              format('-Dsonar.branch.name={0}', github.ref_name) }}
+            ${{ steps.sonar_args_api.outputs.args }}
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
 
   sonarqube-web:
     name: SonarQube Scan — Web
+    needs: changes
+    if: needs.changes.outputs.web == 'true'
     runs-on: ubuntu-latest
     permissions:
       pull-requests: write
@@ -89,15 +126,27 @@ jobs:
         run: bunx vitest run --coverage --coverage.reporter=lcov --passWithNoTests
         continue-on-error: true
 
+      - name: Compute SonarQube branch args
+        id: sonar_args_web
+        run: |
+          if [[ "$EVENT" == "pull_request" ]]; then
+            echo "args=-Dsonar.pullrequest.key=${PR_NUMBER} -Dsonar.pullrequest.branch=${PR_BRANCH} -Dsonar.pullrequest.base=${PR_BASE}" >> "$GITHUB_OUTPUT"
+          else
+            echo "args=-Dsonar.branch.name=${REF_NAME}" >> "$GITHUB_OUTPUT"
+          fi
+        env:
+          EVENT: ${{ github.event_name }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          PR_BRANCH: ${{ github.head_ref }}
+          PR_BASE: ${{ github.base_ref }}
+          REF_NAME: ${{ github.ref_name }}
+
       - uses: sonarsource/sonarqube-scan-action@v3
         with:
           projectBaseDir: apps/web
           args: >
             -Dsonar.projectKey=resto-rate-web
             -Dsonar.host.url=https://sonarqube.mati-lab.online
-            ${{ github.event_name == 'pull_request' &&
-              format('-Dsonar.pullrequest.key={0} -Dsonar.pullrequest.branch={1} -Dsonar.pullrequest.base={2}',
-                github.event.pull_request.number, github.head_ref, github.base_ref) ||
-              format('-Dsonar.branch.name={0}', github.ref_name) }}
+            ${{ steps.sonar_args_web.outputs.args }}
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}

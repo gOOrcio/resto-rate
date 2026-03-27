@@ -290,6 +290,15 @@
 		<div class="mt-6 space-y-4">
 			<PlacePreviewCard place={selectedPlace} />
 
+			{#if selectedPlace.name}
+				<a
+					href="/restaurants/{encodeURIComponent(selectedPlace.name)}"
+					class="text-sm text-blue-600 hover:underline"
+				>
+					See reviews from you &amp; friends →
+				</a>
+			{/if}
+
 			{#if !isCheckingReview && !currentReview}
 				<div>
 					<Button
