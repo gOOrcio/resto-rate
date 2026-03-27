@@ -43,6 +43,9 @@
 		<ul class="space-y-3">
 			{#each reviews as review (review.id)}
 				<li class="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
+					{#if review.restaurantName}
+						<p class="mb-2 truncate font-medium text-gray-900">{review.restaurantName}</p>
+					{/if}
 					<div class="mb-2 flex items-center gap-2">
 						<div class="flex items-center gap-0.5">
 							{#each Array(5) as _, i}
