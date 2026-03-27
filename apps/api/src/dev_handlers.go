@@ -2,10 +2,8 @@ package main
 
 import (
 	"api/src/internal/models"
-	"context"
 	"errors"
 	"net/http"
-	"strconv"
 	"time"
 
 	"github.com/google/uuid"
@@ -29,7 +27,7 @@ func devLoginHandler(db *gorm.DB, kv valkey.Client) http.Handler {
 			email = "dev@restorate.local"
 		}
 
-		ctx := context.Background()
+		ctx := r.Context()
 
 		var user models.User
 		err := db.WithContext(ctx).Where("email = ?", email).First(&user).Error
@@ -54,9 +52,15 @@ func devLoginHandler(db *gorm.DB, kv valkey.Client) http.Handler {
 			return
 		}
 
-		// SameSite=None is not set; dev never needs Secure
-		cookie := "session_token=" + token + "; HttpOnly; Path=/; Max-Age=" + strconv.Itoa(86400) + "; SameSite=Lax"
-		w.Header().Set("Set-Cookie", cookie)
+		http.SetCookie(w, &http.Cookie{
+			Name:     "session_token",
+			Value:    token,
+			Path:     "/",
+			MaxAge:   86400,
+			HttpOnly: true,
+			SameSite: http.SameSiteLaxMode,
+			// Secure is intentionally omitted — dev only runs over HTTP
+		})
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
 		w.Write([]byte(`{"ok":true}`))
