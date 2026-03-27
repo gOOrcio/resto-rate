@@ -67,9 +67,13 @@ jobs:
           lint: false
           breaking: false
 
+      - name: Download Go module dependencies
+        working-directory: apps/api
+        run: go mod download
+
       - name: Run tests with coverage
         working-directory: apps/api
-        run: go test ./... -coverprofile=coverage.out -covermode=atomic
+        run: go test ./src/test/... -coverprofile=coverage.out -covermode=atomic -coverpkg=./src/services/...
         continue-on-error: true
 
       - name: Compute SonarQube branch args
