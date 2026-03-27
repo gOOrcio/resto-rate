@@ -53,7 +53,7 @@ func main() {
 
 	db := mustConnectToDatabase()
 	valkeyClient := mustConnectCache()
-	mux := setupHTTPHandlers(initializeServiceHandlers(db, valkeyClient, googleClientID))
+	mux := setupHTTPHandlers(initializeServiceHandlers(db, valkeyClient, googleClientID), db, valkeyClient)
 
 	err := utils.CreateSchema(db)
 	if err != nil {
@@ -201,7 +201,7 @@ func initializeServiceHandlers(db *gorm.DB, valkeyClient valkey.Client, googleCl
 	}
 }
 
-func setupHTTPHandlers(registrations []ServiceRegistration) *http.ServeMux {
+func setupHTTPHandlers(registrations []ServiceRegistration, db *gorm.DB, kv valkey.Client) *http.ServeMux {
 	slog.Info("Registering services...")
 	metricsPath := "/metrics"
 
@@ -212,6 +212,12 @@ func setupHTTPHandlers(registrations []ServiceRegistration) *http.ServeMux {
 	}
 	mux.Handle(metricsPath, promhttp.Handler())
 	slog.Info("Metrics available", slog.String("path", metricsPath))
+
+	if os.Getenv("ENV") == "dev" {
+		mux.Handle("POST /dev/login", corsMiddleware(devLoginHandler(db, kv)))
+		slog.Info("Dev login available", slog.String("path", "/dev/login"))
+	}
+
 	return mux
 }
 

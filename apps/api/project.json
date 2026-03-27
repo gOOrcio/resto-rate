@@ -7,7 +7,7 @@
     "build": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "go build -o ../../dist/apps/api src/main.go",
+        "command": "go build -o ../../dist/apps/api ./src/",
         "cwd": "apps/api"
       },
       "dependsOn": ["protos:generate:api"]
