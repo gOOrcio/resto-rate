@@ -7,7 +7,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"log/slog"
 
 	"gorm.io/gorm"
 
@@ -23,121 +22,19 @@ func NewUserService(db *gorm.DB) *UserService {
 	return &UserService{DB: db}
 }
 
-func (u *UserService) CreateUser(
-	ctx context.Context,
-	req *connect.Request[v1.CreateUserRequest],
-) (*connect.Response[v1.CreateUserResponse], error) {
-	return u.createUser(ctx, req, false)
-}
-
-func (u *UserService) CreateAdminUser(
-	ctx context.Context,
-	req *connect.Request[v1.CreateAdminUserRequest],
-) (*connect.Response[v1.CreateAdminUserResponse], error) {
-	return u.createAdminUser(ctx, req)
-}
-
 func (u *UserService) GetUser(
 	ctx context.Context,
 	req *connect.Request[v1.GetUserRequest],
 ) (*connect.Response[v1.GetUserResponse], error) {
 	if req.Msg.Id == "" {
-		slog.Debug("User ID is empty in GetUser request")
-		return nil, errors.New("user ID cannot be empty")
+		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("user ID cannot be empty"))
 	}
 	user, err := u.findUserByIDWithContext(ctx, req.Msg.Id)
 	if err != nil {
-		slog.Debug("User not found or error in GetUser", slog.String("id", req.Msg.Id), slog.Any("error", err))
 		return nil, err
 	}
 
-	res := connect.NewResponse(&v1.GetUserResponse{
-		User: user.ToProto(),
-	})
-	return res, nil
-}
-
-func (u *UserService) UpdateUser(
-	ctx context.Context,
-	req *connect.Request[v1.UpdateUserRequest],
-) (*connect.Response[v1.UpdateUserResponse], error) {
-	user, err := u.findUserByIDWithContext(ctx, req.Msg.Id)
-	if err != nil {
-		if ctx.Err() != nil {
-			return nil, ctx.Err()
-		}
-		return nil, err
-	}
-
-	if req.Msg.Username != "" && (user.Username == nil || req.Msg.Username != *user.Username) {
-		var existingUser models.User
-		if err := u.DB.WithContext(ctx).Where("username = ? AND id != ?", req.Msg.Username, user.ID).First(&existingUser).Error; err == nil {
-			return nil, fmt.Errorf("username '%s' is already taken", req.Msg.Username)
-		} else if !errors.Is(err, gorm.ErrRecordNotFound) {
-			if ctx.Err() != nil {
-				return nil, ctx.Err()
-			}
-			return nil, err
-		}
-	}
-
-	if req.Msg.Email != "" && (user.Email == nil || req.Msg.Email != *user.Email) {
-		var existingUser models.User
-		if err := u.DB.WithContext(ctx).Where("email = ? AND id != ?", req.Msg.Email, user.ID).First(&existingUser).Error; err == nil {
-			return nil, fmt.Errorf("email '%s' is already taken", req.Msg.Email)
-		} else if !errors.Is(err, gorm.ErrRecordNotFound) {
-			if ctx.Err() != nil {
-				return nil, ctx.Err()
-			}
-			return nil, err
-		}
-	}
-
-	updates := map[string]interface{}{
-		"Name":  req.Msg.Name,
-		"Email": req.Msg.Email,
-	}
-
-	if req.Msg.Username != "" {
-		updates["Username"] = models.StringPtr(req.Msg.Username)
-	}
-
-	if err := u.DB.WithContext(ctx).Model(user).Updates(updates).Error; err != nil {
-		if ctx.Err() != nil {
-			return nil, ctx.Err()
-		}
-		return nil, err
-	}
-
-	res := connect.NewResponse(&v1.UpdateUserResponse{
-		User: user.ToProto(),
-	})
-	return res, nil
-}
-
-func (u *UserService) DeleteUser(
-	ctx context.Context,
-	req *connect.Request[v1.DeleteUserRequest],
-) (*connect.Response[v1.DeleteUserResponse], error) {
-	user, err := u.findUserByIDWithContext(ctx, req.Msg.Id)
-	if err != nil {
-		if ctx.Err() != nil {
-			return nil, ctx.Err()
-		}
-		return nil, err
-	}
-
-	if err := u.DB.WithContext(ctx).Delete(user).Error; err != nil {
-		if ctx.Err() != nil {
-			return nil, ctx.Err()
-		}
-		return nil, err
-	}
-
-	res := connect.NewResponse(&v1.DeleteUserResponse{
-		Success: true,
-	})
-	return res, nil
+	return connect.NewResponse(&v1.GetUserResponse{User: user.ToProto()}), nil
 }
 
 func (u *UserService) ListUsers(
@@ -181,13 +78,12 @@ func (u *UserService) ListUsers(
 		userProtos[i] = user.ToProto()
 	}
 
-	res := connect.NewResponse(&v1.ListUsersResponse{
+	return connect.NewResponse(&v1.ListUsersResponse{
 		Users:    userProtos,
 		Total:    int32(total),
 		Page:     int32(page),
 		PageSize: int32(pageSize),
-	})
-	return res, nil
+	}), nil
 }
 
 func (u *UserService) findUserByIDWithContext(ctx context.Context, id string) (*models.User, error) {
@@ -198,93 +94,10 @@ func (u *UserService) findUserByIDWithContext(ctx context.Context, id string) (*
 	var user models.User
 	if err := u.DB.WithContext(ctx).First(&user, "id = ?", id).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil, fmt.Errorf("user with ID %s not found", id)
+			return nil, connect.NewError(connect.CodeNotFound, fmt.Errorf("user with ID %s not found", id))
 		}
 		return nil, err
 	}
 
 	return &user, nil
-}
-
-func (u *UserService) createUser(
-	ctx context.Context,
-	req *connect.Request[v1.CreateUserRequest],
-	isAdmin bool,
-) (*connect.Response[v1.CreateUserResponse], error) {
-	user, err := u.createUserInternal(ctx, req.Msg.GoogleId, req.Msg.Email, req.Msg.Username, req.Msg.Name, isAdmin)
-	if err != nil {
-		return nil, err
-	}
-
-	res := connect.NewResponse(&v1.CreateUserResponse{
-		User: user.ToProto(),
-	})
-	return res, nil
-}
-
-func (u *UserService) createAdminUser(
-	ctx context.Context,
-	req *connect.Request[v1.CreateAdminUserRequest],
-) (*connect.Response[v1.CreateAdminUserResponse], error) {
-	user, err := u.createUserInternal(ctx, req.Msg.GoogleId, req.Msg.Email, req.Msg.Username, req.Msg.Name, true)
-	if err != nil {
-		return nil, err
-	}
-
-	res := connect.NewResponse(&v1.CreateAdminUserResponse{
-		User: user.ToProto(),
-	})
-	return res, nil
-}
-
-func (u *UserService) createUserInternal(
-	ctx context.Context,
-	googleId, email, username, name string,
-	isAdmin bool,
-) (*models.User, error) {
-	if email == "" {
-		return nil, fmt.Errorf("email is required")
-	}
-
-	if name == "" {
-		return nil, fmt.Errorf("name is required")
-	}
-
-	var existingUser models.User
-	if username != "" {
-		if err := u.DB.WithContext(ctx).Where("username = ?", username).First(&existingUser).Error; err == nil {
-			return nil, fmt.Errorf("username '%s' is already taken", username)
-		} else if !errors.Is(err, gorm.ErrRecordNotFound) {
-			if ctx.Err() != nil {
-				return nil, ctx.Err()
-			}
-			return nil, err
-		}
-	}
-
-	if err := u.DB.WithContext(ctx).Where("email = ?", email).First(&existingUser).Error; err == nil {
-		return nil, fmt.Errorf("email '%s' is already taken", email)
-	} else if !errors.Is(err, gorm.ErrRecordNotFound) {
-		if ctx.Err() != nil {
-			return nil, ctx.Err()
-		}
-		return nil, err
-	}
-
-	user := &models.User{
-		GoogleId: models.StringPtr(googleId),
-		Email:    models.StringPtr(email),
-		Username: models.StringPtr(username),
-		Name:     name,
-		IsAdmin:  isAdmin,
-	}
-
-	if err := u.DB.WithContext(ctx).Create(user).Error; err != nil {
-		if ctx.Err() != nil {
-			return nil, ctx.Err()
-		}
-		return nil, err
-	}
-
-	return user, nil
 }

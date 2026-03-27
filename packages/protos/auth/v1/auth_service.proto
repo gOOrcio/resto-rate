@@ -16,6 +16,10 @@ service AuthService {
   rpc Login(LoginRequest) returns (LoginResponse);
   rpc Logout(LogoutRequest) returns (LogoutResponse);
   rpc GetCurrentUser(GetCurrentUserRequest) returns (GetCurrentUserResponse);
+  rpc UpdateMyProfile(UpdateMyProfileRequest) returns (UpdateMyProfileResponse);
+  rpc GetMyStats(GetMyStatsRequest) returns (GetMyStatsResponse);
+  rpc DeleteMyAccount(DeleteMyAccountRequest) returns (DeleteMyAccountResponse);
+  rpc SignOutAllDevices(SignOutAllDevicesRequest) returns (SignOutAllDevicesResponse);
 }
 
 message LoginRequest {
@@ -37,4 +41,35 @@ message GetCurrentUserRequest {}
 
 message GetCurrentUserResponse {
   users.v1.UserProto user = 1;
+}
+
+message UpdateMyProfileRequest {
+  string username = 1;
+  string default_region = 2;
+  bool is_dark_mode_enabled = 3;
+  bool set_is_dark_mode_enabled = 4; // explicit setter flag (false is a valid value)
+}
+
+message UpdateMyProfileResponse {
+  users.v1.UserProto user = 1;
+}
+
+message GetMyStatsRequest {}
+
+message GetMyStatsResponse {
+  int32 review_count = 1;
+  int32 wishlist_count = 2;
+  int32 friend_count = 3;
+}
+
+message DeleteMyAccountRequest {}
+
+message DeleteMyAccountResponse {
+  bool success = 1;
+}
+
+message SignOutAllDevicesRequest {}
+
+message SignOutAllDevicesResponse {
+  bool success = 1;
 }

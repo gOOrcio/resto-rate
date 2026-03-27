@@ -41,7 +41,7 @@
 		addError = '';
 		addSuccess = '';
 		try {
-			await client.friendship.sendFriendRequest({ receiverEmail: addEmail.trim() });
+			await client.friendship.sendFriendRequest({ receiver: { case: 'receiverEmail', value: addEmail.trim() } });
 			addSuccess = `Friend request sent to ${addEmail.trim()}`;
 			addEmail = '';
 		} catch (e: unknown) {

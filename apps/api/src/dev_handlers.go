@@ -51,6 +51,8 @@ func devLoginHandler(db *gorm.DB, kv valkey.Client) http.Handler {
 			http.Error(w, "cache error", http.StatusInternalServerError)
 			return
 		}
+		// Track in user's sessions set for sign-out-all support
+		kv.Do(ctx, kv.B().Sadd().Key("user_sessions:"+user.ID).Member(token).Build())
 
 		http.SetCookie(w, &http.Cookie{
 			Name:     "session_token",

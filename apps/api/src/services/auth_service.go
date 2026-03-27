@@ -6,6 +6,7 @@ import (
 	"api/src/internal/models"
 	"context"
 	"errors"
+	"fmt"
 	"net/http"
 	"strconv"
 	"time"
@@ -69,8 +70,7 @@ func (s *AuthService) Login(
 	}
 
 	token := uuid.New().String()
-	setCmd := s.Valkey.B().Set().Key("session:"+token).Value(user.ID).Ex(24 * time.Hour).Build()
-	if err := s.Valkey.Do(ctx, setCmd).Error(); err != nil {
+	if err := s.issueSession(ctx, user.ID, token); err != nil {
 		return nil, connect.NewError(connect.CodeInternal, err)
 	}
 
@@ -87,6 +87,11 @@ func (s *AuthService) Logout(
 ) (*connect.Response[authv1.LogoutResponse], error) {
 	token := sessionToken(req.Header())
 	if token != "" {
+		// Get user ID before deleting session so we can update the sessions set
+		result := s.Valkey.Do(ctx, s.Valkey.B().Get().Key("session:"+token).Build())
+		if userID, err := result.ToString(); err == nil {
+			s.Valkey.Do(ctx, s.Valkey.B().Srem().Key("user_sessions:"+userID).Member(token).Build())
+		}
 		s.Valkey.Do(ctx, s.Valkey.B().Del().Key("session:"+token).Build())
 	}
 
@@ -120,6 +125,185 @@ func (s *AuthService) GetCurrentUser(
 	}
 
 	return connect.NewResponse(&authv1.GetCurrentUserResponse{User: user.ToProto()}), nil
+}
+
+func (s *AuthService) UpdateMyProfile(
+	ctx context.Context,
+	req *connect.Request[authv1.UpdateMyProfileRequest],
+) (*connect.Response[authv1.UpdateMyProfileResponse], error) {
+	userID, err := getUserIDFromSession(ctx, req.Header(), s.Valkey)
+	if err != nil {
+		return nil, err
+	}
+
+	var user models.User
+	if err := s.DB.WithContext(ctx).First(&user, "id = ?", userID).Error; err != nil {
+		return nil, connect.NewError(connect.CodeNotFound, errors.New("user not found"))
+	}
+
+	updates := map[string]interface{}{}
+
+	if req.Msg.Username != "" {
+		// Validate username format: 3–30 chars, lowercase letters/digits/underscores
+		if !isValidUsername(req.Msg.Username) {
+			return nil, connect.NewError(connect.CodeInvalidArgument,
+				errors.New("username must be 3–30 characters and contain only lowercase letters, digits, and underscores"))
+		}
+		// Check uniqueness
+		var existing models.User
+		if err := s.DB.WithContext(ctx).Where("username = ? AND id != ?", req.Msg.Username, userID).First(&existing).Error; err == nil {
+			return nil, connect.NewError(connect.CodeAlreadyExists,
+				fmt.Errorf("username '%s' is already taken", req.Msg.Username))
+		} else if !errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, connect.NewError(connect.CodeInternal, err)
+		}
+		updates["Username"] = models.StringPtr(req.Msg.Username)
+	}
+
+	if req.Msg.DefaultRegion != "" {
+		updates["DefaultRegion"] = req.Msg.DefaultRegion
+	}
+
+	if req.Msg.SetIsDarkModeEnabled {
+		updates["IsDarkModeEnabled"] = req.Msg.IsDarkModeEnabled
+	}
+
+	if len(updates) == 0 {
+		return connect.NewResponse(&authv1.UpdateMyProfileResponse{User: user.ToProto()}), nil
+	}
+
+	if err := s.DB.WithContext(ctx).Model(&user).Updates(updates).Error; err != nil {
+		return nil, connect.NewError(connect.CodeInternal, err)
+	}
+
+	// Re-fetch to get updated values
+	if err := s.DB.WithContext(ctx).First(&user, "id = ?", userID).Error; err != nil {
+		return nil, connect.NewError(connect.CodeInternal, err)
+	}
+
+	return connect.NewResponse(&authv1.UpdateMyProfileResponse{User: user.ToProto()}), nil
+}
+
+func (s *AuthService) GetMyStats(
+	ctx context.Context,
+	req *connect.Request[authv1.GetMyStatsRequest],
+) (*connect.Response[authv1.GetMyStatsResponse], error) {
+	userID, err := getUserIDFromSession(ctx, req.Header(), s.Valkey)
+	if err != nil {
+		return nil, err
+	}
+
+	type statsRow struct {
+		ReviewCount  int64
+		WishlistCount int64
+		FriendCount  int64
+	}
+
+	var reviewCount, wishlistCount, friendCount int64
+
+	if err := s.DB.WithContext(ctx).Table("reviews").Where("user_id = ?", userID).Count(&reviewCount).Error; err != nil {
+		return nil, connect.NewError(connect.CodeInternal, err)
+	}
+	if err := s.DB.WithContext(ctx).Table("wishlist_items").Where("user_id = ?", userID).Count(&wishlistCount).Error; err != nil {
+		return nil, connect.NewError(connect.CodeInternal, err)
+	}
+	if err := s.DB.WithContext(ctx).Table("friend_requests").
+		Where("(sender_id = ? OR receiver_id = ?) AND status = 'accepted'", userID, userID).
+		Count(&friendCount).Error; err != nil {
+		return nil, connect.NewError(connect.CodeInternal, err)
+	}
+
+	return connect.NewResponse(&authv1.GetMyStatsResponse{
+		ReviewCount:   int32(reviewCount),
+		WishlistCount: int32(wishlistCount),
+		FriendCount:   int32(friendCount),
+	}), nil
+}
+
+func (s *AuthService) DeleteMyAccount(
+	ctx context.Context,
+	req *connect.Request[authv1.DeleteMyAccountRequest],
+) (*connect.Response[authv1.DeleteMyAccountResponse], error) {
+	token := sessionToken(req.Header())
+	if token == "" {
+		return nil, connect.NewError(connect.CodeUnauthenticated, errors.New("no session"))
+	}
+
+	result := s.Valkey.Do(ctx, s.Valkey.B().Get().Key("session:"+token).Build())
+	if result.Error() != nil {
+		return nil, connect.NewError(connect.CodeUnauthenticated, errors.New("session expired or invalid"))
+	}
+	userID, err := result.ToString()
+	if err != nil {
+		return nil, connect.NewError(connect.CodeUnauthenticated, errors.New("invalid session data"))
+	}
+
+	// Wipe all sessions for this user
+	if err := s.wipeAllSessions(ctx, userID); err != nil {
+		return nil, connect.NewError(connect.CodeInternal, err)
+	}
+
+	// Delete the user (cascade via DB constraints / GORM soft-delete)
+	if err := s.DB.WithContext(ctx).Delete(&models.User{}, "id = ?", userID).Error; err != nil {
+		return nil, connect.NewError(connect.CodeInternal, err)
+	}
+
+	res := connect.NewResponse(&authv1.DeleteMyAccountResponse{Success: true})
+	res.Header().Set("Set-Cookie", s.sessionCookie("session_token", "", -1))
+	return res, nil
+}
+
+func (s *AuthService) SignOutAllDevices(
+	ctx context.Context,
+	req *connect.Request[authv1.SignOutAllDevicesRequest],
+) (*connect.Response[authv1.SignOutAllDevicesResponse], error) {
+	token := sessionToken(req.Header())
+	if token == "" {
+		return nil, connect.NewError(connect.CodeUnauthenticated, errors.New("no session"))
+	}
+
+	result := s.Valkey.Do(ctx, s.Valkey.B().Get().Key("session:"+token).Build())
+	if result.Error() != nil {
+		return nil, connect.NewError(connect.CodeUnauthenticated, errors.New("session expired or invalid"))
+	}
+	userID, err := result.ToString()
+	if err != nil {
+		return nil, connect.NewError(connect.CodeUnauthenticated, errors.New("invalid session data"))
+	}
+
+	if err := s.wipeAllSessions(ctx, userID); err != nil {
+		return nil, connect.NewError(connect.CodeInternal, err)
+	}
+
+	res := connect.NewResponse(&authv1.SignOutAllDevicesResponse{Success: true})
+	res.Header().Set("Set-Cookie", s.sessionCookie("session_token", "", -1))
+	return res, nil
+}
+
+// issueSession creates a session token in Valkey and tracks it in the user's sessions set.
+func (s *AuthService) issueSession(ctx context.Context, userID, token string) error {
+	setCmd := s.Valkey.B().Set().Key("session:"+token).Value(userID).Ex(24 * time.Hour).Build()
+	if err := s.Valkey.Do(ctx, setCmd).Error(); err != nil {
+		return err
+	}
+	// Track in the user's session set (for sign-out-all)
+	s.Valkey.Do(ctx, s.Valkey.B().Sadd().Key("user_sessions:"+userID).Member(token).Build())
+	return nil
+}
+
+// wipeAllSessions deletes every session for the given user from Valkey.
+func (s *AuthService) wipeAllSessions(ctx context.Context, userID string) error {
+	smembersResult := s.Valkey.Do(ctx, s.Valkey.B().Smembers().Key("user_sessions:"+userID).Build())
+	tokens, err := smembersResult.AsStrSlice()
+	if err != nil {
+		// Key may not exist (old sessions pre-tracking) — treat as empty
+		tokens = []string{}
+	}
+	for _, t := range tokens {
+		s.Valkey.Do(ctx, s.Valkey.B().Del().Key("session:"+t).Build())
+	}
+	s.Valkey.Do(ctx, s.Valkey.B().Del().Key("user_sessions:"+userID).Build())
+	return nil
 }
 
 // verifyIDToken verifies a provider-issued JWT and returns normalized claims.
@@ -191,4 +375,17 @@ func sessionToken(h http.Header) string {
 		return c.Value
 	}
 	return ""
+}
+
+// isValidUsername checks the username regex: 3–30 lowercase letters, digits, underscores.
+func isValidUsername(s string) bool {
+	if len(s) < 3 || len(s) > 30 {
+		return false
+	}
+	for _, c := range s {
+		if !((c >= 'a' && c <= 'z') || (c >= '0' && c <= '9') || c == '_') {
+			return false
+		}
+	}
+	return true
 }
