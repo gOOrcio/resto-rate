@@ -10,7 +10,7 @@
 	let reviews = $state<ReviewProto[]>([]);
 	let loading = $state(true);
 	let editingId = $state<string | null>(null);
-	let deletingId = $state<string | null>(null);
+	let deleting = $state<Set<string>>(new Set());
 
 	async function loadReviews() {
 		try {
@@ -24,14 +24,17 @@
 	}
 
 	async function deleteReview(id: string) {
-		deletingId = id;
+		deleting = new Set([...deleting, id]);
+		const removed = reviews.find((r) => r.id === id)!;
+		reviews = reviews.filter((r) => r.id !== id);
 		try {
 			await client.reviews.deleteReview({ id });
-			reviews = reviews.filter((r) => r.id !== id);
 		} catch (e) {
 			console.error('Failed to delete review:', e);
+			reviews = [...reviews, removed];
 		} finally {
-			deletingId = null;
+			deleting.delete(id);
+			deleting = new Set(deleting);
 		}
 	}
 
@@ -87,11 +90,11 @@
 								<Button
 									variant="outline"
 									size="sm"
-									disabled={deletingId === review.id}
+									disabled={deleting.has(review.id)}
 									onclick={() => deleteReview(review.id)}
 									class="text-red-600 hover:border-red-300 hover:text-red-700"
 								>
-									{deletingId === review.id ? 'Deleting…' : 'Delete'}
+									{deleting.has(review.id) ? 'Deleting…' : 'Delete'}
 								</Button>
 							</div>
 						</div>
