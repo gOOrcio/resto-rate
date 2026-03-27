@@ -4,7 +4,7 @@
 	import * as Sheet from '$lib/components/ui/sheet/index.js';
 	import * as DropdownMenu from '$lib/components/ui/dropdown-menu/index.js';
 	import { auth } from '$lib/state/auth.svelte';
-	import { theme } from '$lib/state/theme.svelte';
+	import { mode, setMode } from '$lib/state/theme.svelte';
 	import SocialSignIn from '$lib/ui/components/SocialSignIn.svelte';
 	import client from '$lib/client/client';
 
@@ -22,6 +22,18 @@
 				if (el.open) el.close();
 			}
 		};
+	}
+
+	async function toggleDarkMode() {
+		const next = mode.current !== 'dark';
+		setMode(next ? 'dark' : 'light');
+		try {
+			const res = await client.auth.updateMyProfile({ setIsDarkModeEnabled: true, isDarkModeEnabled: next });
+			if (res.user) auth.setUser(res.user);
+		} catch {
+			// revert on failure
+			setMode(next ? 'light' : 'dark');
+		}
 	}
 
 	async function handleLogout() {
@@ -102,6 +114,9 @@
 						</DropdownMenu.Trigger>
 						<DropdownMenu.Content align="end" class="w-48">
 							<DropdownMenu.Label>Account</DropdownMenu.Label>
+							<DropdownMenu.Item>
+								<a href="/profile" class="w-full">My Profile</a>
+							</DropdownMenu.Item>
 							<DropdownMenu.Item onclick={handleLogout}>Sign out</DropdownMenu.Item>
 							<DropdownMenu.Separator />
 							<DropdownMenu.Label>Navigate</DropdownMenu.Label>
@@ -110,11 +125,8 @@
 							</DropdownMenu.Item>
 							<DropdownMenu.Separator />
 							<DropdownMenu.Label>Preferences</DropdownMenu.Label>
-							<DropdownMenu.Item onclick={() => theme.toggle()}>
-								{theme.dark ? 'Light mode' : 'Dark mode'}
-							</DropdownMenu.Item>
-							<DropdownMenu.Item disabled class="cursor-not-allowed opacity-50">
-								Language (coming soon)
+							<DropdownMenu.Item onclick={toggleDarkMode}>
+								{mode.current === 'dark' ? 'Light mode' : 'Dark mode'}
 							</DropdownMenu.Item>
 						</DropdownMenu.Content>
 					</DropdownMenu.Root>
@@ -166,9 +178,9 @@
 							<hr class="border-border" />
 							<button
 								class="text-left text-sm text-muted-foreground hover:text-foreground"
-								onclick={() => theme.toggle()}
+								onclick={toggleDarkMode}
 							>
-								{theme.dark ? 'Light mode' : 'Dark mode'}
+								{mode.current === 'dark' ? 'Light mode' : 'Dark mode'}
 							</button>
 							<button
 								class="text-left text-sm text-muted-foreground hover:text-foreground"

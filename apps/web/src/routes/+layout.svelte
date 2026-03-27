@@ -7,26 +7,14 @@
 	import { page } from '$app/state';
 	import client from '$lib/client/client';
 	import { auth } from '$lib/state/auth.svelte';
-	import { theme } from '$lib/state/theme.svelte';
+	import { setMode } from '$lib/state/theme.svelte';
+	import { ModeWatcher } from 'mode-watcher';
 	import { AuthProvider } from '$lib/client/generated/auth/v1/auth_service_pb';
 
 	let { children } = $props();
 
 	const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID as string;
 	let reducedMotion = $state(false);
-
-	// Only apply/persist after init() has read stored preference — prevents
-	// overwriting localStorage with the default false value on first render.
-	$effect(() => {
-		if (!theme.initialized) return;
-		if (theme.dark) {
-			document.documentElement.classList.add('dark');
-			localStorage.setItem('theme', 'dark');
-		} else {
-			document.documentElement.classList.remove('dark');
-			localStorage.setItem('theme', 'light');
-		}
-	});
 
 	async function handleCredentialResponse(response: { credential: string }) {
 		try {
@@ -36,6 +24,8 @@
 			});
 			if (res.user) {
 				auth.setUser(res.user);
+				// Sync dark mode preference from backend on first login
+				setMode(res.user.isDarkModeEnabled ? 'dark' : 'light');
 			}
 		} catch (e) {
 			console.error('[GIS] One Tap sign-in failed', e);
@@ -44,13 +34,14 @@
 
 	onMount(async () => {
 		reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-		theme.init();
 
 		let isAuthenticated = false;
 		try {
 			const res = await client.auth.getCurrentUser({});
 			if (res.user) {
 				auth.setUser(res.user);
+				// Sync dark mode preference from backend
+				setMode(res.user.isDarkModeEnabled ? 'dark' : 'light');
 				isAuthenticated = true;
 			}
 		} catch {
@@ -90,6 +81,8 @@
 		document.head.appendChild(script);
 	});
 </script>
+
+<ModeWatcher defaultMode="system" />
 
 <svelte:head>
 	<link rel="preconnect" href="https://fonts.googleapis.com" />

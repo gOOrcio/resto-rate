@@ -9,13 +9,15 @@ import (
 
 type User struct {
 	UUIDv7
-	GoogleId  *string   `gorm:"uniqueIndex"`
-	Email     *string   `gorm:"uniqueIndex"`
-	Username  *string   `gorm:"uniqueIndex"`
-	Name      string    `gorm:"not null"`
-	IsAdmin   bool      `gorm:"default:false"`
-	CreatedAt time.Time `gorm:"autoCreateTime"`
-	UpdatedAt time.Time `gorm:"autoUpdateTime"`
+	GoogleId           *string   `gorm:"uniqueIndex"`
+	Email              *string   `gorm:"uniqueIndex"`
+	Username           *string   `gorm:"uniqueIndex"`
+	Name               string    `gorm:"not null"`
+	IsDarkModeEnabled  bool      `gorm:"default:false"`
+	DefaultRegion      string    `gorm:"default:''"`
+	DefaultLanguage    string    `gorm:"default:''"`
+	CreatedAt          time.Time `gorm:"autoCreateTime"`
+	UpdatedAt          time.Time `gorm:"autoUpdateTime"`
 }
 
 func (u *User) BeforeCreate(tx *gorm.DB) (err error) {
@@ -27,14 +29,16 @@ func (u *User) BeforeCreate(tx *gorm.DB) (err error) {
 
 func (u *User) ToProto() *userpb.UserProto {
 	return &userpb.UserProto{
-		Id:        u.ID,
-		GoogleId:  derefString(u.GoogleId),
-		Email:     derefString(u.Email),
-		Username:  derefString(u.Username),
-		Name:      u.Name,
-		IsAdmin:   u.IsAdmin,
-		CreatedAt: u.CreatedAt.Unix(),
-		UpdatedAt: u.UpdatedAt.Unix(),
+		Id:                u.ID,
+		GoogleId:          derefString(u.GoogleId),
+		Email:             derefString(u.Email),
+		Username:          derefString(u.Username),
+		Name:              u.Name,
+		IsDarkModeEnabled: u.IsDarkModeEnabled,
+		DefaultRegion:     u.DefaultRegion,
+		DefaultLanguage:   u.DefaultLanguage,
+		CreatedAt:         u.CreatedAt.Unix(),
+		UpdatedAt:         u.UpdatedAt.Unix(),
 	}
 }
 

@@ -13,10 +13,14 @@ service FriendshipService {
   rpc RemoveFriend(RemoveFriendRequest) returns (RemoveFriendResponse);
   rpc ListFriends(ListFriendsRequest) returns (ListFriendsResponse);
   rpc ListPendingRequests(ListPendingRequestsRequest) returns (ListPendingRequestsResponse);
+  rpc FindUserByHandle(FindUserByHandleRequest) returns (FindUserByHandleResponse);
 }
 
 message SendFriendRequestRequest {
-  string receiver_email = 1;
+  oneof receiver {
+    string receiver_email = 1;
+    string receiver_username = 2;
+  }
 }
 
 message SendFriendRequestResponse {
@@ -57,4 +61,14 @@ message ListPendingRequestsRequest {}
 
 message ListPendingRequestsResponse {
   repeated FriendRequestProto requests = 1;
+}
+
+message FindUserByHandleRequest {
+  string username = 1;
+}
+
+message FindUserByHandleResponse {
+  string id = 1;
+  string username = 2;
+  string name = 3;
 }

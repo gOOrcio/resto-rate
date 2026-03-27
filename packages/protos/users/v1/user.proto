@@ -12,8 +12,8 @@ message UserProto {
   string default_language = 5;
   string default_region = 6;
   bool is_dark_mode_enabled = 7;
-  bool is_active = 8;
-  bool is_admin = 9;
+  reserved 8, 9;
+  reserved "is_active", "is_admin";
   int64 created_at = 10;
   int64 updated_at = 11;
   string username = 12;

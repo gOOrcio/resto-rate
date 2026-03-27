@@ -142,8 +142,8 @@ func seedUsers(db *gorm.DB) error {
 	if count == 0 {
 		slog.Info("Seeding users...")
 		seedUsers := []models.User{
-			{GoogleId: models.StringPtr("1"), Email: models.StringPtr("user1@example.com"), Name: "User One", Username: models.StringPtr("username-a"), IsAdmin: true},
-			{GoogleId: models.StringPtr("2"), Email: models.StringPtr("user2@example.com"), Name: "User Two", Username: models.StringPtr("username-b"), IsAdmin: false},
+			{GoogleId: models.StringPtr("1"), Email: models.StringPtr("user1@example.com"), Name: "User One", Username: models.StringPtr("username-a")},
+			{GoogleId: models.StringPtr("2"), Email: models.StringPtr("user2@example.com"), Name: "User Two", Username: models.StringPtr("username-b")},
 		}
 		if err := db.Create(&seedUsers).Error; err != nil {
 			return err

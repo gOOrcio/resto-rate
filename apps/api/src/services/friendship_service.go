@@ -6,6 +6,7 @@ import (
 	"api/src/internal/models"
 	"context"
 	"errors"
+	"strings"
 
 	"connectrpc.com/connect"
 	"github.com/valkey-io/valkey-go"
@@ -31,16 +32,28 @@ func (s *FriendshipService) SendFriendRequest(
 		return nil, err
 	}
 
-	if req.Msg.ReceiverEmail == "" {
-		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("receiver_email is required"))
-	}
-
 	var receiver models.User
-	if err := s.DB.WithContext(ctx).Where("email = ?", req.Msg.ReceiverEmail).First(&receiver).Error; err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil, connect.NewError(connect.CodeNotFound, errors.New("user not found"))
+	switch {
+	case req.Msg.GetReceiverEmail() != "":
+		if err := s.DB.WithContext(ctx).Where("email = ?", req.Msg.GetReceiverEmail()).First(&receiver).Error; err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				return nil, connect.NewError(connect.CodeNotFound, errors.New("user not found"))
+			}
+			return nil, err
 		}
-		return nil, err
+	case req.Msg.GetReceiverUsername() != "":
+		handle := strings.ToLower(strings.TrimPrefix(req.Msg.GetReceiverUsername(), "@"))
+		if !isValidUsername(handle) {
+			return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("invalid username"))
+		}
+		if err := s.DB.WithContext(ctx).Where("username = ?", handle).First(&receiver).Error; err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				return nil, connect.NewError(connect.CodeNotFound, errors.New("user not found"))
+			}
+			return nil, err
+		}
+	default:
+		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("receiver_email or receiver_username is required"))
 	}
 
 	if receiver.ID == senderID {
@@ -238,6 +251,38 @@ func (s *FriendshipService) ListPendingRequests(
 	}
 
 	return connect.NewResponse(&v1.ListPendingRequestsResponse{Requests: protos}), nil
+}
+
+func (s *FriendshipService) FindUserByHandle(
+	ctx context.Context,
+	req *connect.Request[v1.FindUserByHandleRequest],
+) (*connect.Response[v1.FindUserByHandleResponse], error) {
+	// Validate input before auth so callers get a clear error without needing a valid session.
+	handle := strings.ToLower(strings.TrimPrefix(req.Msg.Username, "@"))
+	if handle == "" {
+		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("username is required"))
+	}
+	if !isValidUsername(handle) {
+		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("invalid username"))
+	}
+
+	if _, err := getUserIDFromSession(ctx, req.Header(), s.Valkey); err != nil {
+		return nil, err
+	}
+
+	var user models.User
+	if err := s.DB.WithContext(ctx).Where("username = ?", handle).First(&user).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, connect.NewError(connect.CodeNotFound, errors.New("user not found"))
+		}
+		return nil, err
+	}
+
+	return connect.NewResponse(&v1.FindUserByHandleResponse{
+		Id:       user.ID,
+		Username: derefStr(user.Username),
+		Name:     user.Name,
+	}), nil
 }
 
 // canonicalPairKey returns a deterministic, unordered key for a user pair
