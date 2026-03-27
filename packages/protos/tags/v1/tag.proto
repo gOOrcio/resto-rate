@@ -1,0 +1,12 @@
+syntax = "proto3";
+
+package tags.v1;
+
+option go_package = "api/src/generated/tags/v1";
+
+message TagProto {
+  string id = 1;
+  string slug = 2;
+  string label = 3;
+  string category = 4;
+}

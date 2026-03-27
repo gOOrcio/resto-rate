@@ -1,0 +1,17 @@
+syntax = "proto3";
+
+package tags.v1;
+
+import "tags/v1/tag.proto";
+
+option go_package = "api/src/generated/tags/v1";
+
+service TagsService {
+  rpc ListTags(ListTagsRequest) returns (ListTagsResponse);
+}
+
+message ListTagsRequest {}
+
+message ListTagsResponse {
+  repeated TagProto tags = 1;
+}
