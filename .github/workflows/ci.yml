@@ -1,0 +1,59 @@
+name: CI
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+
+jobs:
+  api:
+    name: Go API — build + test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: apps/api/go.mod
+
+      - name: Generate Go protobuf files
+        uses: bufbuild/buf-action@v1
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          push: false
+          lint: false
+          breaking: false
+
+      - name: Build
+        run: nx run api:build
+
+      - name: Test
+        run: nx run api:test
+
+  web:
+    name: Web — svelte-check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # Use Node 20 LTS — avoids the @typescript/vfs/localStorage bug present in Node 25
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - uses: oven-sh/setup-bun@v2
+
+      - name: Install dependencies
+        run: bun install
+
+      - name: Setup buf
+        uses: bufbuild/buf-action@v1
+        with:
+          setup_only: true
+
+      - name: Generate TypeScript protobuf files
+        run: buf generate --template apps/web/buf.gen.yaml
+
+      - name: Type check
+        run: nx run web:check
