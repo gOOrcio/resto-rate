@@ -194,15 +194,24 @@
 								<p class="font-medium text-gray-900">{friend.name}</p>
 								<p class="text-sm text-gray-500">{friend.email}</p>
 							</div>
-							<Button
-								variant="outline"
-								size="sm"
-								disabled={removing.has(friend.userId)}
-								onclick={() => removeFriend(friend.userId)}
-								class="text-red-600 hover:border-red-300 hover:text-red-700"
-							>
-								{removing.has(friend.userId) ? 'Removing…' : 'Remove'}
-							</Button>
+							<div class="flex gap-2">
+								<Button
+									variant="outline"
+									size="sm"
+									href="/friends/{friend.userId}"
+								>
+									View Profile
+								</Button>
+								<Button
+									variant="outline"
+									size="sm"
+									disabled={removing.has(friend.userId)}
+									onclick={() => removeFriend(friend.userId)}
+									class="text-red-600 hover:border-red-300 hover:text-red-700"
+								>
+									{removing.has(friend.userId) ? 'Removing…' : 'Remove'}
+								</Button>
+							</div>
 						</li>
 					{/each}
 				</ul>

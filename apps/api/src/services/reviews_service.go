@@ -134,14 +134,23 @@ func (s *ReviewsService) ListReviews(
 		return nil, connect.NewError(connect.CodeInternal, errors.New("database not initialized"))
 	}
 
-	userID, err := getUserIDFromSession(ctx, req.Header(), s.Valkey)
+	callerID, err := getUserIDFromSession(ctx, req.Header(), s.Valkey)
 	if err != nil {
 		return nil, err
 	}
 
+	// Determine which user's reviews to return
+	targetUserID := callerID
+	if req.Msg.TargetUserId != "" && req.Msg.TargetUserId != callerID {
+		if err := assertFriendship(ctx, s.DB, callerID, req.Msg.TargetUserId); err != nil {
+			return nil, err
+		}
+		targetUserID = req.Msg.TargetUserId
+	}
+
 	needsRestaurantJoin := req.Msg.City != "" || req.Msg.Country != ""
 
-	query := s.DB.WithContext(ctx).Preload("User").Where("reviews.user_id = ?", userID)
+	query := s.DB.WithContext(ctx).Preload("User").Where("reviews.user_id = ?", targetUserID)
 
 	if needsRestaurantJoin {
 		query = query.Joins("JOIN restaurants ON restaurants.id = reviews.restaurant_id").
@@ -371,6 +380,20 @@ func (s *ReviewsService) ListRestaurantReviews(
 	}
 
 	return connect.NewResponse(resp), nil
+}
+
+// assertFriendship returns CodePermissionDenied if callerID is not a confirmed friend of targetID.
+func assertFriendship(ctx context.Context, db *gorm.DB, callerID, targetID string) error {
+	var count int64
+	db.WithContext(ctx).Model(&models.FriendRequest{}).
+		Where(
+			"((sender_id = ? AND receiver_id = ?) OR (sender_id = ? AND receiver_id = ?)) AND status = ?",
+			callerID, targetID, targetID, callerID, models.FriendRequestStatusAccepted,
+		).Count(&count)
+	if count == 0 {
+		return connect.NewError(connect.CodePermissionDenied, errors.New("you must be friends to view this content"))
+	}
+	return nil
 }
 
 // Ensure RestaurantProto import is used

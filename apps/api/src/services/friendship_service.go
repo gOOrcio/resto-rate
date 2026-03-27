@@ -199,6 +199,7 @@ func (s *FriendshipService) ListFriends(
 				UserId:       fr.ReceiverID,
 				Name:         fr.Receiver.Name,
 				Email:        derefStr(fr.Receiver.Email),
+				Username:     derefStr(fr.Receiver.Username),
 				FriendsSince: fr.UpdatedAt.Unix(),
 			}
 		} else {
@@ -206,6 +207,7 @@ func (s *FriendshipService) ListFriends(
 				UserId:       fr.SenderID,
 				Name:         fr.Sender.Name,
 				Email:        derefStr(fr.Sender.Email),
+				Username:     derefStr(fr.Sender.Username),
 				FriendsSince: fr.UpdatedAt.Unix(),
 			}
 		}
