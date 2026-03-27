@@ -54,7 +54,7 @@ func (s *ReviewsService) CreateReview(
 	}
 
 	if req.Msg.GooglePlacesId == "" {
-		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("google_places_id is required"))
+		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New(errGooglePlacesIDRequired))
 	}
 	if req.Msg.Rating < 1 || req.Msg.Rating > 5 {
 		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("rating must be between 1 and 5"))
@@ -109,7 +109,7 @@ func (s *ReviewsService) CreateReview(
 	var currentUser models.User
 	if err := s.DB.WithContext(ctx).First(&currentUser, "id = ?", userID).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil, connect.NewError(connect.CodeNotFound, errors.New("user not found"))
+			return nil, connect.NewError(connect.CodeNotFound, errors.New(errUserNotFound))
 		}
 		return nil, connect.NewError(connect.CodeInternal, err)
 	}
@@ -131,7 +131,7 @@ func (s *ReviewsService) ListReviews(
 	}
 
 	if s.DB == nil {
-		return nil, connect.NewError(connect.CodeInternal, errors.New("database not initialized"))
+		return nil, connect.NewError(connect.CodeInternal, errors.New(errDatabaseNotInitialized))
 	}
 
 	callerID, err := getUserIDFromSession(ctx, req.Header(), s.Valkey)
@@ -237,7 +237,7 @@ func (s *ReviewsService) UpdateReview(
 	}
 
 	if req.Msg.Id == "" {
-		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("id is required"))
+		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New(errIDRequired))
 	}
 
 	if req.Msg.Rating < 1 || req.Msg.Rating > 5 {
@@ -247,7 +247,7 @@ func (s *ReviewsService) UpdateReview(
 	var review models.Review
 	if err := s.DB.WithContext(ctx).Preload("Restaurant").Preload("User").First(&review, reviewOwnerFilter, req.Msg.Id, userID).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil, connect.NewError(connect.CodeNotFound, errors.New("review not found"))
+			return nil, connect.NewError(connect.CodeNotFound, errors.New(errReviewNotFound))
 		}
 		return nil, err
 	}
@@ -273,13 +273,13 @@ func (s *ReviewsService) GetReview(
 	}
 
 	if req.Msg.Id == "" {
-		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("id is required"))
+		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New(errIDRequired))
 	}
 
 	var review models.Review
 	if err := s.DB.WithContext(ctx).Preload("Restaurant").Preload("User").First(&review, reviewOwnerFilter, req.Msg.Id, userID).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil, connect.NewError(connect.CodeNotFound, errors.New("review not found"))
+			return nil, connect.NewError(connect.CodeNotFound, errors.New(errReviewNotFound))
 		}
 		return nil, err
 	}
@@ -297,7 +297,7 @@ func (s *ReviewsService) DeleteReview(
 	}
 
 	if req.Msg.Id == "" {
-		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("id is required"))
+		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New(errIDRequired))
 	}
 
 	result := s.DB.WithContext(ctx).Where(reviewOwnerFilter, req.Msg.Id, userID).Delete(&models.Review{})
@@ -305,7 +305,7 @@ func (s *ReviewsService) DeleteReview(
 		return nil, result.Error
 	}
 	if result.RowsAffected == 0 {
-		return nil, connect.NewError(connect.CodeNotFound, errors.New("review not found"))
+		return nil, connect.NewError(connect.CodeNotFound, errors.New(errReviewNotFound))
 	}
 
 	return connect.NewResponse(&v1.DeleteReviewResponse{Success: true}), nil
@@ -321,7 +321,7 @@ func (s *ReviewsService) ListRestaurantReviews(
 	}
 
 	if req.Msg.GooglePlacesId == "" {
-		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("google_places_id is required"))
+		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New(errGooglePlacesIDRequired))
 	}
 
 	friendIDs, err := getFriendIDs(ctx, s.DB, userID)

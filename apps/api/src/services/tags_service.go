@@ -42,7 +42,7 @@ func (s *TagsService) ListTags(
 	}
 
 	if s.DB == nil {
-		return nil, connect.NewError(connect.CodeInternal, errors.New("database not initialized"))
+		return nil, connect.NewError(connect.CodeInternal, errors.New(errDatabaseNotInitialized))
 	}
 
 	var tags []models.Tag

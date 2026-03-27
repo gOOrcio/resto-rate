@@ -27,7 +27,7 @@ func (s *WishlistService) AddToWishlist(
 	req *connect.Request[wishlistv1.AddToWishlistRequest],
 ) (*connect.Response[wishlistv1.AddToWishlistResponse], error) {
 	if s.DB == nil {
-		return nil, connect.NewError(connect.CodeInternal, errors.New("database not initialized"))
+		return nil, connect.NewError(connect.CodeInternal, errors.New(errDatabaseNotInitialized))
 	}
 
 	userID, err := getUserIDFromSession(ctx, req.Header(), s.Valkey)
@@ -36,7 +36,7 @@ func (s *WishlistService) AddToWishlist(
 	}
 
 	if req.Msg.GooglePlacesId == "" {
-		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("google_places_id is required"))
+		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New(errGooglePlacesIDRequired))
 	}
 
 	var restaurant models.Restaurant
@@ -81,7 +81,7 @@ func (s *WishlistService) RemoveFromWishlist(
 	req *connect.Request[wishlistv1.RemoveFromWishlistRequest],
 ) (*connect.Response[wishlistv1.RemoveFromWishlistResponse], error) {
 	if s.DB == nil {
-		return nil, connect.NewError(connect.CodeInternal, errors.New("database not initialized"))
+		return nil, connect.NewError(connect.CodeInternal, errors.New(errDatabaseNotInitialized))
 	}
 
 	userID, err := getUserIDFromSession(ctx, req.Header(), s.Valkey)
@@ -90,7 +90,7 @@ func (s *WishlistService) RemoveFromWishlist(
 	}
 
 	if req.Msg.GooglePlacesId == "" {
-		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("google_places_id is required"))
+		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New(errGooglePlacesIDRequired))
 	}
 
 	result := s.DB.WithContext(ctx).
@@ -108,7 +108,7 @@ func (s *WishlistService) ListWishlist(
 	req *connect.Request[wishlistv1.ListWishlistRequest],
 ) (*connect.Response[wishlistv1.ListWishlistResponse], error) {
 	if s.DB == nil {
-		return nil, connect.NewError(connect.CodeInternal, errors.New("database not initialized"))
+		return nil, connect.NewError(connect.CodeInternal, errors.New(errDatabaseNotInitialized))
 	}
 
 	callerID, err := getUserIDFromSession(ctx, req.Header(), s.Valkey)
