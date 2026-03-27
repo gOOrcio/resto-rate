@@ -346,8 +346,6 @@ func verifyIDToken(ctx context.Context, provider authv1.AuthProvider, token, cli
 			Email:      email,
 			Name:       name,
 		}, nil
-	// case authv1.AuthProvider_AUTH_PROVIDER_APPLE:
-	//     TODO: implement Apple Sign-In verification
 	default:
 		return ProviderClaims{}, errors.New("unsupported auth provider")
 	}
