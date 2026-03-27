@@ -9,6 +9,7 @@
 	import { Input } from '$lib/components/ui/input/index.js';
 	import { v4 as uuidv4 } from 'uuid';
 	import { auth } from '$lib/state/auth.svelte';
+	import { Button } from '$lib/components/ui/button/index.js';
 	import PlacePreviewCard from './PlacePreviewCard.svelte';
 	import RatingForm from './RatingForm.svelte';
 	import ReviewSummary from './ReviewSummary.svelte';
@@ -29,6 +30,8 @@
 	let isCheckingReview = $state(false);
 	let currentReview = $state<ReviewProto | null>(null);
 	let isEditingReview = $state(false);
+	let isWishlisted = $state(false);
+	let wishlistLoading = $state(false);
 
 	let debounceTimer: ReturnType<typeof setTimeout> | null = null;
 
@@ -93,6 +96,7 @@
 			selectedPlace = place;
 			currentReview = null;
 			isEditingReview = false;
+			isWishlisted = false;
 			suggestions = [];
 			showSuggestions = false;
 			queryPrediction = '';
@@ -110,6 +114,14 @@
 				currentReview = null;
 			} finally {
 				isCheckingReview = false;
+			}
+
+			// Check if current user has this place wishlisted
+			try {
+				const wRes = await clients.wishlist.listWishlist({ googlePlacesId: place.name || '' });
+				isWishlisted = (wRes.items?.length ?? 0) > 0;
+			} catch {
+				isWishlisted = false;
 			}
 		} catch (error) {
 			console.error('Get place details error:', error);
@@ -152,6 +164,32 @@
 				showSuggestions = false;
 				selectedIndex = -1;
 				break;
+		}
+	}
+
+	async function toggleWishlist() {
+		if (!selectedPlace) return;
+		wishlistLoading = true;
+		try {
+			if (isWishlisted) {
+				await clients.wishlist.removeFromWishlist({
+					googlePlacesId: selectedPlace.name || ''
+				});
+				isWishlisted = false;
+			} else {
+				await clients.wishlist.addToWishlist({
+					googlePlacesId: selectedPlace.name || '',
+					restaurantName: selectedPlace.displayName?.text || selectedPlace.name || '',
+					restaurantAddress: selectedPlace.formattedAddress || '',
+					city: selectedPlace.postalAddress?.locality ?? '',
+					country: selectedPlace.postalAddress?.country ?? ''
+				});
+				isWishlisted = true;
+			}
+		} catch (e) {
+			console.error('Wishlist toggle error:', e);
+		} finally {
+			wishlistLoading = false;
 		}
 	}
 
@@ -249,6 +287,25 @@
 	{#if selectedPlace}
 		<div class="mt-6 space-y-4">
 			<PlacePreviewCard place={selectedPlace} />
+
+			{#if !currentReview}
+				<div>
+					<Button
+						variant={isWishlisted ? 'outline' : 'secondary'}
+						onclick={toggleWishlist}
+						disabled={wishlistLoading}
+						class="gap-2"
+					>
+						{#if wishlistLoading}
+							<div class="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent"></div>
+						{:else if isWishlisted}
+							★ Wishlisted — click to remove
+						{:else}
+							☆ Save to wishlist
+						{/if}
+					</Button>
+				</div>
+			{/if}
 
 			{#if isCheckingReview}
 				<div class="flex items-center gap-2 text-sm text-gray-500">
