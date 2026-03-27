@@ -66,7 +66,7 @@
 						<RatingForm
 							googlePlacesId={review.googlePlacesId}
 							restaurantName={review.restaurantName}
-							restaurantAddress=""
+							restaurantAddress={review.restaurantAddress}
 							existingReview={review}
 							onSubmit={(updated) => {
 								reviews = reviews.map((r) => (r.id === updated.id ? updated : r));
