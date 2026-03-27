@@ -17,6 +17,11 @@ jobs:
         with:
           go-version-file: apps/api/go.mod
 
+      - uses: oven-sh/setup-bun@v2
+
+      - name: Install dependencies
+        run: bun install
+
       - name: Generate Go protobuf files
         uses: bufbuild/buf-action@v1
         with:
@@ -26,10 +31,10 @@ jobs:
           breaking: false
 
       - name: Build
-        run: nx run api:build
+        run: bunx nx run api:build
 
       - name: Test
-        run: nx run api:test
+        run: bunx nx run api:test
 
   web:
     name: Web — svelte-check
@@ -48,7 +53,7 @@ jobs:
           setup_only: true
 
       - name: Generate TypeScript protobuf files
-        run: nx run protos:generate:web
+        run: bunx nx run protos:generate:web
 
       - name: Type check
-        run: nx run web:check
+        run: bunx nx run web:check

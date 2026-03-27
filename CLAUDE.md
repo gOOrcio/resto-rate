@@ -16,15 +16,17 @@ bun run dev:api      # Start only the Go API (uses `air` for hot reload)
 
 Always use Nx to build, test, and lint — never invoke `go build` or `bun run check` directly.
 
+There is no global `nx`. Use `bunx nx` or `./node_modules/.bin/nx` — this picks up the project-local version via NVM's node.
+
 ```bash
 # Per-app Nx targets (preferred for targeted checks)
-nx run api:build     # Build Go API
-nx run api:test      # Run Go tests
-nx run api:lint      # Lint Go code
-nx run web:build     # Build SvelteKit frontend
-nx run web:test      # Run frontend tests
-nx run web:lint      # Lint frontend
-nx run web:check     # svelte-check TypeScript + Svelte types
+bunx nx run api:build     # Build Go API
+bunx nx run api:test      # Run Go tests
+bunx nx run api:lint      # Lint Go code
+bunx nx run web:build     # Build SvelteKit frontend
+bunx nx run web:test      # Run frontend tests
+bunx nx run web:lint      # Lint frontend
+bunx nx run web:check     # svelte-check TypeScript + Svelte types
 
 # Convenience wrappers (bun run X calls nx under the hood)
 bun run build        # Build all apps
@@ -49,17 +51,17 @@ cd apps/api && go test ./src/test/... -run TestName -v
 
 ```bash
 # Use Nx targets, not raw go/bun commands:
-nx run api:build     # Verify Go compiles
-nx run web:check     # svelte-check TypeScript + Svelte types
+bunx nx run api:build     # Verify Go compiles
+bunx nx run web:check     # svelte-check TypeScript + Svelte types
 ```
 
 ### Protobuf code generation
 
 ```bash
-nx run protos:generate       # Generate both Go and TypeScript from .proto files
-nx run protos:generate:api   # Go only
-nx run protos:generate:web   # TypeScript only
-nx run protos:clean          # Remove all generated files
+bunx nx run protos:generate       # Generate both Go and TypeScript from .proto files
+bunx nx run protos:generate:api   # Go only
+bunx nx run protos:generate:web   # TypeScript only
+bunx nx run protos:clean          # Remove all generated files
 ```
 
 ### Infrastructure

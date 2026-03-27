@@ -26,8 +26,8 @@
       		"executor": "nx:run-commands",
       		"options": {
         		"commands": [
-          			"nx run protos:generate:api",
-          			"nx run protos:generate:web"
+          			"bunx nx run protos:generate:api",
+          			"bunx nx run protos:generate:web"
         		],
         		"parallel": true
       		}
