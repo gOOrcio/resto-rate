@@ -33,27 +33,17 @@ func (s *FriendshipService) SendFriendRequest(
 	}
 
 	var receiver models.User
+	var lookupErr error
 	switch {
 	case req.Msg.GetReceiverEmail() != "":
-		if err := s.DB.WithContext(ctx).Where("email = ?", req.Msg.GetReceiverEmail()).First(&receiver).Error; err != nil {
-			if errors.Is(err, gorm.ErrRecordNotFound) {
-				return nil, connect.NewError(connect.CodeNotFound, errors.New(errUserNotFound))
-			}
-			return nil, err
-		}
+		receiver, lookupErr = lookupReceiverByEmail(ctx, s.DB, req.Msg.GetReceiverEmail())
 	case req.Msg.GetReceiverUsername() != "":
-		handle := strings.ToLower(strings.TrimPrefix(req.Msg.GetReceiverUsername(), "@"))
-		if !isValidUsername(handle) {
-			return nil, connect.NewError(connect.CodeInvalidArgument, errors.New(errInvalidUsername))
-		}
-		if err := s.DB.WithContext(ctx).Where("username = ?", handle).First(&receiver).Error; err != nil {
-			if errors.Is(err, gorm.ErrRecordNotFound) {
-				return nil, connect.NewError(connect.CodeNotFound, errors.New(errUserNotFound))
-			}
-			return nil, err
-		}
+		receiver, lookupErr = lookupReceiverByUsername(ctx, s.DB, req.Msg.GetReceiverUsername())
 	default:
 		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("receiver_email or receiver_username is required"))
+	}
+	if lookupErr != nil {
+		return nil, lookupErr
 	}
 
 	if receiver.ID == senderID {
@@ -300,6 +290,34 @@ func derefStr(s *string) string {
 		return ""
 	}
 	return *s
+}
+
+// lookupReceiverByEmail finds a user by email or returns a Connect-RPC error.
+func lookupReceiverByEmail(ctx context.Context, db *gorm.DB, email string) (models.User, error) {
+	var receiver models.User
+	if err := db.WithContext(ctx).Where("email = ?", email).First(&receiver).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return models.User{}, connect.NewError(connect.CodeNotFound, errors.New(errUserNotFound))
+		}
+		return models.User{}, err
+	}
+	return receiver, nil
+}
+
+// lookupReceiverByUsername normalizes the handle, validates it, and finds the user.
+func lookupReceiverByUsername(ctx context.Context, db *gorm.DB, rawUsername string) (models.User, error) {
+	handle := strings.ToLower(strings.TrimPrefix(rawUsername, "@"))
+	if !isValidUsername(handle) {
+		return models.User{}, connect.NewError(connect.CodeInvalidArgument, errors.New(errInvalidUsername))
+	}
+	var receiver models.User
+	if err := db.WithContext(ctx).Where("username = ?", handle).First(&receiver).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return models.User{}, connect.NewError(connect.CodeNotFound, errors.New(errUserNotFound))
+		}
+		return models.User{}, err
+	}
+	return receiver, nil
 }
 
 // getFriendIDs returns the user IDs of all accepted friends for the given user.
