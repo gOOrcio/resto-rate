@@ -4,6 +4,7 @@
 	import * as Sheet from '$lib/components/ui/sheet/index.js';
 	import * as DropdownMenu from '$lib/components/ui/dropdown-menu/index.js';
 	import { auth } from '$lib/state/auth.svelte';
+	import { theme } from '$lib/state/theme.svelte';
 	import SocialSignIn from '$lib/ui/components/SocialSignIn.svelte';
 	import client from '$lib/client/client';
 
@@ -50,26 +51,30 @@
 	});
 </script>
 
-<header class="sticky top-0 z-10 w-full bg-blue-200 p-2 shadow-sm">
-	<nav class="flex w-full items-center justify-between px-2">
+<header class="sticky top-0 z-10 w-full border-b border-border bg-background/95 backdrop-blur-sm">
+	<nav class="mx-auto flex max-w-6xl items-center justify-between px-4 py-3">
 		<!-- Brand -->
-		<a href="/" class="flex items-center gap-2">
-			<img src="/resto-rate-logo.svg" class="h-5 w-5" alt="App Logo" />
-			<span class="self-center text-xl font-semibold whitespace-nowrap text-blue-800">
+		<a href="/" class="group flex items-center gap-2.5">
+			<div
+				class="flex h-7 w-7 items-center justify-center rounded-md bg-primary text-sm font-bold text-primary-foreground transition-opacity group-hover:opacity-80"
+			>
+				R
+			</div>
+			<span class="font-display text-lg font-semibold tracking-tight text-foreground">
 				Restorate
 			</span>
 		</a>
 
 		<!-- Desktop nav links (auth-gated) -->
 		{#if auth.isLoggedIn}
-			<ul class="hidden items-center gap-6 md:flex">
+			<ul class="hidden items-center gap-7 md:flex">
 				{#each authNavLinks as link}
 					<li>
 						<a
 							href={link.href}
 							class="text-sm font-medium transition-colors {isActive(link.href)
-								? 'text-blue-700 underline underline-offset-4'
-								: 'text-gray-700 hover:text-blue-700'}"
+								? 'border-b-2 border-primary pb-0.5 text-primary'
+								: 'text-muted-foreground hover:text-foreground'}"
 						>
 							{link.label}
 						</a>
@@ -88,7 +93,7 @@
 							{#snippet child({ props })}
 								<button
 									{...props}
-									class="flex h-9 w-9 items-center justify-center rounded-full bg-blue-600 text-sm font-semibold text-white transition-colors hover:bg-blue-700"
+									class="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-xs font-semibold text-primary-foreground transition-opacity hover:opacity-80"
 									aria-label="Account menu"
 								>
 									{getInitials()}
@@ -97,22 +102,19 @@
 						</DropdownMenu.Trigger>
 						<DropdownMenu.Content align="end" class="w-48">
 							<DropdownMenu.Label>Account</DropdownMenu.Label>
-							<DropdownMenu.Item onclick={handleLogout}>Logout</DropdownMenu.Item>
+							<DropdownMenu.Item onclick={handleLogout}>Sign out</DropdownMenu.Item>
 							<DropdownMenu.Separator />
 							<DropdownMenu.Label>Navigate</DropdownMenu.Label>
 							<DropdownMenu.Item>
 								<a href="/friends" class="w-full">Find a Friend</a>
 							</DropdownMenu.Item>
 							<DropdownMenu.Separator />
-							<DropdownMenu.Label>Preferences (coming soon)</DropdownMenu.Label>
-							<DropdownMenu.Item disabled class="cursor-not-allowed opacity-50">
-								🌐 Language
+							<DropdownMenu.Label>Preferences</DropdownMenu.Label>
+							<DropdownMenu.Item onclick={() => theme.toggle()}>
+								{theme.dark ? 'Light mode' : 'Dark mode'}
 							</DropdownMenu.Item>
 							<DropdownMenu.Item disabled class="cursor-not-allowed opacity-50">
-								🌙 Dark mode
-							</DropdownMenu.Item>
-							<DropdownMenu.Item disabled class="cursor-not-allowed opacity-50">
-								⚙️ Settings
+								Language (coming soon)
 							</DropdownMenu.Item>
 						</DropdownMenu.Content>
 					</DropdownMenu.Root>
@@ -121,35 +123,59 @@
 				<Button size="sm" onclick={() => (loginOpen = true)}>Sign in</Button>
 			{/if}
 
-			<!-- Mobile hamburger (Sheet trigger) -->
+			<!-- Mobile hamburger -->
 			<Sheet.Root>
 				<Sheet.Trigger>
 					{#snippet child({ props })}
 						<button
 							{...props}
-							class="ml-2 flex flex-col gap-1 rounded p-2 hover:bg-blue-100 md:hidden"
+							class="ml-1 flex flex-col gap-1.5 rounded-md p-2 hover:bg-muted md:hidden"
 							aria-label="Open menu"
 						>
-							<span class="block h-0.5 w-5 bg-gray-700"></span>
-							<span class="block h-0.5 w-5 bg-gray-700"></span>
-							<span class="block h-0.5 w-5 bg-gray-700"></span>
+							<span class="block h-px w-5 bg-foreground"></span>
+							<span class="block h-px w-5 bg-foreground"></span>
+							<span class="block h-px w-5 bg-foreground"></span>
 						</button>
 					{/snippet}
 				</Sheet.Trigger>
 				<Sheet.Content side="right" class="w-64">
 					<Sheet.Header>
-						<div class="flex items-center gap-2 pb-4">
-							<img src="/resto-rate-logo.svg" class="h-6 w-6" alt="App Logo" />
-							<span class="font-semibold text-blue-800">Restorate</span>
+						<div class="flex items-center gap-2.5 pb-4">
+							<div
+								class="flex h-7 w-7 items-center justify-center rounded-md bg-primary text-sm font-bold text-primary-foreground"
+							>
+								R
+							</div>
+							<span class="font-display font-semibold text-foreground">Restorate</span>
 						</div>
 					</Sheet.Header>
-					<hr class="mb-4 border-gray-200" />
+					<hr class="mb-4 border-border" />
 					<nav class="flex flex-col gap-4 px-2">
-						<a href="/" class="text-gray-700 hover:text-blue-700">Home</a>
+						<a href="/" class="text-sm text-muted-foreground hover:text-foreground">Home</a>
 						{#if auth.isLoggedIn}
 							{#each authNavLinks as link}
-								<a href={link.href} class="text-gray-700 hover:text-blue-700">{link.label}</a>
+								<a
+									href={link.href}
+									class="text-sm {isActive(link.href)
+										? 'font-medium text-primary'
+										: 'text-muted-foreground hover:text-foreground'}"
+								>
+									{link.label}
+								</a>
 							{/each}
+							<hr class="border-border" />
+							<button
+								class="text-left text-sm text-muted-foreground hover:text-foreground"
+								onclick={() => theme.toggle()}
+							>
+								{theme.dark ? 'Light mode' : 'Dark mode'}
+							</button>
+							<button
+								class="text-left text-sm text-muted-foreground hover:text-foreground"
+								onclick={handleLogout}
+							>
+								Sign out
+							</button>
 						{:else}
 							<Button size="sm" onclick={() => (loginOpen = true)}>Sign in</Button>
 						{/if}
@@ -176,10 +202,10 @@
 				loginOpen = false;
 			}
 		}}
-		class="m-auto w-full max-w-[calc(100%-2rem)] rounded-lg bg-white p-6 shadow-xl backdrop:bg-gray-900/50 sm:max-w-sm"
+		class="m-auto w-full max-w-[calc(100%-2rem)] rounded-xl bg-card p-6 shadow-xl backdrop:bg-foreground/20 sm:max-w-sm"
 	>
 		<div class="flex flex-col gap-4">
-			<h3 class="text-xl font-semibold text-gray-900">Sign in to Restorate</h3>
+			<h3 class="font-display text-xl font-semibold text-foreground">Sign in to Restorate</h3>
 			<SocialSignIn onSuccess={() => (loginOpen = false)} />
 		</div>
 	</dialog>
