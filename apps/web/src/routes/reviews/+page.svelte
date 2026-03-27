@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
+	import { goto } from '$app/navigation';
 	import { auth } from '$lib/state/auth.svelte';
 	import client from '$lib/client/client';
 	import type { ReviewProto } from '$lib/client/generated/reviews/v1/review_pb';
@@ -39,17 +40,18 @@
 	}
 
 	onMount(() => {
-		if (auth.isLoggedIn) loadReviews();
-		else loading = false;
+		if (!auth.isLoggedIn) {
+			goto('/?login=1');
+			return;
+		}
+		loadReviews();
 	});
 </script>
 
 <div class="container mx-auto max-w-3xl space-y-6 p-6">
 	<h2 class="text-2xl font-semibold text-blue-800">My Reviews</h2>
 
-	{#if !auth.isLoggedIn}
-		<p class="text-sm text-gray-500">Please sign in to view your reviews.</p>
-	{:else if loading}
+	{#if loading}
 		<div class="flex items-center gap-2 text-sm text-gray-500">
 			<div class="h-4 w-4 animate-spin rounded-full border-2 border-gray-300 border-t-blue-500"></div>
 			Loading…
