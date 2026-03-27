@@ -10,7 +10,7 @@
         "command": "go build -o ../../dist/apps/api src/main.go",
         "cwd": "apps/api"
       },
-      "dependsOn": ["protos:generate"]
+      "dependsOn": ["protos:generate:api"]
     },
     "dev": {
       "executor": "nx:run-commands",
@@ -23,11 +23,11 @@
     },
     "lint": {
       "executor": "@nx-go/nx-go:lint",
-      "dependsOn": ["protos:generate"]
+      "dependsOn": ["protos:generate:api"]
     },
     "test": {
       "executor": "@nx-go/nx-go:test",
-      "dependsOn": ["protos:generate"]
+      "dependsOn": ["protos:generate:api"]
     }
   }
 }

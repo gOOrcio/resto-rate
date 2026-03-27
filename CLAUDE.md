@@ -16,7 +16,7 @@ bun run dev:api      # Start only the Go API (uses `air` for hot reload)
 
 Always use Nx to build, test, and lint — never invoke `go build` or `bun run check` directly.
 
-There is no global `nx`. Use `bunx nx` or `./node_modules/.bin/nx` — this picks up the project-local version via NVM's node.
+There is no global `nx`. Use `bunx nx` or `./node_modules/.bin/nx` — both run the workspace-local Nx from `node_modules`.
 
 ```bash
 # Per-app Nx targets (preferred for targeted checks)
