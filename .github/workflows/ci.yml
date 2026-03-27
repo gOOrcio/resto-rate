@@ -37,11 +37,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # Use Node 20 LTS — avoids the @typescript/vfs/localStorage bug present in Node 25
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-
       - uses: oven-sh/setup-bun@v2
 
       - name: Install dependencies
@@ -53,7 +48,7 @@ jobs:
           setup_only: true
 
       - name: Generate TypeScript protobuf files
-        run: buf generate --template apps/web/buf.gen.yaml
+        run: nx run protos:generate:web
 
       - name: Type check
         run: nx run web:check

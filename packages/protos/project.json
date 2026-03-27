@@ -16,7 +16,10 @@
 			"executor": "nx:run-commands",
 			"options": {
 				"command": "buf generate --template apps/web/buf.gen.yaml",
-				"cwd": "."
+				"cwd": ".",
+				"env": {
+					"NODE_OPTIONS": "--no-experimental-webstorage"
+				}
 			}
 		},
 		"generate": {
@@ -32,7 +35,7 @@
 		"clean": {
 			"executor": "nx:run-commands",
 			"options": {
-				"command": "rm -rf apps/api/src/generated/* apps/web/src/generated/*"
+				"command": "rm -rf apps/api/src/generated/* apps/web/src/lib/client/generated/*"
 			}
 		}
 	}
