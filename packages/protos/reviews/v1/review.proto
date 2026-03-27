@@ -15,4 +15,7 @@ message ReviewProto {
   int64 updated_at = 8;
   repeated string tags = 9;
   string restaurant_name = 10;
+  string restaurant_address = 11;
+  string restaurant_city = 12;
+  string restaurant_country = 13;
 }
