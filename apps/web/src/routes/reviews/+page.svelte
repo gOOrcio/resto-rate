@@ -80,7 +80,14 @@
 						<div class="mb-2 flex items-start justify-between gap-2">
 							<div class="min-w-0">
 								{#if review.restaurantName}
-									<p class="truncate font-medium text-gray-900">{review.restaurantName}</p>
+									{#if review.googlePlacesId}
+										<a
+											href="/restaurants/{encodeURIComponent(review.googlePlacesId)}"
+											class="truncate font-medium text-blue-700 hover:underline"
+										>{review.restaurantName}</a>
+									{:else}
+										<p class="truncate font-medium text-gray-900">{review.restaurantName}</p>
+									{/if}
 								{/if}
 								{#if review.restaurantAddress}
 									<p class="truncate text-sm text-gray-500">{review.restaurantAddress}</p>

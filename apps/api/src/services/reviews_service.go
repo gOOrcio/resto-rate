@@ -218,5 +218,61 @@ func (s *ReviewsService) DeleteReview(
 	return connect.NewResponse(&v1.DeleteReviewResponse{Success: true}), nil
 }
 
+func (s *ReviewsService) ListRestaurantReviews(
+	ctx context.Context,
+	req *connect.Request[v1.ListRestaurantReviewsRequest],
+) (*connect.Response[v1.ListRestaurantReviewsResponse], error) {
+	userID, err := getUserIDFromSession(ctx, req.Header(), s.Valkey)
+	if err != nil {
+		return nil, err
+	}
+
+	if req.Msg.GooglePlacesId == "" {
+		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("google_places_id is required"))
+	}
+
+	friendIDs, err := getFriendIDs(ctx, s.DB, userID)
+	if err != nil {
+		return nil, err
+	}
+
+	visibleUserIDs := append(friendIDs, userID)
+
+	var reviews []models.Review
+	if err := s.DB.WithContext(ctx).
+		Preload("Restaurant").
+		Preload("User").
+		Where("google_places_id = ? AND user_id IN ?", req.Msg.GooglePlacesId, visibleUserIDs).
+		Order("created_at DESC").
+		Find(&reviews).Error; err != nil {
+		return nil, err
+	}
+
+	protos := make([]*v1.ReviewProto, len(reviews))
+	var totalRating float64
+	for i, r := range reviews {
+		protos[i] = r.ToProto()
+		totalRating += r.Rating
+	}
+
+	var avgRating float64
+	if len(reviews) > 0 {
+		avgRating = totalRating / float64(len(reviews))
+	}
+
+	resp := &v1.ListRestaurantReviewsResponse{
+		Reviews:       protos,
+		AverageRating: avgRating,
+	}
+	if len(reviews) > 0 {
+		resp.RestaurantName = reviews[0].Restaurant.Name
+		resp.RestaurantAddress = reviews[0].Restaurant.Address
+		resp.RestaurantCity = reviews[0].Restaurant.City
+		resp.RestaurantCountry = reviews[0].Restaurant.Country
+	}
+
+	return connect.NewResponse(resp), nil
+}
+
 // Ensure RestaurantProto import is used
 var _ = &restaurantspb.RestaurantProto{}

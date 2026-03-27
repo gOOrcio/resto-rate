@@ -1,0 +1,60 @@
+syntax = "proto3";
+
+package friendship.v1;
+
+import "friendship/v1/friendship.proto";
+
+option go_package = "api/src/generated/friendship/v1";
+
+service FriendshipService {
+  rpc SendFriendRequest(SendFriendRequestRequest) returns (SendFriendRequestResponse);
+  rpc AcceptFriendRequest(AcceptFriendRequestRequest) returns (AcceptFriendRequestResponse);
+  rpc DeclineFriendRequest(DeclineFriendRequestRequest) returns (DeclineFriendRequestResponse);
+  rpc RemoveFriend(RemoveFriendRequest) returns (RemoveFriendResponse);
+  rpc ListFriends(ListFriendsRequest) returns (ListFriendsResponse);
+  rpc ListPendingRequests(ListPendingRequestsRequest) returns (ListPendingRequestsResponse);
+}
+
+message SendFriendRequestRequest {
+  string receiver_email = 1;
+}
+
+message SendFriendRequestResponse {
+  FriendRequestProto request = 1;
+}
+
+message AcceptFriendRequestRequest {
+  string request_id = 1;
+}
+
+message AcceptFriendRequestResponse {
+  FriendRequestProto request = 1;
+}
+
+message DeclineFriendRequestRequest {
+  string request_id = 1;
+}
+
+message DeclineFriendRequestResponse {
+  bool success = 1;
+}
+
+message RemoveFriendRequest {
+  string friend_user_id = 1;
+}
+
+message RemoveFriendResponse {
+  bool success = 1;
+}
+
+message ListFriendsRequest {}
+
+message ListFriendsResponse {
+  repeated FriendProto friends = 1;
+}
+
+message ListPendingRequestsRequest {}
+
+message ListPendingRequestsResponse {
+  repeated FriendRequestProto requests = 1;
+}

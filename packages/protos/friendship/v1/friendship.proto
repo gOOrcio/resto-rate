@@ -1,0 +1,30 @@
+syntax = "proto3";
+
+package friendship.v1;
+
+option go_package = "api/src/generated/friendship/v1";
+
+enum FriendRequestStatus {
+  PENDING = 0;
+  ACCEPTED = 1;
+  DECLINED = 2;
+}
+
+message FriendRequestProto {
+  string id = 1;
+  string sender_id = 2;
+  string receiver_id = 3;
+  FriendRequestStatus status = 4;
+  int64 created_at = 5;
+  string sender_name = 6;
+  string receiver_name = 7;
+  string sender_email = 8;
+  string receiver_email = 9;
+}
+
+message FriendProto {
+  string user_id = 1;
+  string name = 2;
+  string email = 3;
+  int64 friends_since = 4;
+}

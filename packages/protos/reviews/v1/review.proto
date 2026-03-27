@@ -18,4 +18,5 @@ message ReviewProto {
   string restaurant_address = 11;
   string restaurant_city = 12;
   string restaurant_country = 13;
+  string author_name = 14;
 }

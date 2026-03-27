@@ -13,6 +13,7 @@ service ReviewsService {
   rpc UpdateReview(UpdateReviewRequest) returns (UpdateReviewResponse);
   rpc DeleteReview(DeleteReviewRequest) returns (DeleteReviewResponse);
   rpc ListReviews(ListReviewsRequest) returns (ListReviewsResponse);
+  rpc ListRestaurantReviews(ListRestaurantReviewsRequest) returns (ListRestaurantReviewsResponse);
 }
 
 message CreateReviewRequest {
@@ -64,4 +65,17 @@ message ListReviewsRequest {
 
 message ListReviewsResponse {
   repeated ReviewProto reviews = 1;
+}
+
+message ListRestaurantReviewsRequest {
+  string google_places_id = 1;
+}
+
+message ListRestaurantReviewsResponse {
+  repeated ReviewProto reviews = 1;
+  double average_rating = 2;
+  string restaurant_name = 3;
+  string restaurant_address = 4;
+  string restaurant_city = 5;
+  string restaurant_country = 6;
 }
