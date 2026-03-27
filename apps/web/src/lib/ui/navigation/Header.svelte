@@ -1,5 +1,4 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
 	import { page } from '$app/state';
 	import { Button } from '$lib/components/ui/button/index.js';
 	import * as Sheet from '$lib/components/ui/sheet/index.js';
@@ -41,10 +40,10 @@
 	const authNavLinks = [
 		{ href: '/reviews', label: 'My Reviews' },
 		{ href: '/wishlist', label: 'Wishlist' },
-		{ href: '/friends', label: 'Friends' },
+		{ href: '/friends', label: 'Friends' }
 	];
 
-	onMount(() => {
+	$effect(() => {
 		if (page.url.searchParams.get('login') === '1') {
 			loginOpen = true;
 		}
@@ -56,7 +55,7 @@
 		<!-- Brand -->
 		<a href="/" class="flex items-center gap-2">
 			<img src="/resto-rate-logo.svg" class="h-5 w-5" alt="App Logo" />
-			<span class="self-center whitespace-nowrap text-xl font-semibold text-blue-800">
+			<span class="self-center text-xl font-semibold whitespace-nowrap text-blue-800">
 				Restorate
 			</span>
 		</a>
@@ -89,7 +88,7 @@
 							{#snippet child({ props })}
 								<button
 									{...props}
-									class="rounded-full bg-blue-600 text-white font-semibold text-sm flex items-center justify-center w-9 h-9 hover:bg-blue-700 transition-colors"
+									class="flex h-9 w-9 items-center justify-center rounded-full bg-blue-600 text-sm font-semibold text-white transition-colors hover:bg-blue-700"
 									aria-label="Account menu"
 								>
 									{getInitials()}
@@ -106,13 +105,13 @@
 							</DropdownMenu.Item>
 							<DropdownMenu.Separator />
 							<DropdownMenu.Label>Preferences (coming soon)</DropdownMenu.Label>
-							<DropdownMenu.Item disabled class="opacity-50 cursor-not-allowed">
+							<DropdownMenu.Item disabled class="cursor-not-allowed opacity-50">
 								🌐 Language
 							</DropdownMenu.Item>
-							<DropdownMenu.Item disabled class="opacity-50 cursor-not-allowed">
+							<DropdownMenu.Item disabled class="cursor-not-allowed opacity-50">
 								🌙 Dark mode
 							</DropdownMenu.Item>
-							<DropdownMenu.Item disabled class="opacity-50 cursor-not-allowed">
+							<DropdownMenu.Item disabled class="cursor-not-allowed opacity-50">
 								⚙️ Settings
 							</DropdownMenu.Item>
 						</DropdownMenu.Content>

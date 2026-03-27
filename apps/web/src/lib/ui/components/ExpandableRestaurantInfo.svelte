@@ -5,7 +5,17 @@
 		PriceLevel,
 		BusinessStatus
 	} from '$lib/client/generated/google_maps/v1/google_maps_service_pb';
-	import { MapPin, Phone, Globe, Star, Loader2, Check, X, ChevronRight, ChevronUp } from '@lucide/svelte';
+	import {
+		MapPin,
+		Phone,
+		Globe,
+		Star,
+		Loader2,
+		Check,
+		X,
+		ChevronRight,
+		ChevronUp
+	} from '@lucide/svelte';
 
 	const { googlePlacesId, name, address, city, country } = $props<{
 		googlePlacesId: string;
@@ -70,7 +80,7 @@
 					{ label: 'Delivery', value: googleData.delivery },
 					{ label: 'Outdoor seating', value: googleData.outdoorSeating },
 					{ label: 'Reservations', value: googleData.reservable }
-				]
+				].filter((a) => a.value !== undefined && a.value !== null)
 			: []
 	);
 
@@ -109,7 +119,7 @@
 <div class="flex flex-col">
 	<!-- DB info section -->
 	<div class="space-y-1">
-		<h3 class="text-base font-bold leading-tight text-gray-900">{name}</h3>
+		<h3 class="text-base leading-tight font-bold text-gray-900">{name}</h3>
 		{#if address}
 			<p class="text-sm text-gray-500">{address}</p>
 		{/if}
@@ -253,7 +263,7 @@
 				{#if hoursToday}
 					<div>
 						<hr class="mb-4 border-gray-200" />
-						<h4 class="mb-1.5 text-xs font-semibold uppercase tracking-wide text-gray-400">
+						<h4 class="mb-1.5 text-xs font-semibold tracking-wide text-gray-400 uppercase">
 							Today's hours
 						</h4>
 						<p class="text-sm text-gray-600">{hoursToday}</p>
@@ -264,7 +274,7 @@
 				{#if amenities.length > 0}
 					<div>
 						<hr class="mb-4 border-gray-200" />
-						<h4 class="mb-3 text-xs font-semibold uppercase tracking-wide text-gray-400">
+						<h4 class="mb-3 text-xs font-semibold tracking-wide text-gray-400 uppercase">
 							Features
 						</h4>
 						<div class="grid grid-cols-2 gap-2">

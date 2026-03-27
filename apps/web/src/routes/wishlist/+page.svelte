@@ -46,10 +46,10 @@
 		}
 	}
 
-	function handleSearchReview(_review: ReviewProto) {
+	function handleSearchReview(review: ReviewProto) {
 		// Item was reviewed — remove from wishlist list (backend auto-removes)
 		// and close the search panel
-		items = items.filter((i) => i.googlePlacesId !== (searchedPlace?.name || ''));
+		items = items.filter((i) => i.googlePlacesId !== review.googlePlacesId);
 		searchedPlace = null;
 		searchAction = null;
 	}
@@ -97,9 +97,11 @@
 			onSelect={handleSearchSelect}
 		/>
 		{#if searchedPlace}
-			<div class="rounded-lg border border-gray-200 bg-white p-4 shadow-sm space-y-3">
+			<div class="space-y-3 rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
 				<div>
-					<p class="font-medium text-gray-900">{searchedPlace.displayName?.text || searchedPlace.name || ''}</p>
+					<p class="font-medium text-gray-900">
+						{searchedPlace.displayName?.text || searchedPlace.name || ''}
+					</p>
 					<p class="text-sm text-gray-500">{searchedPlace.formattedAddress || ''}</p>
 				</div>
 
@@ -128,7 +130,9 @@
 
 	{#if loading}
 		<div class="flex items-center gap-2 text-sm text-gray-500">
-			<div class="h-4 w-4 animate-spin rounded-full border-2 border-gray-300 border-t-blue-500"></div>
+			<div
+				class="h-4 w-4 animate-spin rounded-full border-2 border-gray-300 border-t-blue-500"
+			></div>
 			Loading…
 		</div>
 	{:else if items.length === 0}
@@ -138,7 +142,7 @@
 	{:else}
 		<ul class="space-y-3">
 			{#each items as item (item.id)}
-				<li class="rounded-lg border border-gray-200 bg-white p-4 shadow-sm space-y-3">
+				<li class="space-y-3 rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
 					<ExpandableRestaurantInfo
 						googlePlacesId={item.googlePlacesId}
 						name={item.restaurantName}
@@ -148,11 +152,11 @@
 					/>
 
 					{#if ratingId !== item.id}
-						<div class="flex gap-2 pt-1 border-t border-gray-100">
+						<div class="flex gap-2 border-t border-gray-100 pt-1">
 							<Button
 								variant="outline"
 								size="sm"
-								class="text-red-600 hover:text-red-700 hover:border-red-300"
+								class="text-red-600 hover:border-red-300 hover:text-red-700"
 								disabled={removing.has(item.googlePlacesId)}
 								onclick={() => remove(item.googlePlacesId)}
 							>
@@ -163,7 +167,7 @@
 							</Button>
 						</div>
 					{:else}
-						<div class="pt-2 border-t border-gray-100 space-y-3">
+						<div class="space-y-3 border-t border-gray-100 pt-2">
 							<RatingForm
 								googlePlacesId={item.googlePlacesId}
 								restaurantName={item.restaurantName}
