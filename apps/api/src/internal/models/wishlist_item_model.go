@@ -28,6 +28,6 @@ func (w *WishlistItem) ToProto() *wishlistv1.WishlistItemProto {
 		RestaurantAddress: w.Restaurant.Address,
 		City:              w.Restaurant.City,
 		Country:           w.Restaurant.Country,
-		CreatedAt:         w.CreatedAt.UnixMilli(),
+		CreatedAt:         w.CreatedAt.Unix(),
 	}
 }

@@ -100,7 +100,7 @@ func (s *WishlistService) RemoveFromWishlist(
 		return nil, result.Error
 	}
 
-	return connect.NewResponse(&wishlistv1.RemoveFromWishlistResponse{Success: true}), nil
+	return connect.NewResponse(&wishlistv1.RemoveFromWishlistResponse{Success: result.RowsAffected > 0}), nil
 }
 
 func (s *WishlistService) ListWishlist(

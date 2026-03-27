@@ -116,12 +116,14 @@
 				isCheckingReview = false;
 			}
 
-			// Check if current user has this place wishlisted
-			try {
-				const wRes = await clients.wishlist.listWishlist({ googlePlacesId: place.name || '' });
-				isWishlisted = (wRes.items?.length ?? 0) > 0;
-			} catch {
-				isWishlisted = false;
+			// Check if current user has this place wishlisted (only when no review exists)
+			if (!currentReview) {
+				try {
+					const wRes = await clients.wishlist.listWishlist({ googlePlacesId: place.name || '' });
+					isWishlisted = (wRes.items?.length ?? 0) > 0;
+				} catch {
+					isWishlisted = false;
+				}
 			}
 		} catch (error) {
 			console.error('Get place details error:', error);
@@ -288,7 +290,7 @@
 		<div class="mt-6 space-y-4">
 			<PlacePreviewCard place={selectedPlace} />
 
-			{#if !currentReview}
+			{#if !isCheckingReview && !currentReview}
 				<div>
 					<Button
 						variant={isWishlisted ? 'outline' : 'secondary'}
