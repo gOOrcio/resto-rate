@@ -101,7 +101,11 @@ func (s *ReviewsService) CreateReview(
 		return nil, txErr
 	}
 
+	// Load the current user so author_name is populated in the proto.
+	var currentUser models.User
+	_ = s.DB.WithContext(ctx).First(&currentUser, "id = ?", userID).Error
 	review.Restaurant = restaurant
+	review.User = currentUser
 	return connect.NewResponse(&v1.CreateReviewResponse{
 		Review:     review.ToProto(),
 		Restaurant: restaurant.ToProto(),
@@ -118,7 +122,7 @@ func (s *ReviewsService) ListReviews(
 	}
 
 	var reviews []models.Review
-	query := s.DB.WithContext(ctx).Preload("Restaurant").Where("user_id = ?", userID)
+	query := s.DB.WithContext(ctx).Preload("Restaurant").Preload("User").Where("user_id = ?", userID)
 	if req.Msg.GooglePlacesId != "" {
 		query = query.Where("google_places_id = ?", req.Msg.GooglePlacesId)
 	}
@@ -152,7 +156,7 @@ func (s *ReviewsService) UpdateReview(
 	}
 
 	var review models.Review
-	if err := s.DB.WithContext(ctx).Preload("Restaurant").First(&review, "id = ? AND user_id = ?", req.Msg.Id, userID).Error; err != nil {
+	if err := s.DB.WithContext(ctx).Preload("Restaurant").Preload("User").First(&review, "id = ? AND user_id = ?", req.Msg.Id, userID).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, connect.NewError(connect.CodeNotFound, errors.New("review not found"))
 		}
@@ -184,7 +188,7 @@ func (s *ReviewsService) GetReview(
 	}
 
 	var review models.Review
-	if err := s.DB.WithContext(ctx).Preload("Restaurant").First(&review, "id = ? AND user_id = ?", req.Msg.Id, userID).Error; err != nil {
+	if err := s.DB.WithContext(ctx).Preload("Restaurant").Preload("User").First(&review, "id = ? AND user_id = ?", req.Msg.Id, userID).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, connect.NewError(connect.CodeNotFound, errors.New("review not found"))
 		}
@@ -264,11 +268,26 @@ func (s *ReviewsService) ListRestaurantReviews(
 		Reviews:       protos,
 		AverageRating: avgRating,
 	}
+
+	// Populate restaurant metadata: prefer from reviews, fall back to a DB lookup.
+	var restauMeta *models.Restaurant
 	if len(reviews) > 0 {
-		resp.RestaurantName = reviews[0].Restaurant.Name
-		resp.RestaurantAddress = reviews[0].Restaurant.Address
-		resp.RestaurantCity = reviews[0].Restaurant.City
-		resp.RestaurantCountry = reviews[0].Restaurant.Country
+		restauMeta = &reviews[0].Restaurant
+	} else {
+		var r models.Restaurant
+		if err := s.DB.WithContext(ctx).Where("google_id = ?", req.Msg.GooglePlacesId).First(&r).Error; err != nil {
+			if !errors.Is(err, gorm.ErrRecordNotFound) {
+				return nil, err
+			}
+		} else {
+			restauMeta = &r
+		}
+	}
+	if restauMeta != nil {
+		resp.RestaurantName = restauMeta.Name
+		resp.RestaurantAddress = restauMeta.Address
+		resp.RestaurantCity = restauMeta.City
+		resp.RestaurantCountry = restauMeta.Country
 	}
 
 	return connect.NewResponse(resp), nil

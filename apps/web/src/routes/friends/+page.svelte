@@ -65,8 +65,9 @@
 	}
 
 	async function decline(requestId: string) {
+		const removed = pendingRequests.find((r) => r.id === requestId);
+		if (!removed) return;
 		declining = new Set([...declining, requestId]);
-		const removed = pendingRequests.find((r) => r.id === requestId)!;
 		pendingRequests = pendingRequests.filter((r) => r.id !== requestId);
 		try {
 			await client.friendship.declineFriendRequest({ requestId });
@@ -80,8 +81,9 @@
 	}
 
 	async function removeFriend(friendUserId: string) {
+		const removed = friends.find((f) => f.userId === friendUserId);
+		if (!removed) return;
 		removing = new Set([...removing, friendUserId]);
-		const removed = friends.find((f) => f.userId === friendUserId)!;
 		friends = friends.filter((f) => f.userId !== friendUserId);
 		try {
 			await client.friendship.removeFriend({ friendUserId });

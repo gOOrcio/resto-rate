@@ -6,7 +6,7 @@
 	import type { ReviewProto } from '$lib/client/generated/reviews/v1/review_pb';
 	import { Star } from '@lucide/svelte';
 
-	const googlePlacesId = $derived(decodeURIComponent(page.params.googlePlacesId));
+	const googlePlacesId = $derived(decodeURIComponent(page.params.googlePlacesId ?? ''));
 
 	let reviews = $state<ReviewProto[]>([]);
 	let averageRating = $state(0);

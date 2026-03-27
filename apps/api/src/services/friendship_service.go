@@ -47,20 +47,37 @@ func (s *FriendshipService) SendFriendRequest(
 		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("cannot send friend request to yourself"))
 	}
 
-	// Check if a request already exists in either direction
-	var existing models.FriendRequest
-	err = s.DB.WithContext(ctx).Where(
-		"(sender_id = ? AND receiver_id = ?) OR (sender_id = ? AND receiver_id = ?)",
-		senderID, receiver.ID, receiver.ID, senderID,
-	).First(&existing).Error
-	if err == nil {
-		return nil, connect.NewError(connect.CodeAlreadyExists, errors.New("friend request already exists"))
-	} else if !errors.Is(err, gorm.ErrRecordNotFound) {
+	var sender models.User
+	if err := s.DB.WithContext(ctx).First(&sender, "id = ?", senderID).Error; err != nil {
 		return nil, err
 	}
 
-	var sender models.User
-	if err := s.DB.WithContext(ctx).First(&sender, "id = ?", senderID).Error; err != nil {
+	// Compute the unordered pair key (same logic as BeforeCreate).
+	var pairKey string
+	if senderID < receiver.ID {
+		pairKey = senderID + ":" + receiver.ID
+	} else {
+		pairKey = receiver.ID + ":" + senderID
+	}
+
+	// Check for an existing request between this pair.
+	var existing models.FriendRequest
+	err = s.DB.WithContext(ctx).Where("pair_key = ?", pairKey).First(&existing).Error
+	if err == nil {
+		// If the previous request was declined, allow re-sending by resetting to pending.
+		if existing.Status == models.FriendRequestStatusDeclined {
+			existing.SenderID = senderID
+			existing.ReceiverID = receiver.ID
+			existing.Status = models.FriendRequestStatusPending
+			existing.Sender = sender
+			existing.Receiver = receiver
+			if err := s.DB.WithContext(ctx).Save(&existing).Error; err != nil {
+				return nil, err
+			}
+			return connect.NewResponse(&v1.SendFriendRequestResponse{Request: existing.ToProto()}), nil
+		}
+		return nil, connect.NewError(connect.CodeAlreadyExists, errors.New("friend request already exists"))
+	} else if !errors.Is(err, gorm.ErrRecordNotFound) {
 		return nil, err
 	}
 
@@ -121,14 +138,18 @@ func (s *FriendshipService) DeclineFriendRequest(
 		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("request_id is required"))
 	}
 
-	result := s.DB.WithContext(ctx).Where(
-		"id = ? AND receiver_id = ? AND status = ?", req.Msg.RequestId, userID, models.FriendRequestStatusPending,
-	).Delete(&models.FriendRequest{})
-	if result.Error != nil {
-		return nil, result.Error
+	var fr models.FriendRequest
+	if err := s.DB.WithContext(ctx).
+		First(&fr, "id = ? AND receiver_id = ? AND status = ?", req.Msg.RequestId, userID, models.FriendRequestStatusPending).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, connect.NewError(connect.CodeNotFound, errors.New("pending friend request not found"))
+		}
+		return nil, err
 	}
-	if result.RowsAffected == 0 {
-		return nil, connect.NewError(connect.CodeNotFound, errors.New("pending friend request not found"))
+
+	fr.Status = models.FriendRequestStatusDeclined
+	if err := s.DB.WithContext(ctx).Save(&fr).Error; err != nil {
+		return nil, err
 	}
 
 	return connect.NewResponse(&v1.DeclineFriendRequestResponse{Success: true}), nil
@@ -183,14 +204,14 @@ func (s *FriendshipService) ListFriends(
 			friends[i] = &v1.FriendProto{
 				UserId:       fr.ReceiverID,
 				Name:         fr.Receiver.Name,
-				Email:        ptrStr(fr.Receiver.Email),
+				Email:        derefStr(fr.Receiver.Email),
 				FriendsSince: fr.UpdatedAt.Unix(),
 			}
 		} else {
 			friends[i] = &v1.FriendProto{
 				UserId:       fr.SenderID,
 				Name:         fr.Sender.Name,
-				Email:        ptrStr(fr.Sender.Email),
+				Email:        derefStr(fr.Sender.Email),
 				FriendsSince: fr.UpdatedAt.Unix(),
 			}
 		}
@@ -223,14 +244,15 @@ func (s *FriendshipService) ListPendingRequests(
 	return connect.NewResponse(&v1.ListPendingRequestsResponse{Requests: protos}), nil
 }
 
-// getFriendIDs returns the user IDs of all accepted friends for the given user.
-func ptrStr(s *string) string {
+// derefStr safely dereferences a string pointer, returning "" for nil.
+func derefStr(s *string) string {
 	if s == nil {
 		return ""
 	}
 	return *s
 }
 
+// getFriendIDs returns the user IDs of all accepted friends for the given user.
 func getFriendIDs(ctx context.Context, db *gorm.DB, userID string) ([]string, error) {
 	var friendRequests []models.FriendRequest
 	if err := db.WithContext(ctx).Select("sender_id, receiver_id").
