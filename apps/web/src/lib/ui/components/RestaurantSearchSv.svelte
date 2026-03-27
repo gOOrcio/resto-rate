@@ -16,36 +16,42 @@
 	let showRatingForm = $state(false);
 	let wishlistLoading = $state(false);
 
+	let selectionToken = 0;
+
 	async function handleSelect(place: Place) {
+		const googlePlacesId = place.name || '';
+		if (!googlePlacesId) return;
+
 		selectedPlace = place;
 		currentReview = null;
 		currentWishlistItem = null;
 		showRatingForm = false;
 		isEditingReview = false;
 
+		const token = ++selectionToken;
 		isChecking = true;
 		try {
-			const googlePlacesId = place.name || '';
-			const [reviewRes, wishlistRes] = await Promise.all([
+			const [reviewResult, wishlistResult] = await Promise.allSettled([
 				clients.reviews.listReviews({ googlePlacesId }),
 				clients.wishlist.listWishlist({ googlePlacesId })
 			]);
-			currentReview = reviewRes.reviews?.[0] ?? null;
-			currentWishlistItem = wishlistRes.items?.[0] ?? null;
-		} catch {
-			// leave both null — show the default action buttons
+			if (token !== selectionToken) return;
+			currentReview =
+				reviewResult.status === 'fulfilled' ? (reviewResult.value.reviews?.[0] ?? null) : null;
+			currentWishlistItem =
+				wishlistResult.status === 'fulfilled' ? (wishlistResult.value.items?.[0] ?? null) : null;
 		} finally {
-			isChecking = false;
+			if (token === selectionToken) isChecking = false;
 		}
 	}
 
 	async function addToWishlist() {
-		if (!selectedPlace) return;
+		if (!selectedPlace?.name) return;
 		wishlistLoading = true;
 		try {
 			const res = await clients.wishlist.addToWishlist({
-				googlePlacesId: selectedPlace.name || '',
-				restaurantName: selectedPlace.displayName?.text || selectedPlace.name || '',
+				googlePlacesId: selectedPlace.name,
+				restaurantName: selectedPlace.displayName?.text || selectedPlace.name,
 				restaurantAddress: selectedPlace.formattedAddress || '',
 				city: selectedPlace.postalAddress?.locality ?? '',
 				country: selectedPlace.postalAddress?.country ?? ''
@@ -59,10 +65,10 @@
 	}
 
 	async function removeFromWishlist() {
-		if (!selectedPlace) return;
+		if (!selectedPlace?.name) return;
 		wishlistLoading = true;
 		try {
-			await clients.wishlist.removeFromWishlist({ googlePlacesId: selectedPlace.name || '' });
+			await clients.wishlist.removeFromWishlist({ googlePlacesId: selectedPlace.name });
 			currentWishlistItem = null;
 		} catch (e) {
 			console.error('Wishlist remove error:', e);
