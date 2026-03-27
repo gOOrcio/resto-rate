@@ -13,9 +13,12 @@
 	let { children } = $props();
 
 	const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID as string;
+	let reducedMotion = $state(false);
 
-	// Apply dark class to <html> and persist
+	// Only apply/persist after init() has read stored preference — prevents
+	// overwriting localStorage with the default false value on first render.
 	$effect(() => {
+		if (!theme.initialized) return;
 		if (theme.dark) {
 			document.documentElement.classList.add('dark');
 			localStorage.setItem('theme', 'dark');
@@ -40,6 +43,7 @@
 	}
 
 	onMount(async () => {
+		reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 		theme.init();
 
 		let isAuthenticated = false;
@@ -102,8 +106,8 @@
 	{#key page.url.pathname}
 		<main
 			class="flex-grow"
-			in:fly={{ y: 8, duration: 200, delay: 140 }}
-			out:fly={{ y: -6, duration: 140 }}
+			in:fly={reducedMotion ? { duration: 0 } : { y: 8, duration: 200, delay: 140 }}
+			out:fly={reducedMotion ? { duration: 0 } : { y: -6, duration: 140 }}
 		>
 			{@render children()}
 		</main>
