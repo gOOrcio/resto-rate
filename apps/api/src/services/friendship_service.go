@@ -37,18 +37,18 @@ func (s *FriendshipService) SendFriendRequest(
 	case req.Msg.GetReceiverEmail() != "":
 		if err := s.DB.WithContext(ctx).Where("email = ?", req.Msg.GetReceiverEmail()).First(&receiver).Error; err != nil {
 			if errors.Is(err, gorm.ErrRecordNotFound) {
-				return nil, connect.NewError(connect.CodeNotFound, errors.New("user not found"))
+				return nil, connect.NewError(connect.CodeNotFound, errors.New(errUserNotFound))
 			}
 			return nil, err
 		}
 	case req.Msg.GetReceiverUsername() != "":
 		handle := strings.ToLower(strings.TrimPrefix(req.Msg.GetReceiverUsername(), "@"))
 		if !isValidUsername(handle) {
-			return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("invalid username"))
+			return nil, connect.NewError(connect.CodeInvalidArgument, errors.New(errInvalidUsername))
 		}
 		if err := s.DB.WithContext(ctx).Where("username = ?", handle).First(&receiver).Error; err != nil {
 			if errors.Is(err, gorm.ErrRecordNotFound) {
-				return nil, connect.NewError(connect.CodeNotFound, errors.New("user not found"))
+				return nil, connect.NewError(connect.CodeNotFound, errors.New(errUserNotFound))
 			}
 			return nil, err
 		}
@@ -112,7 +112,7 @@ func (s *FriendshipService) AcceptFriendRequest(
 	}
 
 	if req.Msg.RequestId == "" {
-		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("request_id is required"))
+		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New(errRequestIDRequired))
 	}
 
 	var fr models.FriendRequest
@@ -142,7 +142,7 @@ func (s *FriendshipService) DeclineFriendRequest(
 	}
 
 	if req.Msg.RequestId == "" {
-		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("request_id is required"))
+		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New(errRequestIDRequired))
 	}
 
 	var fr models.FriendRequest
@@ -172,7 +172,7 @@ func (s *FriendshipService) RemoveFriend(
 	}
 
 	if req.Msg.FriendUserId == "" {
-		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("friend_user_id is required"))
+		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New(errFriendUserIDRequired))
 	}
 
 	result := s.DB.WithContext(ctx).Where(
@@ -260,10 +260,10 @@ func (s *FriendshipService) FindUserByHandle(
 	// Validate input before auth so callers get a clear error without needing a valid session.
 	handle := strings.ToLower(strings.TrimPrefix(req.Msg.Username, "@"))
 	if handle == "" {
-		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("username is required"))
+		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New(errUsernameRequired))
 	}
 	if !isValidUsername(handle) {
-		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("invalid username"))
+		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New(errInvalidUsername))
 	}
 
 	if _, err := getUserIDFromSession(ctx, req.Header(), s.Valkey); err != nil {
@@ -273,7 +273,7 @@ func (s *FriendshipService) FindUserByHandle(
 	var user models.User
 	if err := s.DB.WithContext(ctx).Where("username = ?", handle).First(&user).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil, connect.NewError(connect.CodeNotFound, errors.New("user not found"))
+			return nil, connect.NewError(connect.CodeNotFound, errors.New(errUserNotFound))
 		}
 		return nil, err
 	}
