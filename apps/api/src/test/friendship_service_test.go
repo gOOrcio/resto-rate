@@ -12,7 +12,7 @@ import (
 func TestFriendshipService_SendFriendRequest_NilDB(t *testing.T) {
 	svc := &services.FriendshipService{}
 	req := connect.NewRequest(&friendshipv1.SendFriendRequestRequest{
-		ReceiverEmail: "friend@example.com",
+		Receiver: &friendshipv1.SendFriendRequestRequest_ReceiverEmail{ReceiverEmail: "friend@example.com"},
 	})
 	_, err := svc.SendFriendRequest(context.Background(), req)
 	if err == nil {

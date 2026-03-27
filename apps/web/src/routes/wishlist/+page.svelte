@@ -7,6 +7,7 @@
 	import type { WishlistItemProto } from '$lib/client/generated/wishlist/v1/wishlist_item_pb';
 	import type { ReviewProto } from '$lib/client/generated/reviews/v1/review_pb';
 	import type { Place } from '$lib/client/generated/google_maps/v1/google_maps_service_pb';
+	import { extractCity } from '$lib/utils/place';
 	import ExpandableRestaurantInfo from '$lib/ui/components/ExpandableRestaurantInfo.svelte';
 	import RatingForm from '$lib/ui/components/RatingForm.svelte';
 	import RestaurantSearch from '$lib/ui/components/RestaurantSearch.svelte';
@@ -65,7 +66,7 @@
 				googlePlacesId: searchedPlace.name || '',
 				restaurantName: searchedPlace.displayName?.text || '',
 				restaurantAddress: searchedPlace.formattedAddress || '',
-				city: searchedPlace.postalAddress?.locality ?? '',
+				city: extractCity(searchedPlace),
 				country: searchedPlace.postalAddress?.country ?? ''
 			});
 			await loadWishlist();

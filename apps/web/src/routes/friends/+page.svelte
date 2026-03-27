@@ -11,7 +11,7 @@
 	let pendingRequests = $state<FriendRequestProto[]>([]);
 	let loading = $state(true);
 
-	let addEmail = $state('');
+	let addInput = $state('');
 	let addLoading = $state(false);
 	let addError = $state('');
 	let addSuccess = $state('');
@@ -36,14 +36,20 @@
 	}
 
 	async function sendRequest() {
-		if (!addEmail.trim()) return;
+		const val = addInput.trim();
+		if (!val) return;
 		addLoading = true;
 		addError = '';
 		addSuccess = '';
+		const isEmail = val.includes('@');
 		try {
-			await client.friendship.sendFriendRequest({ receiver: { case: 'receiverEmail', value: addEmail.trim() } });
-			addSuccess = `Friend request sent to ${addEmail.trim()}`;
-			addEmail = '';
+			await client.friendship.sendFriendRequest({
+				receiver: isEmail
+					? { case: 'receiverEmail', value: val }
+					: { case: 'receiverUsername', value: val.replace(/^@/, '') }
+			});
+			addSuccess = `Friend request sent to ${val}`;
+			addInput = '';
 		} catch (e: unknown) {
 			addError = (e as Error).message || 'Failed to send request';
 		} finally {
@@ -126,13 +132,13 @@
 				}}
 			>
 				<Input
-					type="email"
-					placeholder="Their email address"
-					bind:value={addEmail}
+					type="text"
+					placeholder="Email address or @username"
+					bind:value={addInput}
 					class="flex-1"
 					disabled={addLoading}
 				/>
-				<Button type="submit" disabled={addLoading || !addEmail.trim()}>
+				<Button type="submit" disabled={addLoading || !addInput.trim()}>
 					{addLoading ? 'Sending…' : 'Send Request'}
 				</Button>
 			</form>
