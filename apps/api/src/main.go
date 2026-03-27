@@ -5,6 +5,7 @@ import (
 	googlemapsv1connect "api/src/generated/google_maps/v1/v1connect"
 	restaurantsv1connect "api/src/generated/restaurants/v1/v1connect"
 	reviewsv1connect "api/src/generated/reviews/v1/v1connect"
+	tagsv1connect "api/src/generated/tags/v1/v1connect"
 	usersv1connect "api/src/generated/users/v1/v1connect"
 	"api/src/internal/cache"
 	"api/src/internal/utils"
@@ -55,6 +56,12 @@ func main() {
 	err := utils.CreateSchema(db)
 	if err != nil {
 		slog.Error("Failed to create database schema", slog.Any("error", err))
+		os.Exit(1)
+	}
+
+	err = utils.SeedRequiredData(db)
+	if err != nil {
+		slog.Error("Failed to seed required data", slog.Any("error", err))
 		os.Exit(1)
 	}
 
@@ -174,6 +181,11 @@ func initializeServiceHandlers(db *gorm.DB, valkeyClient valkey.Client, googleCl
 			path, handler := reviewsv1connect.NewReviewsServiceHandler(svc, connect.WithInterceptors(prometheusInterceptor))
 			return ServiceRegistration{Path: path, Handler: handler}
 		}(),
+		func() ServiceRegistration {
+			svc := services.NewTagsService(db, valkeyClient)
+			path, handler := tagsv1connect.NewTagsServiceHandler(svc, connect.WithInterceptors(prometheusInterceptor))
+			return ServiceRegistration{Path: path, Handler: handler}
+		}(),
 	}
 }
 
@@ -237,6 +249,7 @@ func optionallySetupGRPCReflection(mux *http.ServeMux) {
 			googlemapsv1connect.GoogleMapsServiceName,
 			authv1connect.AuthServiceName,
 			reviewsv1connect.ReviewsServiceName,
+			tagsv1connect.TagsServiceName,
 		)
 		mux.Handle(grpcreflect.NewHandlerV1(reflector))
 		mux.Handle(grpcreflect.NewHandlerV1Alpha(reflector))
