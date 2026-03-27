@@ -1,7 +1,9 @@
 <script lang="ts">
+	import { onMount } from 'svelte';
 	import { page } from '$app/state';
 	import { Button } from '$lib/components/ui/button/index.js';
 	import * as Sheet from '$lib/components/ui/sheet/index.js';
+	import * as DropdownMenu from '$lib/components/ui/dropdown-menu/index.js';
 	import { auth } from '$lib/state/auth.svelte';
 	import SocialSignIn from '$lib/ui/components/SocialSignIn.svelte';
 	import client from '$lib/client/client';
@@ -30,11 +32,23 @@
 		}
 	}
 
+	function getInitials(): string {
+		if (auth.user?.username) return auth.user.username[0].toUpperCase();
+		if (auth.user?.email) return auth.user.email[0].toUpperCase();
+		return '?';
+	}
+
 	const authNavLinks = [
 		{ href: '/reviews', label: 'My Reviews' },
 		{ href: '/wishlist', label: 'Wishlist' },
 		{ href: '/friends', label: 'Friends' },
 	];
+
+	onMount(() => {
+		if (page.url.searchParams.get('login') === '1') {
+			loginOpen = true;
+		}
+	});
 </script>
 
 <header class="sticky top-0 z-10 w-full bg-blue-200 p-2 shadow-sm">
@@ -68,10 +82,42 @@
 		<!-- Auth controls + mobile hamburger -->
 		<div class="flex items-center gap-2">
 			{#if auth.isLoggedIn}
-				<span class="hidden text-sm text-gray-700 sm:inline">
-					{auth.user?.username || auth.user?.email}
-				</span>
-				<Button size="sm" variant="outline" onclick={handleLogout}>Logout</Button>
+				<!-- Avatar + Dropdown (desktop) -->
+				<div class="hidden sm:block">
+					<DropdownMenu.Root>
+						<DropdownMenu.Trigger>
+							{#snippet child({ props })}
+								<button
+									{...props}
+									class="rounded-full bg-blue-600 text-white font-semibold text-sm flex items-center justify-center w-9 h-9 hover:bg-blue-700 transition-colors"
+									aria-label="Account menu"
+								>
+									{getInitials()}
+								</button>
+							{/snippet}
+						</DropdownMenu.Trigger>
+						<DropdownMenu.Content align="end" class="w-48">
+							<DropdownMenu.Label>Account</DropdownMenu.Label>
+							<DropdownMenu.Item onclick={handleLogout}>Logout</DropdownMenu.Item>
+							<DropdownMenu.Separator />
+							<DropdownMenu.Label>Navigate</DropdownMenu.Label>
+							<DropdownMenu.Item>
+								<a href="/friends" class="w-full">Find a Friend</a>
+							</DropdownMenu.Item>
+							<DropdownMenu.Separator />
+							<DropdownMenu.Label>Preferences (coming soon)</DropdownMenu.Label>
+							<DropdownMenu.Item disabled class="opacity-50 cursor-not-allowed">
+								🌐 Language
+							</DropdownMenu.Item>
+							<DropdownMenu.Item disabled class="opacity-50 cursor-not-allowed">
+								🌙 Dark mode
+							</DropdownMenu.Item>
+							<DropdownMenu.Item disabled class="opacity-50 cursor-not-allowed">
+								⚙️ Settings
+							</DropdownMenu.Item>
+						</DropdownMenu.Content>
+					</DropdownMenu.Root>
+				</div>
 			{:else}
 				<Button size="sm" onclick={() => (loginOpen = true)}>Sign in</Button>
 			{/if}
@@ -105,6 +151,8 @@
 							{#each authNavLinks as link}
 								<a href={link.href} class="text-gray-700 hover:text-blue-700">{link.label}</a>
 							{/each}
+						{:else}
+							<Button size="sm" onclick={() => (loginOpen = true)}>Sign in</Button>
 						{/if}
 					</nav>
 				</Sheet.Content>
