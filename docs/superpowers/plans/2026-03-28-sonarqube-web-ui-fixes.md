@@ -45,7 +45,7 @@ echo ""
 - [ ] **Step 2: Run provision.sh**
 
 ```bash
-export SONAR_TOKEN=squ_bcacb5fcfd823abad4b2e0fc8cfbf08986265cd3
+export SONAR_TOKEN=<YOUR_SONARQUBE_TOKEN>
 export SONAR_HOST_URL=https://sonarqube.mati-lab.online
 bash ~/Projects/sonarqube-sandbox/sonar-config/provision.sh
 ```
@@ -62,7 +62,7 @@ Expected output includes:
 - [ ] **Step 3: Verify gate assigned**
 
 ```bash
-curl -sf -u "squ_bcacb5fcfd823abad4b2e0fc8cfbf08986265cd3:" \
+curl -sf -u "$SONAR_TOKEN:" \
   "https://sonarqube.mati-lab.online/api/qualitygates/get_by_project?project=resto-rate-web" \
   | python3 -c "import sys,json; print('Gate:', json.load(sys.stdin)['qualityGate']['name'])"
 ```
