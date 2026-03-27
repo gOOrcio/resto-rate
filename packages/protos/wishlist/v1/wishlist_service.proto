@@ -1,0 +1,41 @@
+syntax = "proto3";
+
+package wishlist.v1;
+
+import "wishlist/v1/wishlist_item.proto";
+
+option go_package = "api/src/generated/wishlist/v1";
+
+service WishlistService {
+  rpc AddToWishlist(AddToWishlistRequest) returns (AddToWishlistResponse);
+  rpc RemoveFromWishlist(RemoveFromWishlistRequest) returns (RemoveFromWishlistResponse);
+  rpc ListWishlist(ListWishlistRequest) returns (ListWishlistResponse);
+}
+
+message AddToWishlistRequest {
+  string google_places_id = 1;
+  string restaurant_name = 2;
+  string restaurant_address = 3;
+  string city = 4;
+  string country = 5;
+}
+
+message AddToWishlistResponse {
+  WishlistItemProto item = 1;
+}
+
+message RemoveFromWishlistRequest {
+  string google_places_id = 1;
+}
+
+message RemoveFromWishlistResponse {
+  bool success = 1;
+}
+
+message ListWishlistRequest {
+  string google_places_id = 1;
+}
+
+message ListWishlistResponse {
+  repeated WishlistItemProto items = 1;
+}

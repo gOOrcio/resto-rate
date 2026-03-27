@@ -1,0 +1,15 @@
+syntax = "proto3";
+
+package wishlist.v1;
+
+option go_package = "api/src/generated/wishlist/v1";
+
+message WishlistItemProto {
+  string id = 1;
+  string google_places_id = 2;
+  string restaurant_name = 3;
+  string restaurant_address = 4;
+  string city = 5;
+  string country = 6;
+  int64 created_at = 7;
+}
