@@ -41,6 +41,12 @@
 		return () => clearTimeout(id);
 	});
 
+	let ratingRangeError = $derived(
+		minRating > 0 && maxRating > 0 && minRating > maxRating
+			? 'Min rating cannot exceed max rating'
+			: null
+	);
+
 	let activeFilterCount = $derived(
 		(tagSlugs.length > 0 ? 1 : 0) +
 			(minRating > 0 || maxRating > 0 ? 1 : 0) +
@@ -99,6 +105,7 @@
 	// Reactive reload when any filter changes (only after mount + auth confirmed)
 	$effect(() => {
 		if (!mounted) return;
+		if (ratingRangeError) return;
 		void [tagSlugs, tagMode, minRating, maxRating, commentSearch, city, country, sortBy];
 		loadReviews();
 	});
@@ -223,6 +230,9 @@
 							<option value={n}>{n} ★</option>
 						{/each}
 					</select>
+					{#if ratingRangeError}
+						<p class="w-full text-xs text-red-600">{ratingRangeError}</p>
+					{/if}
 				</div>
 
 				<!-- Comment search -->

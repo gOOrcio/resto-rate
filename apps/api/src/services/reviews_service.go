@@ -168,7 +168,7 @@ func (s *ReviewsService) ListReviews(
 				conditions[i] = "reviews.tags LIKE ?"
 				args[i] = fmt.Sprintf(`%%"%s"%%`, slug)
 			}
-			query = query.Where(strings.Join(conditions, " OR "), args...)
+			query = query.Where("("+strings.Join(conditions, " OR ")+")", args...)
 		}
 	}
 
