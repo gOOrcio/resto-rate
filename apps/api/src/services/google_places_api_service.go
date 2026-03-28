@@ -37,9 +37,14 @@ func (s *GooglePlacesAPIService) AutocompletePlaces(
 		return nil, fmt.Errorf("input is required")
 	}
 
+	includedPrimaryTypes := req.Msg.IncludedPrimaryTypes
+	if len(includedPrimaryTypes) == 0 {
+		includedPrimaryTypes = []string{"restaurant"}
+	}
+
 	pbReq := &placespb.AutocompletePlacesRequest{
 		Input:                   req.Msg.Input,
-		IncludedPrimaryTypes:    []string{"restaurant"},
+		IncludedPrimaryTypes:    includedPrimaryTypes,
 		IncludedRegionCodes:     req.Msg.IncludedRegionCodes,
 		LanguageCode:            req.Msg.LanguageCode,
 		IncludeQueryPredictions: true,

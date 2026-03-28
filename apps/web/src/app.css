@@ -143,6 +143,13 @@
   body {
     @apply bg-background text-foreground;
     font-family: var(--font-sans);
+    cursor: default;
+  }
+  a, button, [role="button"], label[for], select {
+    cursor: pointer;
+  }
+  input, textarea, [contenteditable] {
+    cursor: text;
   }
   input[type="search"]::-webkit-search-cancel-button {
     display: none;
