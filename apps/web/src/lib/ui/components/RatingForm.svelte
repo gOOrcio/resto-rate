@@ -71,8 +71,8 @@
 	}
 </script>
 
-<div class="rounded-2xl bg-white p-6 shadow-xl">
-	<h4 class="mb-4 text-base font-semibold text-gray-800">
+<div class="rounded-2xl bg-card p-6 shadow-xl">
+	<h4 class="mb-4 text-base font-semibold text-foreground">
 		{isEdit ? 'Edit your rating' : 'Rate this place'}
 	</h4>
 
@@ -92,7 +92,7 @@
 					<Star
 						class="h-7 w-7 {i < displayRating
 							? 'fill-amber-400 text-amber-400'
-							: 'fill-none text-gray-300'}"
+							: 'fill-none text-gray-300 dark:text-gray-600'}"
 					/>
 				</button>
 			{/each}
@@ -107,7 +107,7 @@
 			bind:value={comment}
 			rows="3"
 			placeholder="What did you think?"
-			class="w-full resize-none rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+			class="w-full resize-none rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
 		></textarea>
 	</div>
 
@@ -118,7 +118,7 @@
 	</div>
 
 	{#if error}
-		<p class="mb-3 text-sm text-red-600">{error}</p>
+		<p class="mb-3 text-sm text-destructive">{error}</p>
 	{/if}
 
 	<Button onclick={handleSubmit} disabled={loading || rating < 1} class="w-full">

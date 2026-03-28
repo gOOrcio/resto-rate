@@ -88,15 +88,15 @@
 			{#if selectedPlace.name}
 				<a
 					href="/restaurants/{encodeURIComponent(selectedPlace.name)}"
-					class="text-sm text-blue-600 hover:underline"
+					class="text-sm text-primary hover:underline"
 				>
 					See reviews from you &amp; friends →
 				</a>
 			{/if}
 
 			{#if isChecking}
-				<div class="flex items-center gap-2 text-sm text-gray-500">
-					<div class="h-4 w-4 animate-spin rounded-full border-2 border-gray-300 border-t-blue-500"></div>
+				<div class="flex items-center gap-2 text-sm text-muted-foreground">
+					<div class="h-4 w-4 animate-spin rounded-full border-2 border-border border-t-primary"></div>
 					Checking your history…
 				</div>
 			{:else if currentReview && !isEditingReview}
@@ -131,7 +131,7 @@
 							</button>
 						{:else}
 							<button
-								class="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 disabled:opacity-50"
+								class="rounded-lg border border-border bg-card px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-muted disabled:opacity-50"
 								onclick={addToWishlist}
 								disabled={wishlistLoading}
 							>
@@ -139,7 +139,7 @@
 							</button>
 						{/if}
 						<button
-							class="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700"
+							class="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
 							onclick={() => (showRatingForm = true)}
 						>
 							📝 Add review
@@ -159,7 +159,7 @@
 						}}
 					/>
 					<button
-						class="mt-2 text-sm text-gray-500 hover:text-gray-700 hover:underline"
+						class="mt-2 text-sm text-muted-foreground hover:text-foreground hover:underline"
 						onclick={() => (showRatingForm = false)}
 					>
 						Cancel

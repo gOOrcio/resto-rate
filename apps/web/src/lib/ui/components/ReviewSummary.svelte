@@ -9,9 +9,9 @@
 	}>();
 </script>
 
-<div class="rounded-2xl bg-white p-6 shadow-xl">
+<div class="rounded-2xl bg-card p-6 shadow-xl">
 	<div class="mb-3 flex items-center justify-between">
-		<h4 class="text-base font-semibold text-gray-800">Your rating</h4>
+		<h4 class="text-base font-semibold text-foreground">Your rating</h4>
 		<Button size="sm" variant="outline" onclick={onEdit}>Edit</Button>
 	</div>
 
@@ -21,20 +21,20 @@
 			<Star
 				class="h-5 w-5 {i < review.rating
 					? 'fill-amber-400 text-amber-400'
-					: 'fill-none text-gray-300'}"
+					: 'fill-none text-gray-300 dark:text-gray-600'}"
 			/>
 		{/each}
-		<span class="ml-2 text-sm font-semibold text-gray-800">{review.rating.toFixed(1)}</span>
+		<span class="ml-2 text-sm font-semibold text-foreground">{review.rating.toFixed(1)}</span>
 	</div>
 
 	{#if review.comment}
-		<p class="mb-3 text-sm leading-relaxed text-gray-600">{review.comment}</p>
+		<p class="mb-3 text-sm leading-relaxed text-muted-foreground">{review.comment}</p>
 	{/if}
 
 	{#if review.tags && review.tags.length > 0}
 		<div class="flex flex-wrap gap-1.5">
 			{#each review.tags as tag}
-				<span class="rounded-full bg-blue-100 px-2.5 py-0.5 text-xs font-medium text-blue-700">
+				<span class="rounded-full bg-secondary px-2.5 py-0.5 text-xs font-medium text-secondary-foreground">
 					{tag}
 				</span>
 			{/each}
