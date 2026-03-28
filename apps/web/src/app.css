@@ -136,6 +136,7 @@
 @layer base {
   * {
     @apply border-border outline-ring/50;
+    cursor: default;
   }
   dialog:focus:not(:focus-visible) {
     outline: none;
@@ -143,7 +144,6 @@
   body {
     @apply bg-background text-foreground;
     font-family: var(--font-sans);
-    cursor: default;
   }
   a, button, [role="button"], label[for], select {
     cursor: pointer;
