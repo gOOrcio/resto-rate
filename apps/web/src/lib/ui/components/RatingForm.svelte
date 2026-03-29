@@ -13,6 +13,7 @@
 		city = '',
 		country = '',
 		existingReview,
+		initialTags,
 		onSubmit
 	} = $props<{
 		googlePlacesId: string;
@@ -21,13 +22,14 @@
 		city?: string;
 		country?: string;
 		existingReview?: ReviewProto;
+		initialTags?: string[];
 		onSubmit: (review: ReviewProto) => void;
 	}>();
 
 	let rating = $state(existingReview?.rating ?? 0);
 	let hoverRating = $state(0);
 	let comment = $state(existingReview?.comment ?? '');
-	let tags = $state<string[]>(existingReview?.tags ? [...existingReview.tags] : []);
+	let tags = $state<string[]>(existingReview?.tags ? [...existingReview.tags] : (initialTags ?? []));
 	let loading = $state(false);
 	let error = $state<string | null>(null);
 

@@ -177,7 +177,7 @@
 
 	<!-- Add review panel -->
 	{#if showAddReview}
-		<div class="card-reveal rounded-lg border border-border bg-card p-5">
+		<div class="relative z-10 card-reveal rounded-lg border border-border bg-card p-5">
 			<p class="mb-3 text-sm font-medium text-foreground">Search for a restaurant to review</p>
 			<RestaurantSearch
 				placeholder="Restaurant name or address…"

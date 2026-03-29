@@ -177,6 +177,7 @@ func predefinedRestaurantDetails() []string {
 		"name",
 		"display_name",
 		"formatted_address",
+		"postal_address",
 		"short_formatted_address",
 		"rating",
 		"business_status",

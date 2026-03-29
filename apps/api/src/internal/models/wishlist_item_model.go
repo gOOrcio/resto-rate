@@ -13,6 +13,7 @@ type WishlistItem struct {
 	RestaurantID   string     `gorm:"not null;index;uniqueIndex:idx_wishlist_user_restaurant"`
 	Restaurant     Restaurant `gorm:"foreignKey:RestaurantID"`
 	GooglePlacesID string     `gorm:"not null;index"`
+	Tags           []string   `gorm:"serializer:json"`
 	CreatedAt      time.Time  `gorm:"autoCreateTime"`
 }
 
@@ -21,6 +22,10 @@ func (w *WishlistItem) BeforeCreate(tx *gorm.DB) (err error) {
 }
 
 func (w *WishlistItem) ToProto() *wishlistv1.WishlistItemProto {
+	tags := w.Tags
+	if tags == nil {
+		tags = []string{}
+	}
 	return &wishlistv1.WishlistItemProto{
 		Id:                w.ID,
 		GooglePlacesId:    w.GooglePlacesID,
@@ -29,5 +34,6 @@ func (w *WishlistItem) ToProto() *wishlistv1.WishlistItemProto {
 		City:              w.Restaurant.City,
 		Country:           w.Restaurant.Country,
 		CreatedAt:         w.CreatedAt.Unix(),
+		Tags:              tags,
 	}
 }

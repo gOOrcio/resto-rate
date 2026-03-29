@@ -2,7 +2,7 @@
 	import { goto } from '$app/navigation';
 	import { auth } from '$lib/state/auth.svelte';
 	import client from '$lib/client/client';
-	import { WishlistSortBy } from '$lib/client/generated/wishlist/v1/wishlist_service_pb';
+	import { WishlistSortBy, WishlistTagFilterMode } from '$lib/client/generated/wishlist/v1/wishlist_service_pb';
 	import type { WishlistItemProto } from '$lib/client/generated/wishlist/v1/wishlist_item_pb';
 	import type { ReviewProto } from '$lib/client/generated/reviews/v1/review_pb';
 	import type { Place } from '$lib/client/generated/google_maps/v1/google_maps_service_pb';
@@ -10,6 +10,8 @@
 	import ExpandableRestaurantInfo from '$lib/ui/components/ExpandableRestaurantInfo.svelte';
 	import RatingForm from '$lib/ui/components/RatingForm.svelte';
 	import RestaurantSearch from '$lib/ui/components/RestaurantSearch.svelte';
+	import TagPicker from '$lib/ui/components/TagPicker.svelte';
+	import TagFilter from '$lib/ui/components/TagFilter.svelte';
 
 	let items = $state<WishlistItemProto[]>([]);
 	let loading = $state(true);
@@ -21,22 +23,28 @@
 	let searchAction = $state<'review' | null>(null);
 	let savingToWishlist = $state(false);
 	let showSearch = $state(false);
+	let pendingTags = $state<string[]>([]);
 
 	// Filter state
 	let city = $state('');
 	let country = $state('');
 	let sortBy = $state('date-desc');
+	let tagSlugs = $state<string[]>([]);
+	let tagMode = $state<'OR' | 'AND'>('OR');
 
 	let activeFilterCount = $derived(
 		(city.trim() !== '' ? 1 : 0) +
 			(country.trim() !== '' ? 1 : 0) +
-			(sortBy !== 'date-desc' ? 1 : 0)
+			(sortBy !== 'date-desc' ? 1 : 0) +
+			(tagSlugs.length > 0 ? 1 : 0)
 	);
 
 	function clearFilters() {
 		city = '';
 		country = '';
 		sortBy = 'date-desc';
+		tagSlugs = [];
+		tagMode = 'OR';
 	}
 
 	function toSortByEnum(s: string): WishlistSortBy {
@@ -55,6 +63,7 @@
 	function handleSearchSelect(place: Place) {
 		searchedPlace = place;
 		searchAction = null;
+		pendingTags = [];
 	}
 
 	async function saveToWishlist() {
@@ -66,11 +75,13 @@
 				restaurantName: searchedPlace.displayName?.text || '',
 				restaurantAddress: searchedPlace.formattedAddress || '',
 				city: extractCity(searchedPlace),
-				country: searchedPlace.postalAddress?.country ?? ''
+				country: searchedPlace.postalAddress?.country ?? '',
+				tagSlugs: pendingTags
 			});
 			await loadWishlist();
 			searchedPlace = null;
 			showSearch = false;
+			pendingTags = [];
 		} catch (e) {
 			console.error('Failed to add to wishlist:', e);
 		} finally {
@@ -91,7 +102,12 @@
 			const res = await client.wishlist.listWishlist({
 				city,
 				country,
-				sortBy: toSortByEnum(sortBy)
+				sortBy: toSortByEnum(sortBy),
+				tagSlugs,
+				tagFilterMode:
+					tagMode === 'AND'
+						? WishlistTagFilterMode.AND
+						: WishlistTagFilterMode.OR
 			});
 			items = res.items ?? [];
 		} catch (e) {
@@ -116,7 +132,7 @@
 
 	$effect(() => {
 		if (!mounted) return;
-		void [city, country, sortBy];
+		void [city, country, sortBy, tagSlugs, tagMode];
 		loadWishlist();
 	});
 
@@ -145,7 +161,7 @@
 		</div>
 		<button
 			class="shrink-0 rounded-md border border-border px-3 py-1.5 text-sm font-medium text-foreground transition-colors hover:bg-muted"
-			onclick={() => { showSearch = !showSearch; searchedPlace = null; searchAction = null; }}
+			onclick={() => { showSearch = !showSearch; searchedPlace = null; searchAction = null; pendingTags = []; }}
 		>
 			{showSearch ? 'Cancel' : '+ Add place'}
 		</button>
@@ -153,7 +169,7 @@
 
 	<!-- Add place panel -->
 	{#if showSearch}
-		<div class="card-reveal rounded-lg border border-border bg-card p-5">
+		<div class="relative z-10 card-reveal rounded-lg border border-border bg-card p-5">
 			<p class="mb-3 text-sm font-medium text-foreground">Search for a restaurant to save</p>
 			<RestaurantSearch
 				placeholder="Restaurant name or address…"
@@ -169,6 +185,8 @@
 					</div>
 
 					{#if !searchAction}
+						<TagPicker bind:selected={pendingTags} />
+
 						<div class="flex flex-wrap gap-2">
 							<button
 								class="rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-50"
@@ -210,7 +228,7 @@
 	{/if}
 
 	<!-- Filter bar -->
-	<div class="flex flex-wrap items-center gap-2">
+	<div class="flex flex-wrap items-start gap-2">
 		<input
 			type="text"
 			bind:value={city}
@@ -223,12 +241,13 @@
 			placeholder="Filter by country…"
 			class="w-40 rounded-md border border-border bg-card px-3 py-1.5 text-sm text-foreground placeholder:text-muted-foreground focus:ring-1 focus:ring-ring focus:outline-none"
 		/>
+		<TagFilter bind:selected={tagSlugs} bind:mode={tagMode} />
 		{#if activeFilterCount > 0}
 			<button
-				class="text-sm text-muted-foreground hover:text-foreground"
+				class="self-center text-sm text-muted-foreground hover:text-foreground"
 				onclick={clearFilters}
 			>
-				Clear
+				Clear all
 			</button>
 		{/if}
 		<div class="ml-auto flex items-center gap-2">
@@ -281,6 +300,15 @@
 								city={item.city}
 								country={item.country}
 							/>
+							{#if item.tags && item.tags.length > 0}
+								<div class="mt-3 flex flex-wrap gap-1.5">
+									{#each item.tags as tag}
+										<span class="rounded-full bg-secondary px-2.5 py-0.5 text-xs font-medium text-secondary-foreground">
+											{tag}
+										</span>
+									{/each}
+								</div>
+							{/if}
 						</div>
 						<div class="flex items-center justify-between border-t border-border px-5 py-3">
 							<button
@@ -303,6 +331,7 @@
 								googlePlacesId={item.googlePlacesId}
 								restaurantName={item.restaurantName}
 								restaurantAddress={item.restaurantAddress}
+								initialTags={item.tags ?? []}
 								onSubmit={() => {
 									items = items.filter((i) => i.googlePlacesId !== item.googlePlacesId);
 									ratingId = null;
