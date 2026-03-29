@@ -60,6 +60,18 @@ func (s *ReviewsService) CreateReview(
 	if req.Msg.Rating < 1 || req.Msg.Rating > 5 {
 		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("rating must be between 1 and 5"))
 	}
+	if req.Msg.PricePaidPerPerson < 0 {
+		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("price_paid_per_person cannot be negative"))
+	}
+	if req.Msg.PartySize < 0 || int32(req.Msg.PartySize) > 4 {
+		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("invalid party_size value"))
+	}
+	if req.Msg.Occasion < 0 || int32(req.Msg.Occasion) > 5 {
+		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("invalid occasion value"))
+	}
+	if req.Msg.WouldVisitAgain < 0 || int32(req.Msg.WouldVisitAgain) > 3 {
+		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("invalid would_visit_again value"))
+	}
 
 	var restaurant models.Restaurant
 	var review models.Review
@@ -229,6 +241,18 @@ func (s *ReviewsService) UpdateReview(
 	if req.Msg.Rating < 1 || req.Msg.Rating > 5 {
 		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("rating must be between 1 and 5"))
 	}
+	if req.Msg.PricePaidPerPerson != nil && *req.Msg.PricePaidPerPerson < 0 {
+		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("price_paid_per_person cannot be negative"))
+	}
+	if req.Msg.PartySize != nil && (int32(*req.Msg.PartySize) < 0 || int32(*req.Msg.PartySize) > 4) {
+		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("invalid party_size value"))
+	}
+	if req.Msg.Occasion != nil && (int32(*req.Msg.Occasion) < 0 || int32(*req.Msg.Occasion) > 5) {
+		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("invalid occasion value"))
+	}
+	if req.Msg.WouldVisitAgain != nil && (int32(*req.Msg.WouldVisitAgain) < 0 || int32(*req.Msg.WouldVisitAgain) > 3) {
+		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("invalid would_visit_again value"))
+	}
 
 	var review models.Review
 	if err := s.DB.WithContext(ctx).Preload("Restaurant").Preload("User").First(&review, reviewOwnerFilter, req.Msg.Id, userID).Error; err != nil {
@@ -238,19 +262,34 @@ func (s *ReviewsService) UpdateReview(
 		return nil, err
 	}
 
+	// Always-present fields (same contract as before this feature)
 	review.Comment = req.Msg.Comment
 	review.Rating = req.Msg.Rating
 	review.Tags = req.Msg.Tags
-	review.PartySize = int32(req.Msg.PartySize)
-	review.Occasion = int32(req.Msg.Occasion)
-	review.PricePaidPerPerson = req.Msg.PricePaidPerPerson
-	review.WouldVisitAgain = int32(req.Msg.WouldVisitAgain)
-	review.DishHighlights = req.Msg.DishHighlights
-	if req.Msg.VisitedAt != 0 {
-		t := time.Unix(req.Msg.VisitedAt, 0)
-		review.VisitedAt = &t
-	} else {
-		review.VisitedAt = nil
+
+	// Optional fields: only update when explicitly provided by the client.
+	if req.Msg.VisitedAt != nil {
+		if *req.Msg.VisitedAt == 0 {
+			review.VisitedAt = nil
+		} else {
+			t := time.Unix(*req.Msg.VisitedAt, 0)
+			review.VisitedAt = &t
+		}
+	}
+	if req.Msg.PartySize != nil {
+		review.PartySize = int32(*req.Msg.PartySize)
+	}
+	if req.Msg.Occasion != nil {
+		review.Occasion = int32(*req.Msg.Occasion)
+	}
+	if req.Msg.PricePaidPerPerson != nil {
+		review.PricePaidPerPerson = *req.Msg.PricePaidPerPerson
+	}
+	if req.Msg.WouldVisitAgain != nil {
+		review.WouldVisitAgain = int32(*req.Msg.WouldVisitAgain)
+	}
+	if req.Msg.DishHighlights != nil {
+		review.DishHighlights = *req.Msg.DishHighlights
 	}
 
 	if err := s.DB.WithContext(ctx).Save(&review).Error; err != nil {

@@ -68,6 +68,7 @@
 		loading = true;
 		try {
 			if (isEdit && existingReview) {
+				// Always send optional extra fields so the server can update/clear them.
 				const res = await client.reviews.updateReview({
 					id: existingReview.id,
 					comment,
@@ -76,7 +77,7 @@
 					visitedAt: visitedAtTs(),
 					partySize,
 					occasion,
-					pricePaidPerPerson,
+					pricePaidPerPerson: pricePaidPerPerson || 0,
 					wouldVisitAgain,
 					dishHighlights
 				});
@@ -241,7 +242,11 @@
 						id="price-paid"
 						type="number"
 						min="0"
-						bind:value={pricePaidPerPerson}
+						value={pricePaidPerPerson || ''}
+						oninput={(e) => {
+							const n = (e.currentTarget as HTMLInputElement).valueAsNumber;
+							pricePaidPerPerson = Number.isNaN(n) || n < 0 ? 0 : Math.floor(n);
+						}}
 						placeholder="0"
 						class="w-full rounded-md border border-border bg-card py-1.5 pl-7 pr-3 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-ring"
 					/>

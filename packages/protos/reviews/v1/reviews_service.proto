@@ -65,12 +65,13 @@ message UpdateReviewRequest {
   string comment = 2;
   double rating = 3;
   repeated string tags = 4;
-  int64 visited_at = 5;
-  PartySize party_size = 6;
-  Occasion occasion = 7;
-  int32 price_paid_per_person = 8;
-  WouldVisitAgain would_visit_again = 9;
-  string dish_highlights = 10;
+  // Optional: omitting a field leaves the stored value unchanged.
+  optional int64 visited_at = 5;
+  optional PartySize party_size = 6;
+  optional Occasion occasion = 7;
+  optional int32 price_paid_per_person = 8;
+  optional WouldVisitAgain would_visit_again = 9;
+  optional string dish_highlights = 10;
 }
 
 message UpdateReviewResponse {
