@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"net/http"
 	"strings"
+	"time"
 
 	"connectrpc.com/connect"
 	"github.com/valkey-io/valkey-go"
@@ -92,12 +93,21 @@ func (s *ReviewsService) CreateReview(
 		}
 
 		review = models.Review{
-			RestaurantID:   restaurant.ID,
-			UserID:         userID,
-			GooglePlacesID: req.Msg.GooglePlacesId,
-			Comment:        req.Msg.Comment,
-			Rating:         req.Msg.Rating,
-			Tags:           req.Msg.Tags,
+			RestaurantID:       restaurant.ID,
+			UserID:             userID,
+			GooglePlacesID:     req.Msg.GooglePlacesId,
+			Comment:            req.Msg.Comment,
+			Rating:             req.Msg.Rating,
+			Tags:               req.Msg.Tags,
+			PartySize:          int32(req.Msg.PartySize),
+			Occasion:           int32(req.Msg.Occasion),
+			PricePaidPerPerson: req.Msg.PricePaidPerPerson,
+			WouldVisitAgain:    int32(req.Msg.WouldVisitAgain),
+			DishHighlights:     req.Msg.DishHighlights,
+		}
+		if req.Msg.VisitedAt != 0 {
+			t := time.Unix(req.Msg.VisitedAt, 0)
+			review.VisitedAt = &t
 		}
 		return tx.Create(&review).Error
 	})
@@ -231,6 +241,17 @@ func (s *ReviewsService) UpdateReview(
 	review.Comment = req.Msg.Comment
 	review.Rating = req.Msg.Rating
 	review.Tags = req.Msg.Tags
+	review.PartySize = int32(req.Msg.PartySize)
+	review.Occasion = int32(req.Msg.Occasion)
+	review.PricePaidPerPerson = req.Msg.PricePaidPerPerson
+	review.WouldVisitAgain = int32(req.Msg.WouldVisitAgain)
+	review.DishHighlights = req.Msg.DishHighlights
+	if req.Msg.VisitedAt != 0 {
+		t := time.Unix(req.Msg.VisitedAt, 0)
+		review.VisitedAt = &t
+	} else {
+		review.VisitedAt = nil
+	}
 
 	if err := s.DB.WithContext(ctx).Save(&review).Error; err != nil {
 		return nil, err

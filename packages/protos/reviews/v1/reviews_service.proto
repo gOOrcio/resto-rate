@@ -39,6 +39,12 @@ message CreateReviewRequest {
   repeated string tags = 6;
   string city = 7;
   string country = 8;
+  int64 visited_at = 9;
+  PartySize party_size = 10;
+  Occasion occasion = 11;
+  int32 price_paid_per_person = 12;
+  WouldVisitAgain would_visit_again = 13;
+  string dish_highlights = 14;
 }
 
 message CreateReviewResponse {
@@ -59,6 +65,12 @@ message UpdateReviewRequest {
   string comment = 2;
   double rating = 3;
   repeated string tags = 4;
+  int64 visited_at = 5;
+  PartySize party_size = 6;
+  Occasion occasion = 7;
+  int32 price_paid_per_person = 8;
+  WouldVisitAgain would_visit_again = 9;
+  string dish_highlights = 10;
 }
 
 message UpdateReviewResponse {
