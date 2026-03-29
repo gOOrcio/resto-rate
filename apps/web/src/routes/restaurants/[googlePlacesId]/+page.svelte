@@ -83,25 +83,25 @@
 
 <div class="container mx-auto max-w-3xl space-y-6 p-6">
 	{#if !auth.isLoggedIn}
-		<p class="text-sm text-gray-500">Please sign in to view restaurant reviews.</p>
+		<p class="text-sm text-muted-foreground">Please sign in to view restaurant reviews.</p>
 	{:else if loading}
-		<div class="flex items-center gap-2 text-sm text-gray-500">
-			<div class="h-4 w-4 animate-spin rounded-full border-2 border-gray-300 border-t-blue-500"></div>
+		<div class="flex items-center gap-2 text-sm text-muted-foreground">
+			<div class="h-4 w-4 animate-spin rounded-full border-2 border-border border-t-primary"></div>
 			Loading…
 		</div>
 	{:else if error}
-		<p class="text-sm text-red-600">{error}</p>
+		<p class="text-sm text-destructive">{error}</p>
 	{:else}
 		<!-- Restaurant header -->
-		<div class="rounded-lg border border-gray-200 bg-white p-5 shadow-sm">
+		<div class="rounded-lg border border-border bg-card p-5 shadow-sm">
 			<div class="flex items-start justify-between gap-4">
 				<div class="min-w-0 flex-1">
-					<h2 class="text-2xl font-semibold text-blue-800">{restaurantName || 'Restaurant'}</h2>
+					<h2 class="text-2xl font-semibold text-foreground">{restaurantName || 'Restaurant'}</h2>
 					{#if restaurantAddress}
-						<p class="mt-1 text-sm text-gray-500">{restaurantAddress}</p>
+						<p class="mt-1 text-sm text-muted-foreground">{restaurantAddress}</p>
 					{/if}
 					{#if restaurantCity || restaurantCountry}
-						<p class="text-xs text-gray-400">{[restaurantCity, restaurantCountry].filter(Boolean).join(', ')}</p>
+						<p class="text-xs text-muted-foreground">{[restaurantCity, restaurantCountry].filter(Boolean).join(', ')}</p>
 					{/if}
 				</div>
 				<Button
@@ -130,52 +130,52 @@
 							<Star
 								class="h-5 w-5 {i < Math.round(averageRating)
 									? 'fill-amber-400 text-amber-400'
-									: 'fill-none text-gray-300'}"
+									: 'fill-none text-gray-300 dark:text-gray-600'}"
 							/>
 						{/each}
 					</div>
-					<span class="font-semibold text-gray-800">{averageRating.toFixed(1)}</span>
-					<span class="text-sm text-gray-500">({reviews.length} {reviews.length === 1 ? 'review' : 'reviews'})</span>
+					<span class="font-semibold text-foreground">{averageRating.toFixed(1)}</span>
+					<span class="text-sm text-muted-foreground">({reviews.length} {reviews.length === 1 ? 'review' : 'reviews'})</span>
 				</div>
 			{/if}
 		</div>
 
 		<!-- Reviews -->
 		{#if reviews.length === 0}
-			<p class="text-sm text-gray-500">No reviews yet from you or your friends for this restaurant.</p>
+			<p class="text-sm text-muted-foreground">No reviews yet from you or your friends for this restaurant.</p>
 		{:else}
 			<ul class="space-y-3">
 				{#each reviews as review (review.id)}
-					<li class="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
+					<li class="rounded-lg border border-border bg-card p-4 shadow-sm">
 						<div class="mb-2 flex items-start justify-between gap-2">
 							<div>
-								<p class="font-medium text-gray-900">{review.authorName || 'Unknown'}</p>
+								<p class="font-medium text-foreground">{review.authorName || 'Unknown'}</p>
 								<div class="mt-1 flex items-center gap-1.5">
 									<div class="flex items-center gap-0.5">
 										{#each Array(5) as _, i}
 											<Star
 												class="h-3.5 w-3.5 {i < review.rating
 													? 'fill-amber-400 text-amber-400'
-													: 'fill-none text-gray-300'}"
+													: 'fill-none text-gray-300 dark:text-gray-600'}"
 											/>
 										{/each}
 									</div>
-									<span class="text-sm font-semibold text-gray-700">{review.rating.toFixed(1)}</span>
+									<span class="text-sm font-semibold text-foreground">{review.rating.toFixed(1)}</span>
 								</div>
 							</div>
-							<span class="shrink-0 text-xs text-gray-400">
+							<span class="shrink-0 text-xs text-muted-foreground">
 								{new Date(Number(review.createdAt) * 1000).toLocaleDateString()}
 							</span>
 						</div>
 
 						{#if review.comment}
-							<p class="mb-2 text-sm leading-relaxed text-gray-600">{review.comment}</p>
+							<p class="mb-2 text-sm leading-relaxed text-muted-foreground">{review.comment}</p>
 						{/if}
 
 						{#if review.tags && review.tags.length > 0}
 							<div class="flex flex-wrap gap-1.5">
 								{#each review.tags as tag}
-									<span class="rounded-full bg-blue-100 px-2.5 py-0.5 text-xs font-medium text-blue-700">
+									<span class="rounded-full bg-secondary px-2.5 py-0.5 text-xs font-medium text-secondary-foreground">
 										{tag}
 									</span>
 								{/each}

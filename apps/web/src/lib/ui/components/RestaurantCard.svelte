@@ -51,11 +51,11 @@
 			? (() => {
 					switch (googleData.businessStatus) {
 						case BusinessStatus.OPERATIONAL:
-							return { label: 'Operational', color: 'text-green-600' };
+							return { label: 'Operational', color: 'text-green-600 dark:text-green-400' };
 						case BusinessStatus.CLOSED_TEMPORARILY:
-							return { label: 'Temporarily closed', color: 'text-yellow-600' };
+							return { label: 'Temporarily closed', color: 'text-yellow-600 dark:text-yellow-400' };
 						case BusinessStatus.CLOSED_PERMANENTLY:
-							return { label: 'Permanently closed', color: 'text-red-600' };
+							return { label: 'Permanently closed', color: 'text-red-600 dark:text-red-400' };
 						default:
 							return null;
 					}
@@ -178,7 +178,7 @@
 </script>
 
 <div
-	class="flex w-fit overflow-hidden rounded-2xl bg-white shadow-xl transition-all duration-300 hover:shadow-2xl"
+	class="flex w-fit overflow-hidden rounded-2xl bg-card shadow-xl transition-all duration-300 hover:shadow-2xl"
 >
 	<!-- ═══ Left panel: DB data ═══ -->
 	<div class="flex w-80 flex-shrink-0 flex-col gap-5 p-6">
@@ -187,18 +187,18 @@
 			{#if isEditingName}
 				<input
 					type="text"
-					class="w-full rounded-lg border border-blue-300 px-2 py-1 text-xl font-bold text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
+					class="w-full rounded-lg border border-ring px-2 py-1 text-xl font-bold text-foreground focus:outline-none focus:ring-2 focus:ring-ring bg-background"
 					bind:value={editedName}
 					onkeydown={(e) => e.key === 'Escape' && cancelEdit()}
 				/>
 			{:else}
 				<div class="flex items-start justify-between gap-2">
-					<h3 class="text-xl font-bold leading-tight text-gray-900">
+					<h3 class="text-xl font-bold leading-tight text-foreground">
 						{localName}
 					</h3>
 					<button
 						onclick={startEditName}
-						class="mt-0.5 shrink-0 text-gray-400 opacity-0 transition-opacity hover:text-gray-600 group-hover:opacity-100"
+						class="mt-0.5 shrink-0 text-muted-foreground opacity-0 transition-opacity hover:text-foreground group-hover:opacity-100"
 						aria-label="Edit name"
 					>
 						<Pencil class="h-4 w-4" />
@@ -211,21 +211,21 @@
 		<div class="group flex-1">
 			{#if isEditingAddress}
 				<textarea
-					class="w-full resize-none rounded-lg border border-blue-300 px-2 py-1 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+					class="w-full resize-none rounded-lg border border-ring px-2 py-1 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring bg-background"
 					rows="3"
 					bind:value={editedAddress}
 					onkeydown={(e) => e.key === 'Escape' && cancelEdit()}
 				></textarea>
 			{:else}
 				<div class="flex items-start gap-2">
-					<MapPin class="mt-0.5 h-5 w-5 shrink-0 text-gray-400" />
+					<MapPin class="mt-0.5 h-5 w-5 shrink-0 text-muted-foreground" />
 					<div class="flex flex-1 items-start justify-between gap-2">
-						<p class="text-sm leading-relaxed text-gray-600">
+						<p class="text-sm leading-relaxed text-muted-foreground">
 							{localAddress || '—'}
 						</p>
 						<button
 							onclick={startEditAddress}
-							class="mt-0.5 shrink-0 text-gray-400 opacity-0 transition-opacity hover:text-gray-600 group-hover:opacity-100"
+							class="mt-0.5 shrink-0 text-muted-foreground opacity-0 transition-opacity hover:text-foreground group-hover:opacity-100"
 							aria-label="Edit address"
 						>
 							<Pencil class="h-4 w-4" />
@@ -242,7 +242,7 @@
 					<button
 						onclick={saveChanges}
 						disabled={isSaving}
-						class="flex items-center gap-1.5 rounded-lg bg-blue-600 px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-blue-700 disabled:opacity-50"
+						class="flex items-center gap-1.5 rounded-lg bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50"
 					>
 						{#if isSaving}
 							<Loader2 class="h-4 w-4 animate-spin" />
@@ -253,27 +253,27 @@
 					</button>
 					<button
 						onclick={cancelEdit}
-						class="flex items-center gap-1.5 rounded-lg border border-gray-300 px-3 py-1.5 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-50"
+						class="flex items-center gap-1.5 rounded-lg border border-border px-3 py-1.5 text-sm font-medium text-foreground transition-colors hover:bg-muted"
 					>
 						<X class="h-4 w-4" />
 						Cancel
 					</button>
 				</div>
 				{#if saveError}
-					<p class="text-xs text-red-500">{saveError}</p>
+					<p class="text-xs text-destructive">{saveError}</p>
 				{/if}
 			</div>
 		{/if}
 
 		<!-- Footer: created date + expand toggle -->
 		<div class="mt-auto flex items-center justify-between pt-2">
-			<span class="text-xs text-gray-400">
+			<span class="text-xs text-muted-foreground">
 				{formatCreatedAt(restaurant.createdAt)}
 			</span>
 			{#if hasGoogle}
 				<button
 					onclick={toggleExpand}
-					class="flex items-center gap-1.5 rounded-lg border border-gray-200 px-3 py-1.5 text-sm font-medium text-gray-600 transition-all hover:border-blue-300 hover:bg-blue-50 hover:text-blue-600"
+					class="flex items-center gap-1.5 rounded-lg border border-border px-3 py-1.5 text-sm font-medium text-muted-foreground transition-all hover:border-primary/40 hover:bg-accent hover:text-foreground"
 				>
 					{#if isExpanded}
 						<ChevronLeft class="h-4 w-4" />
@@ -291,19 +291,19 @@
 	{#if isExpanded}
 		<div transition:fly={{ x: 50, duration: 300 }}>
 			<!-- separator -->
-			<div class="w-px self-stretch bg-gray-200"></div>
+			<div class="w-px self-stretch bg-border"></div>
 
 			<div class="flex h-full w-96 flex-col overflow-y-auto">
 				{#if isLoadingGoogle}
 					<div class="flex flex-1 items-center justify-center py-16">
-						<Loader2 class="h-10 w-10 animate-spin text-gray-400" />
+						<Loader2 class="h-10 w-10 animate-spin text-muted-foreground" />
 					</div>
 				{:else if googleError}
 					<div class="flex flex-1 flex-col items-center justify-center gap-3 py-16 text-center">
-						<p class="text-sm text-red-500">{googleError}</p>
+						<p class="text-sm text-destructive">{googleError}</p>
 						<button
 							onclick={fetchGoogleData}
-							class="rounded-lg bg-blue-600 px-4 py-2 text-sm text-white transition-colors hover:bg-blue-700"
+							class="rounded-lg bg-primary px-4 py-2 text-sm text-primary-foreground transition-colors hover:bg-primary/90"
 						>
 							Retry
 						</button>
@@ -313,7 +313,7 @@
 						<!-- Header -->
 						<div class="flex items-center justify-between">
 							<img src="/GoogleMaps_Logo_Gray.svg" alt="Google Maps" class="h-4 w-auto" />
-							<span class="text-xs text-gray-400">Live · not cached</span>
+							<span class="text-xs text-muted-foreground">Live · not cached</span>
 						</div>
 
 						<!-- Core info: rating, status, price -->
@@ -325,15 +325,15 @@
 											<Star
 												class="h-4 w-4 {i < Math.round(googleData.rating)
 													? 'fill-amber-400 text-amber-400'
-													: 'fill-none text-gray-300'}"
+													: 'fill-none text-gray-300 dark:text-gray-600'}"
 											/>
 										{/each}
-										<span class="ml-1 text-sm font-semibold text-gray-800">
+										<span class="ml-1 text-sm font-semibold text-foreground">
 											{googleData.rating.toFixed(1)}
 										</span>
 									</div>
 									{#if googleData.userRatingCount}
-										<span class="text-xs text-gray-400">
+										<span class="text-xs text-muted-foreground">
 											({googleData.userRatingCount.toLocaleString()} reviews)
 										</span>
 									{/if}
@@ -345,31 +345,31 @@
 									<span class="text-sm font-medium {status.color}">{status.label}</span>
 								{/if}
 								{#if priceLabel}
-									<span class="rounded bg-gray-100 px-1.5 py-0.5 text-xs font-semibold text-gray-700">
+									<span class="rounded bg-muted px-1.5 py-0.5 text-xs font-semibold text-muted-foreground">
 										{priceLabel}
 									</span>
 								{/if}
 							</div>
 						</div>
 
-						<hr class="border-gray-200" />
+						<hr class="border-border" />
 
 						<!-- Contact & location -->
 						<div class="space-y-3">
 							{#if googleData.formattedAddress}
 								<div class="flex items-start gap-2">
-									<MapPin class="mt-0.5 h-4 w-4 shrink-0 text-gray-400" />
-									<p class="text-sm leading-relaxed text-gray-600">
+									<MapPin class="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
+									<p class="text-sm leading-relaxed text-muted-foreground">
 										{googleData.formattedAddress}
 									</p>
 								</div>
 							{/if}
 							{#if googleData.nationalPhoneNumber || googleData.internationalPhoneNumber}
 								<div class="flex items-center gap-2">
-									<Phone class="h-4 w-4 shrink-0 text-gray-400" />
+									<Phone class="h-4 w-4 shrink-0 text-muted-foreground" />
 									<a
 										href="tel:{googleData.internationalPhoneNumber || googleData.nationalPhoneNumber}"
-										class="text-sm text-blue-600 hover:underline"
+										class="text-sm text-primary hover:underline"
 									>
 										{googleData.nationalPhoneNumber || googleData.internationalPhoneNumber}
 									</a>
@@ -377,12 +377,12 @@
 							{/if}
 							{#if googleData.websiteUri}
 								<div class="flex items-center gap-2 overflow-hidden">
-									<Globe class="h-4 w-4 shrink-0 text-gray-400" />
+									<Globe class="h-4 w-4 shrink-0 text-muted-foreground" />
 									<a
 										href={googleData.websiteUri}
 										target="_blank"
 										rel="noopener noreferrer"
-										class="truncate text-sm text-blue-600 hover:underline"
+										class="truncate text-sm text-primary hover:underline"
 									>
 										{safeHostname(googleData.websiteUri)}
 									</a>
@@ -395,7 +395,7 @@
 										href={googleData.googleMapsUri}
 										target="_blank"
 										rel="noopener noreferrer"
-										class="text-sm text-blue-600 hover:underline"
+										class="text-sm text-primary hover:underline"
 									>
 										Open in Maps
 									</a>
@@ -406,30 +406,30 @@
 						<!-- Opening hours: today -->
 						{#if hoursToday}
 							<div>
-								<hr class="mb-4 border-gray-200" />
-								<h4 class="mb-1.5 text-xs font-semibold uppercase tracking-wide text-gray-400">
+								<hr class="mb-4 border-border" />
+								<h4 class="mb-1.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
 									Today's hours
 								</h4>
-								<p class="text-sm text-gray-600">{hoursToday}</p>
+								<p class="text-sm text-muted-foreground">{hoursToday}</p>
 							</div>
 						{/if}
 
 						<!-- Amenities -->
 						{#if amenities.length > 0}
 							<div>
-								<hr class="mb-4 border-gray-200" />
-								<h4 class="mb-3 text-xs font-semibold uppercase tracking-wide text-gray-400">
+								<hr class="mb-4 border-border" />
+								<h4 class="mb-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
 									Features
 								</h4>
 								<div class="grid grid-cols-2 gap-2">
 									{#each amenities as feature}
 										<div class="flex items-center gap-1.5">
 											{#if feature.value}
-												<Check class="h-3.5 w-3.5 shrink-0 text-green-500" />
+												<Check class="h-3.5 w-3.5 shrink-0 text-green-500 dark:text-green-400" />
 											{:else}
-												<X class="h-3.5 w-3.5 shrink-0 text-gray-300" />
+												<X class="h-3.5 w-3.5 shrink-0 text-muted-foreground/40" />
 											{/if}
-											<span class="text-xs text-gray-600">{feature.label}</span>
+											<span class="text-xs text-muted-foreground">{feature.label}</span>
 										</div>
 									{/each}
 								</div>
@@ -437,8 +437,8 @@
 						{/if}
 
 						<!-- Attribution -->
-						<div class="border-t border-gray-100 pt-3">
-							<p class="text-xs text-gray-400">Data from Google Places API</p>
+						<div class="border-t border-border pt-3">
+							<p class="text-xs text-muted-foreground">Data from Google Places API</p>
 						</div>
 					</div>
 				{/if}

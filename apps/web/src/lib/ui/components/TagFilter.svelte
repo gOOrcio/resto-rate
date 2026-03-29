@@ -24,23 +24,23 @@
 
 <div class="flex flex-col gap-3">
 	<div class="flex items-center gap-2">
-		<span class="text-xs font-medium text-gray-500">Match:</span>
-		<div class="flex overflow-hidden rounded-md border border-gray-200 text-xs">
+		<span class="text-xs font-medium text-muted-foreground">Match:</span>
+		<div class="flex overflow-hidden rounded-md border border-border text-xs">
 			<button
 				type="button"
 				onclick={() => setMode('OR')}
 				class="px-3 py-1 transition-colors {mode === 'OR'
-					? 'bg-blue-600 text-white'
-					: 'bg-white text-gray-600 hover:bg-gray-50'}"
+					? 'bg-primary text-primary-foreground'
+					: 'bg-card text-muted-foreground hover:bg-muted'}"
 			>
 				Any
 			</button>
 			<button
 				type="button"
 				onclick={() => setMode('AND')}
-				class="border-l border-gray-200 px-3 py-1 transition-colors {mode === 'AND'
-					? 'bg-blue-600 text-white'
-					: 'bg-white text-gray-600 hover:bg-gray-50'}"
+				class="border-l border-border px-3 py-1 transition-colors {mode === 'AND'
+					? 'bg-primary text-primary-foreground'
+					: 'bg-card text-muted-foreground hover:bg-muted'}"
 			>
 				All
 			</button>

@@ -50,19 +50,19 @@
 </script>
 
 {#if loading}
-	<p class="text-sm text-gray-400">Loading tags…</p>
+	<p class="text-sm text-muted-foreground">Loading tags…</p>
 {:else if loadError}
-	<div class="flex items-center gap-2 text-sm text-red-500">
+	<div class="flex items-center gap-2 text-sm text-destructive">
 		<span>Failed to load tags.</span>
 		<button type="button" onclick={loadTags} class="underline hover:no-underline">Retry</button>
 	</div>
 {:else if tags.length === 0}
-	<p class="text-sm text-gray-400">No tags available.</p>
+	<p class="text-sm text-muted-foreground">No tags available.</p>
 {:else}
 	<div class="flex flex-col gap-3">
 		{#each Object.entries(grouped) as [category, categoryTags]}
 			<div>
-				<p class="mb-1 text-xs font-semibold uppercase tracking-wide text-gray-400">{category}</p>
+				<p class="mb-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">{category}</p>
 				<div class="flex flex-wrap gap-1.5">
 					{#each categoryTags as tag}
 						<button
@@ -70,8 +70,8 @@
 							onclick={() => toggleTag(tag.slug)}
 							class="rounded-full px-2.5 py-0.5 text-xs font-medium transition-colors
 								{selected.includes(tag.slug)
-								? 'bg-blue-600 text-white'
-								: 'bg-gray-100 text-gray-600 hover:bg-gray-200'}"
+								? 'bg-primary text-primary-foreground'
+								: 'bg-muted text-muted-foreground hover:bg-muted/70'}"
 						>
 							{tag.label}
 						</button>

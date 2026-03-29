@@ -174,7 +174,7 @@
 				oninput={handleInputChange}
 				onkeydown={handleKeyDown}
 				{placeholder}
-				class="w-full bg-[url('/GoogleMaps_Logo_Gray.svg')] bg-[length:60px_60px] bg-[position:calc(100%-2.25rem)_50%] bg-no-repeat pr-10"
+				class="w-full bg-[url('/GoogleMaps_Logo_Gray.svg')] bg-[length:60px_60px] bg-[position:calc(100%-2.25rem)_50%] bg-no-repeat pr-10 text-foreground"
 			/>
 			{#if isLoading}
 				<div class="absolute right-3 flex items-center">
@@ -185,12 +185,12 @@
 
 		{#if showSuggestions && suggestions.length > 0}
 			<div
-				class="absolute left-0 right-0 top-full z-50 max-h-80 overflow-y-auto rounded-b-lg border-2 border-t-0 border-gray-200 bg-white shadow-lg"
+				class="absolute left-0 right-0 top-full z-50 max-h-80 overflow-y-auto rounded-b-lg border-2 border-t-0 border-border bg-card shadow-lg"
 			>
 				{#each suggestions as suggestion, index}
 					{#if suggestion.placePrediction}
 						<div
-							class="cursor-pointer border-b border-gray-100 p-3 transition-colors duration-200 last:border-b-0 hover:bg-gray-50 {index === selectedIndex ? 'bg-gray-50' : ''}"
+							class="cursor-pointer border-b border-border p-3 transition-colors duration-200 last:border-b-0 hover:bg-muted {index === selectedIndex ? 'bg-muted' : ''}"
 							onclick={() => selectSuggestion(suggestion)}
 							onkeydown={(e) => e.key === 'Enter' && selectSuggestion(suggestion)}
 							onmouseenter={() => (selectedIndex = index)}
@@ -198,9 +198,9 @@
 							role="button"
 							aria-label="Select {getSuggestionText(suggestion)}"
 						>
-							<div class="mb-1 font-medium text-gray-900">{getSuggestionText(suggestion)}</div>
+							<div class="mb-1 font-medium text-foreground">{getSuggestionText(suggestion)}</div>
 							{#if getSuggestionSubtext(suggestion)}
-								<div class="text-sm text-gray-500">{getSuggestionSubtext(suggestion)}</div>
+								<div class="text-sm text-muted-foreground">{getSuggestionSubtext(suggestion)}</div>
 							{/if}
 						</div>
 					{/if}
@@ -210,7 +210,7 @@
 
 		{#if queryPrediction && input.length > 0}
 			<div
-				class="pointer-events-none absolute left-4 top-1/2 z-10 -translate-y-1/2 transform text-base text-gray-500 {showSuggestions ? 'hidden' : ''}"
+				class="pointer-events-none absolute left-4 top-1/2 z-10 -translate-y-1/2 transform text-base text-muted-foreground {showSuggestions ? 'hidden' : ''}"
 			>
 				<span class="text-transparent">{input}</span>
 				<span class="text-gray-500 opacity-60">{queryPrediction.substring(input.length)}</span>
@@ -218,7 +218,7 @@
 		{/if}
 
 		{#if input.length > 0 && input.length < 2}
-			<div class="absolute left-0 right-0 top-full mt-1 rounded border border-gray-200 bg-gray-50 p-2 text-sm text-gray-500">
+			<div class="absolute left-0 right-0 top-full mt-1 rounded border border-border bg-muted p-2 text-sm text-muted-foreground">
 				Type at least 2 characters to search...
 			</div>
 		{/if}

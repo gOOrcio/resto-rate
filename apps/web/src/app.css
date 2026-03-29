@@ -149,6 +149,16 @@
   }
 }
 
+/* Unlayered — wins over all Tailwind layers */
+*, *::before, *::after {
+  cursor: default !important;
+  user-select: none;
+}
+input, textarea, [contenteditable] {
+  cursor: text !important;
+  user-select: text;
+}
+
 /* ─── Card reveal animation ─────────────────────────────────────────────── */
 @keyframes card-in {
   from { opacity: 0; transform: translateY(10px); }
