@@ -76,8 +76,10 @@ func (s *WishlistService) AddToWishlist(
 		return nil, res.Error
 	}
 
-	// If item already existed, update its tags
-	if res.RowsAffected == 0 {
+	// If item already existed and tags were explicitly provided, update them.
+	// An empty tag list is not treated as "clear tags" — use a dedicated update
+	// endpoint for that to avoid silently wiping tags on a plain re-add.
+	if res.RowsAffected == 0 && len(req.Msg.TagSlugs) > 0 {
 		if err := s.DB.WithContext(ctx).Model(&existing).Update("tags", tags).Error; err != nil {
 			return nil, err
 		}
