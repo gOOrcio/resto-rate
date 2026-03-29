@@ -26,6 +26,7 @@
 	let pendingTags = $state<string[]>([]);
 
 	// Filter state
+	let showFilters = $state(false);
 	let city = $state('');
 	let country = $state('');
 	let sortBy = $state('date-desc');
@@ -228,41 +229,72 @@
 	{/if}
 
 	<!-- Filter bar -->
-	<div class="flex flex-wrap items-start gap-2">
-		<input
-			type="text"
-			bind:value={city}
-			placeholder="Filter by city…"
-			class="w-36 rounded-md border border-border bg-card px-3 py-1.5 text-sm text-foreground placeholder:text-muted-foreground focus:ring-1 focus:ring-ring focus:outline-none"
-		/>
-		<input
-			type="text"
-			bind:value={country}
-			placeholder="Filter by country…"
-			class="w-40 rounded-md border border-border bg-card px-3 py-1.5 text-sm text-foreground placeholder:text-muted-foreground focus:ring-1 focus:ring-ring focus:outline-none"
-		/>
-		<TagFilter bind:selected={tagSlugs} bind:mode={tagMode} />
-		{#if activeFilterCount > 0}
+	<div class="space-y-3">
+		<div class="flex flex-wrap items-center gap-2">
 			<button
-				class="self-center text-sm text-muted-foreground hover:text-foreground"
-				onclick={clearFilters}
+				class="rounded-md border px-3 py-1.5 text-sm font-medium transition-colors {showFilters
+					? 'border-primary bg-primary text-primary-foreground'
+					: 'border-border bg-card text-foreground hover:bg-muted'}"
+				onclick={() => (showFilters = !showFilters)}
 			>
-				Clear all
+				Filters{activeFilterCount > 0 ? ` (${activeFilterCount})` : ''}
 			</button>
-		{/if}
-		<div class="ml-auto flex items-center gap-2">
-			<label for="wishlist-sort" class="text-sm text-muted-foreground">Sort</label>
-			<select
-				id="wishlist-sort"
-				bind:value={sortBy}
-				class="rounded-md border border-border bg-card px-2 py-1 text-sm text-foreground focus:ring-1 focus:ring-ring focus:outline-none"
-			>
-				<option value="date-desc">Newest first</option>
-				<option value="date-asc">Oldest first</option>
-				<option value="name-asc">Name A–Z</option>
-				<option value="name-desc">Name Z–A</option>
-			</select>
+			{#if activeFilterCount > 0}
+				<button
+					class="text-sm text-muted-foreground hover:text-foreground"
+					onclick={clearFilters}
+				>
+					Clear all
+				</button>
+			{/if}
+			<div class="ml-auto flex items-center gap-2">
+				<label for="wishlist-sort" class="text-sm text-muted-foreground">Sort</label>
+				<select
+					id="wishlist-sort"
+					bind:value={sortBy}
+					class="rounded-md border border-border bg-card px-2 py-1 text-sm text-foreground focus:ring-1 focus:ring-ring focus:outline-none"
+				>
+					<option value="date-desc">Newest first</option>
+					<option value="date-asc">Oldest first</option>
+					<option value="name-asc">Name A–Z</option>
+					<option value="name-desc">Name Z–A</option>
+				</select>
+			</div>
 		</div>
+
+		{#if showFilters}
+			<div class="card-reveal space-y-4 rounded-lg border border-border bg-card p-4">
+				<!-- Tags -->
+				<div>
+					<span class="mb-2 block text-sm font-medium text-foreground">Tags</span>
+					<TagFilter bind:selected={tagSlugs} bind:mode={tagMode} />
+				</div>
+
+				<!-- City + Country -->
+				<div class="grid grid-cols-2 gap-3">
+					<div>
+						<label for="filter-city" class="mb-1 block text-sm font-medium text-foreground">City</label>
+						<input
+							id="filter-city"
+							type="text"
+							bind:value={city}
+							placeholder="e.g. Paris"
+							class="w-full rounded-md border border-border bg-card px-3 py-1.5 text-sm text-foreground placeholder:text-muted-foreground focus:ring-1 focus:ring-ring focus:outline-none"
+						/>
+					</div>
+					<div>
+						<label for="filter-country" class="mb-1 block text-sm font-medium text-foreground">Country</label>
+						<input
+							id="filter-country"
+							type="text"
+							bind:value={country}
+							placeholder="e.g. France"
+							class="w-full rounded-md border border-border bg-card px-3 py-1.5 text-sm text-foreground placeholder:text-muted-foreground focus:ring-1 focus:ring-ring focus:outline-none"
+						/>
+					</div>
+				</div>
+			</div>
+		{/if}
 	</div>
 
 	<!-- Content -->
