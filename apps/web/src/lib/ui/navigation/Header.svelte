@@ -78,7 +78,7 @@
 		</a>
 
 		<!-- Desktop nav links (auth-gated) -->
-		{#if auth.isLoggedIn}
+		{#if !auth.loading && auth.isLoggedIn}
 			<ul class="hidden items-center gap-7 md:flex">
 				{#each authNavLinks as link}
 					<li>
@@ -97,7 +97,9 @@
 
 		<!-- Auth controls + mobile hamburger -->
 		<div class="flex items-center gap-2">
-			{#if auth.isLoggedIn}
+			{#if auth.loading}
+				<div class="h-8 w-8 animate-spin rounded-full border-2 border-border border-t-primary"></div>
+			{:else if auth.isLoggedIn}
 				<!-- Avatar + Dropdown (desktop) -->
 				<div class="hidden sm:block">
 					<DropdownMenu.Root>
@@ -164,7 +166,9 @@
 					<hr class="mb-4 border-border" />
 					<nav class="flex flex-col gap-4 px-2">
 						<a href="/" class="text-sm text-muted-foreground hover:text-foreground">Home</a>
-						{#if auth.isLoggedIn}
+						{#if auth.loading}
+							<div class="h-4 w-4 animate-spin rounded-full border-2 border-border border-t-primary"></div>
+						{:else if auth.isLoggedIn}
 							{#each authNavLinks as link}
 								<a
 									href={link.href}
