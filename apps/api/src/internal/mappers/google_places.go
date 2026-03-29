@@ -247,6 +247,22 @@ func PlaceToProto(place *placespb.Place) *v1.Place {
 		}
 	}
 
+	if place.PostalAddress != nil {
+		country := place.PostalAddress.RegionCode
+		// Prefer the full country name from the formatted address (last segment)
+		if place.FormattedAddress != "" {
+			parts := strings.Split(place.FormattedAddress, ", ")
+			if len(parts) > 1 {
+				country = parts[len(parts)-1]
+			}
+		}
+		result.PostalAddress = &v1.PostalAddress{
+			Locality:           place.PostalAddress.Locality,
+			AdministrativeArea: place.PostalAddress.AdministrativeArea,
+			Country:            country,
+		}
+	}
+
 	if place.PrimaryTypeDisplayName != nil {
 		result.PrimaryTypeDisplayName = &v1.LocalizedText{
 			Text:         place.PrimaryTypeDisplayName.Text,

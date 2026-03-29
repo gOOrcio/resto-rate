@@ -14,6 +14,12 @@ enum WishlistSortBy {
   WISHLIST_SORT_BY_NAME_DESC = 4;
 }
 
+enum WishlistTagFilterMode {
+  WISHLIST_TAG_FILTER_MODE_UNSPECIFIED = 0;
+  WISHLIST_TAG_FILTER_MODE_OR = 1;
+  WISHLIST_TAG_FILTER_MODE_AND = 2;
+}
+
 service WishlistService {
   rpc AddToWishlist(AddToWishlistRequest) returns (AddToWishlistResponse);
   rpc RemoveFromWishlist(RemoveFromWishlistRequest) returns (RemoveFromWishlistResponse);
@@ -26,6 +32,7 @@ message AddToWishlistRequest {
   string restaurant_address = 3;
   string city = 4;
   string country = 5;
+  repeated string tag_slugs = 6;
 }
 
 message AddToWishlistResponse {
@@ -47,6 +54,8 @@ message ListWishlistRequest {
   WishlistSortBy sort_by = 4;
   // When set, returns this user's wishlist (caller must be a confirmed friend)
   string target_user_id = 5;
+  repeated string tag_slugs = 6;
+  WishlistTagFilterMode tag_filter_mode = 7;
 }
 
 message ListWishlistResponse {

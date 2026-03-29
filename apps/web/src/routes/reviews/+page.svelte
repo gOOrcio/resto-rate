@@ -9,7 +9,7 @@
 	import RatingForm from '$lib/ui/components/RatingForm.svelte';
 	import RestaurantSearch from '$lib/ui/components/RestaurantSearch.svelte';
 	import ExpandableRestaurantInfo from '$lib/ui/components/ExpandableRestaurantInfo.svelte';
-	import TagPicker from '$lib/ui/components/TagPicker.svelte';
+	import TagFilter from '$lib/ui/components/TagFilter.svelte';
 
 	let reviews = $state<ReviewProto[]>([]);
 	let loading = $state(true);
@@ -22,7 +22,7 @@
 	// Filter state
 	let showFilters = $state(false);
 	let tagSlugs = $state<string[]>([]);
-	let tagMode = $state<'or' | 'and'>('or');
+	let tagMode = $state<'OR' | 'AND'>('OR');
 	let minRating = $state(0);
 	let maxRating = $state(0);
 	let commentRaw = $state('');
@@ -57,7 +57,7 @@
 
 	function clearFilters() {
 		tagSlugs = [];
-		tagMode = 'or';
+		tagMode = 'OR';
 		minRating = 0;
 		maxRating = 0;
 		commentRaw = '';
@@ -85,7 +85,7 @@
 		try {
 			const res = await client.reviews.listReviews({
 				tagSlugs,
-				tagFilterMode: tagMode === 'and' ? TagFilterMode.AND : TagFilterMode.OR,
+				tagFilterMode: tagMode === 'AND' ? TagFilterMode.AND : TagFilterMode.OR,
 				minRating,
 				maxRating,
 				commentSearch,
@@ -177,7 +177,7 @@
 
 	<!-- Add review panel -->
 	{#if showAddReview}
-		<div class="card-reveal rounded-lg border border-border bg-card p-5">
+		<div class="relative z-10 card-reveal rounded-lg border border-border bg-card p-5">
 			<p class="mb-3 text-sm font-medium text-foreground">Search for a restaurant to review</p>
 			<RestaurantSearch
 				placeholder="Restaurant name or address…"
@@ -242,32 +242,10 @@
 
 		{#if showFilters}
 			<div class="card-reveal space-y-4 rounded-lg border border-border bg-card p-4">
-				<!-- Tags + AND/OR toggle -->
+				<!-- Tags -->
 				<div>
-					<div class="mb-2 flex items-center gap-3">
-						<span class="text-sm font-medium text-foreground">Tags</span>
-						<div class="flex items-center gap-0.5 rounded-full border border-border p-0.5">
-							<button
-								type="button"
-								onclick={() => (tagMode = 'or')}
-								class="rounded-full px-2.5 py-0.5 text-xs font-medium transition-colors {tagMode === 'or'
-									? 'bg-primary text-primary-foreground'
-									: 'text-muted-foreground hover:bg-muted'}"
-							>
-								Any
-							</button>
-							<button
-								type="button"
-								onclick={() => (tagMode = 'and')}
-								class="rounded-full px-2.5 py-0.5 text-xs font-medium transition-colors {tagMode === 'and'
-									? 'bg-primary text-primary-foreground'
-									: 'text-muted-foreground hover:bg-muted'}"
-							>
-								All
-							</button>
-						</div>
-					</div>
-					<TagPicker bind:selected={tagSlugs} />
+					<span class="mb-2 block text-sm font-medium text-foreground">Tags</span>
+					<TagFilter bind:selected={tagSlugs} bind:mode={tagMode} />
 				</div>
 
 				<!-- Rating range -->

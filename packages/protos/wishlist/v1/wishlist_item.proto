@@ -12,4 +12,5 @@ message WishlistItemProto {
   string city = 5;
   string country = 6;
   int64 created_at = 7;
+  repeated string tags = 8;
 }
