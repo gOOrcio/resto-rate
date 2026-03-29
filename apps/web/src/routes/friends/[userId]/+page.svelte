@@ -1,5 +1,4 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
 	import { goto } from '$app/navigation';
 	import { page } from '$app/state';
 	import { auth } from '$lib/state/auth.svelte';
@@ -178,21 +177,24 @@
 		loadWishlist();
 	});
 
-	onMount(async () => {
-		if (!auth.isLoggedIn) {
-			goto('/?login=1');
-			return;
-		}
+	async function initPage() {
 		try {
 			const res = await client.friendship.listFriends({});
 			friend = res.friends.find((f) => f.userId === targetUserId) ?? null;
-			if (!friend) {
-				notFriends = true;
-			}
+			if (!friend) notFriends = true;
 		} catch (e) {
 			console.error('Failed to load friends list:', e);
 		}
 		mounted = true;
+	}
+
+	$effect(() => {
+		if (auth.loading || mounted) return;
+		if (!auth.isLoggedIn) {
+			goto('/?login=1');
+			return;
+		}
+		void initPage();
 	});
 </script>
 

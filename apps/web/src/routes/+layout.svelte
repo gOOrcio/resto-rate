@@ -46,6 +46,8 @@
 			}
 		} catch {
 			// Not authenticated — fall through to GIS bootstrapping
+		} finally {
+			auth.setLoaded();
 		}
 
 		if (isAuthenticated || !clientId) return;

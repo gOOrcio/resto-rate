@@ -1,5 +1,4 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
 	import { goto } from '$app/navigation';
 	import { auth } from '$lib/state/auth.svelte';
 	import client from '$lib/client/client';
@@ -134,7 +133,8 @@
 		showAddReview = false;
 	}
 
-	onMount(() => {
+	$effect(() => {
+		if (auth.loading || mounted) return;
 		if (!auth.isLoggedIn) {
 			goto('/?login=1');
 			return;

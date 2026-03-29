@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { page } from '$app/state';
-	import { onMount } from 'svelte';
+
 	import { auth } from '$lib/state/auth.svelte';
 	import client from '$lib/client/client';
 	import type { ReviewProto } from '$lib/client/generated/reviews/v1/review_pb';
@@ -75,8 +75,11 @@
 		}
 	}
 
-	onMount(() => {
-		if (auth.isLoggedIn) loadRestaurantData();
+	let initialized = $state(false);
+	$effect(() => {
+		if (auth.loading || initialized) return;
+		initialized = true;
+		if (auth.isLoggedIn) void loadRestaurantData();
 		else loading = false;
 	});
 </script>

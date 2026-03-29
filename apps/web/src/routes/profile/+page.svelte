@@ -1,5 +1,4 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
 	import { goto } from '$app/navigation';
 	import { auth } from '$lib/state/auth.svelte';
 	import { mode, setMode } from '$lib/state/theme.svelte';
@@ -200,21 +199,11 @@
 		}
 	}
 
-	onMount(async () => {
-		if (!auth.isLoggedIn) {
-			goto('/?login=1');
-			return;
-		}
+	let initialized = $state(false);
 
-		// Pre-fill city from stored value
-		if (auth.user?.defaultRegion) {
-			cityInput = auth.user.defaultRegion;
-		}
-
-		// Pre-fill username
+	async function initPage() {
+		if (auth.user?.defaultRegion) cityInput = auth.user.defaultRegion;
 		usernameInput = auth.user?.username ?? '';
-
-		// Load stats
 		try {
 			const res = await client.auth.getMyStats({});
 			stats = {
@@ -227,6 +216,16 @@
 		} finally {
 			statsLoading = false;
 		}
+	}
+
+	$effect(() => {
+		if (auth.loading || initialized) return;
+		if (!auth.isLoggedIn) {
+			goto('/?login=1');
+			return;
+		}
+		initialized = true;
+		void initPage();
 	});
 </script>
 

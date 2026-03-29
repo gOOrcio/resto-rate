@@ -1,5 +1,4 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
 	import { goto } from '$app/navigation';
 	import { auth } from '$lib/state/auth.svelte';
 	import client from '$lib/client/client';
@@ -105,11 +104,14 @@
 		}
 	}
 
-	onMount(() => {
+	let initialized = $state(false);
+	$effect(() => {
+		if (auth.loading || initialized) return;
 		if (!auth.isLoggedIn) {
 			goto('/?login=1');
 			return;
 		}
+		initialized = true;
 		loadData();
 	});
 </script>
