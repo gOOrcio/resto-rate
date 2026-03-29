@@ -10,6 +10,7 @@
 	import RestaurantSearch from '$lib/ui/components/RestaurantSearch.svelte';
 	import ExpandableRestaurantInfo from '$lib/ui/components/ExpandableRestaurantInfo.svelte';
 	import TagFilter from '$lib/ui/components/TagFilter.svelte';
+	import { PartySize, Occasion, WouldVisitAgain } from '$lib/client/generated/reviews/v1/review_pb';
 
 	let reviews = $state<ReviewProto[]>([]);
 	let loading = $state(true);
@@ -151,6 +152,32 @@
 		if (r >= 3.5) return 'bg-amber-50 text-amber-700 dark:bg-amber-950 dark:text-amber-300';
 		if (r >= 2.5) return 'bg-orange-50 text-orange-700 dark:bg-orange-950 dark:text-orange-300';
 		return 'bg-red-50 text-red-700 dark:bg-red-950 dark:text-red-300';
+	}
+
+	const PARTY_SIZE_LABELS: Record<number, string> = {
+		[PartySize.SOLO]: 'Solo',
+		[PartySize.COUPLE]: 'Couple',
+		[PartySize.SMALL_GROUP]: 'Small group',
+		[PartySize.LARGE_GROUP]: 'Large group',
+	};
+
+	const OCCASION_LABELS: Record<number, string> = {
+		[Occasion.CASUAL]: 'Casual',
+		[Occasion.DATE_NIGHT]: 'Date night',
+		[Occasion.BUSINESS]: 'Business',
+		[Occasion.CELEBRATION]: 'Celebration',
+		[Occasion.QUICK_BITE]: 'Quick bite',
+	};
+
+	const WOULD_VISIT_AGAIN_LABELS: Record<number, { text: string; cls: string }> = {
+		[WouldVisitAgain.YES]: { text: 'Would visit again', cls: 'text-emerald-600 dark:text-emerald-400' },
+		[WouldVisitAgain.MAYBE]: { text: 'Maybe again', cls: 'text-amber-600 dark:text-amber-400' },
+		[WouldVisitAgain.NO]: { text: "Wouldn't return", cls: 'text-red-600 dark:text-red-400' },
+	};
+
+	function formatVisitDate(ts: bigint): string {
+		if (!ts) return '';
+		return new Date(Number(ts) * 1000).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
 	}
 </script>
 
@@ -398,6 +425,38 @@
 											{tag}
 										</span>
 									{/each}
+								</div>
+							{/if}
+
+							<!-- Extra detail fields -->
+							{#if review.visitedAt || review.partySize || review.occasion || review.pricePaidPerPerson || review.wouldVisitAgain || review.dishHighlights}
+								{@const visitDate = formatVisitDate(review.visitedAt)}
+								{@const partyLabel = PARTY_SIZE_LABELS[review.partySize]}
+								{@const occasionLabel = OCCASION_LABELS[review.occasion]}
+								{@const wvaEntry = WOULD_VISIT_AGAIN_LABELS[review.wouldVisitAgain]}
+								<div class="space-y-1.5 border-t border-border pt-3">
+									<div class="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
+										{#if visitDate}
+											<span>📅 {visitDate}</span>
+										{/if}
+										{#if partyLabel}
+											<span>👥 {partyLabel}</span>
+										{/if}
+										{#if occasionLabel}
+											<span>🎉 {occasionLabel}</span>
+										{/if}
+										{#if review.pricePaidPerPerson}
+											<span>💰 ${review.pricePaidPerPerson}/person</span>
+										{/if}
+										{#if wvaEntry}
+											<span class={wvaEntry.cls}>{wvaEntry.text}</span>
+										{/if}
+									</div>
+									{#if review.dishHighlights}
+										<p class="text-xs text-muted-foreground">
+											<span class="font-medium text-foreground">Highlights:</span> {review.dishHighlights}
+										</p>
+									{/if}
 								</div>
 							{/if}
 						</div>
