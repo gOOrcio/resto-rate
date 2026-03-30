@@ -45,13 +45,6 @@ var RequiredTags = []models.Tag{
 	{Slug: "halal", Label: "Halal", Category: "Dietary"},
 	{Slug: "kosher", Label: "Kosher", Category: "Dietary"},
 	{Slug: "dairy-free", Label: "Dairy-Free", Category: "Dietary"},
-	// Service
-	{Slug: "fast-service", Label: "Fast Service", Category: "Service"},
-	{Slug: "outdoor-seating", Label: "Outdoor Seating", Category: "Service"},
-	{Slug: "delivery", Label: "Delivery", Category: "Service"},
-	{Slug: "takeaway", Label: "Takeaway", Category: "Service"},
-	{Slug: "reservations", Label: "Reservations", Category: "Service"},
-	{Slug: "dog-friendly", Label: "Dog Friendly", Category: "Service"},
 	// Occasion
 	{Slug: "birthday", Label: "Birthday", Category: "Occasion"},
 	{Slug: "anniversary", Label: "Anniversary", Category: "Occasion"},
