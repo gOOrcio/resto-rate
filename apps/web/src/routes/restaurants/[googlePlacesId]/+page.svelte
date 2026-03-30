@@ -10,7 +10,7 @@
 		PriceLevel,
 		BusinessStatus
 	} from '$lib/client/generated/google_maps/v1/google_maps_service_pb';
-	import { PartySize, Occasion, WouldVisitAgain } from '$lib/client/generated/reviews/v1/review_pb';
+	import { WouldVisitAgain } from '$lib/client/generated/reviews/v1/review_pb';
 	import {
 		Star,
 		MapPin,
@@ -23,8 +23,6 @@
 		ChevronDown,
 		ChevronUp,
 		Calendar,
-		Users,
-		UtensilsCrossed,
 		Receipt
 	} from '@lucide/svelte';
 	import RatingForm from '$lib/ui/components/RatingForm.svelte';
@@ -54,19 +52,6 @@
 	const myReview = $derived(reviews.find((r) => r.userId === auth.user?.id));
 	const friendReviews = $derived(reviews.filter((r) => r.userId !== auth.user?.id));
 
-	const PARTY_SIZE_LABELS: Record<number, string> = {
-		[PartySize.SOLO]: 'Solo',
-		[PartySize.COUPLE]: 'Couple',
-		[PartySize.SMALL_GROUP]: 'Small group',
-		[PartySize.LARGE_GROUP]: 'Large group'
-	};
-	const OCCASION_LABELS: Record<number, string> = {
-		[Occasion.CASUAL]: 'Casual',
-		[Occasion.DATE_NIGHT]: 'Date night',
-		[Occasion.BUSINESS]: 'Business',
-		[Occasion.CELEBRATION]: 'Celebration',
-		[Occasion.QUICK_BITE]: 'Quick bite'
-	};
 	const WOULD_VISIT_AGAIN_LABELS: Record<number, { text: string; cls: string }> = {
 		[WouldVisitAgain.YES]: { text: 'Would visit again', cls: 'text-emerald-600 dark:text-emerald-400' },
 		[WouldVisitAgain.MAYBE]: { text: 'Maybe again', cls: 'text-amber-600 dark:text-amber-400' },
@@ -384,26 +369,14 @@
 								{/if}
 
 								<!-- Extra fields -->
-								{#if myReview.visitedAt || myReview.partySize || myReview.occasion || myReview.pricePaidPerPerson || myReview.wouldVisitAgain || myReview.dishHighlights}
+								{#if myReview.visitedAt || myReview.pricePaidPerPerson || myReview.wouldVisitAgain || myReview.dishHighlights}
 									{@const visitDate = formatDate(myReview.visitedAt)}
-									{@const partyLabel = PARTY_SIZE_LABELS[myReview.partySize]}
-									{@const occasionLabel = OCCASION_LABELS[myReview.occasion]}
 									{@const wvaEntry = WOULD_VISIT_AGAIN_LABELS[myReview.wouldVisitAgain]}
 									<div class="border-t border-border pt-3 space-y-2">
 										<div class="flex flex-wrap items-center gap-x-3 gap-y-1.5">
 											{#if visitDate}
 												<span class="flex items-center gap-1 text-xs text-muted-foreground">
 													<Calendar class="h-3 w-3 shrink-0" />{visitDate}
-												</span>
-											{/if}
-											{#if partyLabel}
-												<span class="flex items-center gap-1 text-xs text-muted-foreground">
-													<Users class="h-3 w-3 shrink-0" />{partyLabel}
-												</span>
-											{/if}
-											{#if occasionLabel}
-												<span class="flex items-center gap-1 text-xs text-muted-foreground">
-													<UtensilsCrossed class="h-3 w-3 shrink-0" />{occasionLabel}
 												</span>
 											{/if}
 											{#if myReview.pricePaidPerPerson}
@@ -552,7 +525,7 @@
 				<ul class="divide-y divide-border">
 					{#each friendReviews as review (review.id)}
 						{@const expanded = expandedFriendIds.has(review.id)}
-						{@const hasDetails = !!(review.comment || review.tags?.length || review.visitedAt || review.partySize || review.occasion || review.pricePaidPerPerson || review.wouldVisitAgain || review.dishHighlights)}
+						{@const hasDetails = !!(review.comment || review.tags?.length || review.visitedAt || review.pricePaidPerPerson || review.wouldVisitAgain || review.dishHighlights)}
 						<li>
 							<button
 								class="flex w-full items-center justify-between gap-3 px-5 py-4 text-left {hasDetails ? 'hover:bg-muted/40' : 'cursor-default'}"
@@ -596,26 +569,14 @@
 											{/each}
 										</div>
 									{/if}
-									{#if review.visitedAt || review.partySize || review.occasion || review.pricePaidPerPerson || review.wouldVisitAgain || review.dishHighlights}
+									{#if review.visitedAt || review.pricePaidPerPerson || review.wouldVisitAgain || review.dishHighlights}
 										{@const visitDate = formatDate(review.visitedAt)}
-										{@const partyLabel = PARTY_SIZE_LABELS[review.partySize]}
-										{@const occasionLabel = OCCASION_LABELS[review.occasion]}
 										{@const wvaEntry = WOULD_VISIT_AGAIN_LABELS[review.wouldVisitAgain]}
 										<div class="space-y-2 border-t border-border pt-3">
 											<div class="flex flex-wrap items-center gap-x-3 gap-y-1.5">
 												{#if visitDate}
 													<span class="flex items-center gap-1 text-xs text-muted-foreground">
 														<Calendar class="h-3 w-3 shrink-0" />{visitDate}
-													</span>
-												{/if}
-												{#if partyLabel}
-													<span class="flex items-center gap-1 text-xs text-muted-foreground">
-														<Users class="h-3 w-3 shrink-0" />{partyLabel}
-													</span>
-												{/if}
-												{#if occasionLabel}
-													<span class="flex items-center gap-1 text-xs text-muted-foreground">
-														<UtensilsCrossed class="h-3 w-3 shrink-0" />{occasionLabel}
 													</span>
 												{/if}
 												{#if review.pricePaidPerPerson}

@@ -6,12 +6,12 @@
 	import type { ReviewProto } from '$lib/client/generated/reviews/v1/review_pb';
 	import type { Place } from '$lib/client/generated/google_maps/v1/google_maps_service_pb';
 	import { Button } from '$lib/components/ui/button/index.js';
-	import { Calendar, Users, UtensilsCrossed, Receipt } from '@lucide/svelte';
+	import { Calendar, Receipt } from '@lucide/svelte';
 	import RatingForm from '$lib/ui/components/RatingForm.svelte';
 	import RestaurantSearch from '$lib/ui/components/RestaurantSearch.svelte';
 	import ExpandableRestaurantInfo from '$lib/ui/components/ExpandableRestaurantInfo.svelte';
 	import TagFilter from '$lib/ui/components/TagFilter.svelte';
-	import { PartySize, Occasion, WouldVisitAgain } from '$lib/client/generated/reviews/v1/review_pb';
+	import { WouldVisitAgain } from '$lib/client/generated/reviews/v1/review_pb';
 
 	let reviews = $state<ReviewProto[]>([]);
 	let loading = $state(true);
@@ -150,21 +150,6 @@
 		}
 		mounted = true;
 	});
-
-	const PARTY_SIZE_LABELS: Record<number, string> = {
-		[PartySize.SOLO]: 'Solo',
-		[PartySize.COUPLE]: 'Couple',
-		[PartySize.SMALL_GROUP]: 'Small group',
-		[PartySize.LARGE_GROUP]: 'Large group',
-	};
-
-	const OCCASION_LABELS: Record<number, string> = {
-		[Occasion.CASUAL]: 'Casual',
-		[Occasion.DATE_NIGHT]: 'Date night',
-		[Occasion.BUSINESS]: 'Business',
-		[Occasion.CELEBRATION]: 'Celebration',
-		[Occasion.QUICK_BITE]: 'Quick bite',
-	};
 
 	const WOULD_VISIT_AGAIN_LABELS: Record<number, { text: string; cls: string }> = {
 		[WouldVisitAgain.YES]: { text: 'Would visit again', cls: 'text-emerald-600 dark:text-emerald-400' },
@@ -428,26 +413,14 @@
 							{/if}
 
 							<!-- Extra detail fields -->
-							{#if review.visitedAt || review.partySize || review.occasion || review.pricePaidPerPerson || review.wouldVisitAgain || review.dishHighlights}
+							{#if review.visitedAt || review.pricePaidPerPerson || review.wouldVisitAgain || review.dishHighlights}
 								{@const visitDate = formatVisitDate(review.visitedAt)}
-								{@const partyLabel = PARTY_SIZE_LABELS[review.partySize]}
-								{@const occasionLabel = OCCASION_LABELS[review.occasion]}
 								{@const wvaEntry = WOULD_VISIT_AGAIN_LABELS[review.wouldVisitAgain]}
 								<div class="space-y-2 border-t border-border pt-3">
 									<div class="flex flex-wrap items-center gap-x-3 gap-y-1.5">
 										{#if visitDate}
 											<span class="flex items-center gap-1 text-xs text-muted-foreground">
 												<Calendar class="h-3 w-3 shrink-0" />{visitDate}
-											</span>
-										{/if}
-										{#if partyLabel}
-											<span class="flex items-center gap-1 text-xs text-muted-foreground">
-												<Users class="h-3 w-3 shrink-0" />{partyLabel}
-											</span>
-										{/if}
-										{#if occasionLabel}
-											<span class="flex items-center gap-1 text-xs text-muted-foreground">
-												<UtensilsCrossed class="h-3 w-3 shrink-0" />{occasionLabel}
 											</span>
 										{/if}
 										{#if review.pricePaidPerPerson}

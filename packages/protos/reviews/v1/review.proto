@@ -4,23 +4,6 @@ package reviews.v1;
 
 option go_package = "api/src/generated/reviews/v1";
 
-enum PartySize {
-  PARTY_SIZE_UNSPECIFIED = 0;
-  PARTY_SIZE_SOLO = 1;
-  PARTY_SIZE_COUPLE = 2;
-  PARTY_SIZE_SMALL_GROUP = 3;
-  PARTY_SIZE_LARGE_GROUP = 4;
-}
-
-enum Occasion {
-  OCCASION_UNSPECIFIED = 0;
-  OCCASION_CASUAL = 1;
-  OCCASION_DATE_NIGHT = 2;
-  OCCASION_BUSINESS = 3;
-  OCCASION_CELEBRATION = 4;
-  OCCASION_QUICK_BITE = 5;
-}
-
 enum WouldVisitAgain {
   WOULD_VISIT_AGAIN_UNSPECIFIED = 0;
   WOULD_VISIT_AGAIN_YES = 1;
@@ -46,8 +29,8 @@ message ReviewProto {
 
   // Optional extra detail fields
   int64 visited_at = 15;
-  PartySize party_size = 16;
-  Occasion occasion = 17;
+  reserved 16, 17;
+  reserved "party_size", "occasion";
   int32 price_paid_per_person = 18;
   WouldVisitAgain would_visit_again = 19;
   string dish_highlights = 20;

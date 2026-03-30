@@ -35,7 +35,7 @@ bun install
 
 2. **Start infrastructure** (PostgreSQL + Valkey):
 ```bash
-docker-compose up -d
+docker compose up -d
 ```
 
 3. **Set up environment**:

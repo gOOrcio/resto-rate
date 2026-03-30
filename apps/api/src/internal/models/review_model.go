@@ -18,8 +18,6 @@ type Review struct {
 	Rating             float64  `gorm:"not null"`
 	Tags               []string `gorm:"serializer:json"`
 	VisitedAt          *time.Time
-	PartySize          int32
-	Occasion           int32
 	PricePaidPerPerson int32
 	WouldVisitAgain    int32
 	DishHighlights     string
@@ -54,8 +52,6 @@ func (r *Review) ToProto() *reviewspb.ReviewProto {
 		RestaurantCountry:        r.Restaurant.Country,
 		RestaurantPhotoReference: r.Restaurant.PhotoReference,
 		AuthorName:               r.User.Name,
-		PartySize:          reviewspb.PartySize(r.PartySize),
-		Occasion:           reviewspb.Occasion(r.Occasion),
 		PricePaidPerPerson: r.PricePaidPerPerson,
 		WouldVisitAgain:    reviewspb.WouldVisitAgain(r.WouldVisitAgain),
 		DishHighlights:     r.DishHighlights,

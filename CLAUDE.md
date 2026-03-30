@@ -67,8 +67,8 @@ bunx nx run protos:clean          # Remove all generated files
 ### Infrastructure
 
 ```bash
-docker-compose up -d         # Start PostgreSQL + Valkey (Redis-compatible cache)
-docker-compose down          # Stop services
+docker compose up -d         # Start PostgreSQL + Valkey (Redis-compatible cache)
+docker compose down          # Stop services
 ```
 
 ## Architecture

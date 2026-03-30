@@ -4,7 +4,7 @@
 	import client from '$lib/client/client';
 	import TagPicker from './TagPicker.svelte';
 	import type { ReviewProto } from '$lib/client/generated/reviews/v1/review_pb';
-	import { PartySize, Occasion, WouldVisitAgain } from '$lib/client/generated/reviews/v1/review_pb';
+	import { WouldVisitAgain } from '$lib/client/generated/reviews/v1/review_pb';
 
 	const {
 		googlePlacesId,
@@ -39,8 +39,7 @@
 	let showComment = $state(!!existingReview?.comment);
 	let showTags = $state(!!(existingReview?.tags?.length || initialTags?.length));
 	let showVisitDetails = $state(
-		!!(existingReview?.visitedAt || existingReview?.partySize || existingReview?.occasion ||
-		   existingReview?.wouldVisitAgain || existingReview?.dishHighlights)
+		!!(existingReview?.visitedAt || existingReview?.wouldVisitAgain || existingReview?.dishHighlights)
 	);
 
 	// Visit detail fields
@@ -49,8 +48,6 @@
 			? new Date(Number(existingReview.visitedAt) * 1000).toISOString().slice(0, 10)
 			: ''
 	);
-	let partySize = $state<PartySize>(existingReview?.partySize ?? PartySize.UNSPECIFIED);
-	let occasion = $state<Occasion>(existingReview?.occasion ?? Occasion.UNSPECIFIED);
 	let wouldVisitAgain = $state<WouldVisitAgain>(existingReview?.wouldVisitAgain ?? WouldVisitAgain.UNSPECIFIED);
 	let dishHighlights = $state(existingReview?.dishHighlights ?? '');
 
@@ -78,8 +75,6 @@
 					rating,
 					tags,
 					visitedAt: visitedAtTs(),
-					partySize,
-					occasion,
 					wouldVisitAgain,
 					dishHighlights
 				});
@@ -96,8 +91,6 @@
 					rating,
 					tags,
 					visitedAt: visitedAtTs(),
-					partySize,
-					occasion,
 					wouldVisitAgain,
 					dishHighlights
 				});
@@ -229,39 +222,6 @@
 									</button>
 								{/each}
 							</div>
-						</div>
-					</div>
-
-					<!-- Party size + Occasion -->
-					<div class="grid grid-cols-2 gap-3">
-						<div>
-							<label for="party-size" class="mb-1 block text-xs font-medium text-muted-foreground">Party size</label>
-							<select
-								id="party-size"
-								bind:value={partySize}
-								class="w-full rounded-md border border-border bg-card px-3 py-1.5 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-ring"
-							>
-								<option value={PartySize.UNSPECIFIED}>—</option>
-								<option value={PartySize.SOLO}>Solo</option>
-								<option value={PartySize.COUPLE}>Couple</option>
-								<option value={PartySize.SMALL_GROUP}>Small group</option>
-								<option value={PartySize.LARGE_GROUP}>Large group</option>
-							</select>
-						</div>
-						<div>
-							<label for="occasion" class="mb-1 block text-xs font-medium text-muted-foreground">Occasion</label>
-							<select
-								id="occasion"
-								bind:value={occasion}
-								class="w-full rounded-md border border-border bg-card px-3 py-1.5 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-ring"
-							>
-								<option value={Occasion.UNSPECIFIED}>—</option>
-								<option value={Occasion.CASUAL}>Casual</option>
-								<option value={Occasion.DATE_NIGHT}>Date night</option>
-								<option value={Occasion.BUSINESS}>Business</option>
-								<option value={Occasion.CELEBRATION}>Celebration</option>
-								<option value={Occasion.QUICK_BITE}>Quick bite</option>
-							</select>
 						</div>
 					</div>
 

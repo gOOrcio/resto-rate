@@ -45,11 +45,18 @@ var RequiredTags = []models.Tag{
 	{Slug: "halal", Label: "Halal", Category: "Dietary"},
 	{Slug: "kosher", Label: "Kosher", Category: "Dietary"},
 	{Slug: "dairy-free", Label: "Dairy-Free", Category: "Dietary"},
+	// Group
+	{Slug: "solo", Label: "Solo", Category: "Group"},
+	{Slug: "couple", Label: "Couple", Category: "Group"},
+	{Slug: "small-group", Label: "Small Group", Category: "Group"},
+	{Slug: "large-group", Label: "Large Group", Category: "Group"},
 	// Occasion
 	{Slug: "birthday", Label: "Birthday", Category: "Occasion"},
 	{Slug: "anniversary", Label: "Anniversary", Category: "Occasion"},
 	{Slug: "brunch", Label: "Brunch", Category: "Occasion"},
 	{Slug: "late-night", Label: "Late Night", Category: "Occasion"},
+	{Slug: "celebration", Label: "Celebration", Category: "Occasion"},
+	{Slug: "quick-bite", Label: "Quick Bite", Category: "Occasion"},
 }
 
 // removedSlugs lists tag slugs that were once seeded but have since been
