@@ -143,17 +143,6 @@
 		mounted = true;
 	});
 
-	function ratingLabel(r: number): string {
-		return r.toFixed(1);
-	}
-
-	function ratingClass(r: number): string {
-		if (r >= 4.5) return 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300';
-		if (r >= 3.5) return 'bg-amber-50 text-amber-700 dark:bg-amber-950 dark:text-amber-300';
-		if (r >= 2.5) return 'bg-orange-50 text-orange-700 dark:bg-orange-950 dark:text-orange-300';
-		return 'bg-red-50 text-red-700 dark:bg-red-950 dark:text-red-300';
-	}
-
 	const PARTY_SIZE_LABELS: Record<number, string> = {
 		[PartySize.SOLO]: 'Solo',
 		[PartySize.COUPLE]: 'Couple',
@@ -394,23 +383,15 @@
 					{:else}
 						<div class="flex flex-col gap-3 p-5">
 							<!-- Restaurant info + rating badge -->
-							<div class="flex items-start justify-between gap-3">
-								<div class="min-w-0 flex-1">
-									<ExpandableRestaurantInfo
-										googlePlacesId={review.googlePlacesId}
-										name={review.restaurantName}
-										address={review.restaurantAddress}
-										city={review.restaurantCity}
-										country={review.restaurantCountry}
-										photoReference={review.restaurantPhotoReference || ''}
-									/>
-								</div>
-								<span
-									class="shrink-0 rounded-md px-2 py-0.5 text-sm font-semibold tabular-nums {ratingClass(review.rating)}"
-								>
-									{ratingLabel(review.rating)} ★
-								</span>
-							</div>
+							<ExpandableRestaurantInfo
+								googlePlacesId={review.googlePlacesId}
+								name={review.restaurantName}
+								address={review.restaurantAddress}
+								city={review.restaurantCity}
+								country={review.restaurantCountry}
+								photoReference={review.restaurantPhotoReference || ''}
+								rating={review.rating}
+							/>
 
 							<!-- Comment -->
 							{#if review.comment}

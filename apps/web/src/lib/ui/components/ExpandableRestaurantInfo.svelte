@@ -17,14 +17,22 @@
 		ChevronUp
 	} from '@lucide/svelte';
 
-	const { googlePlacesId, name, address, city, country, photoReference = '' } = $props<{
+	const { googlePlacesId, name, address, city, country, photoReference = '', rating = undefined } = $props<{
 		googlePlacesId: string;
 		name: string;
 		address?: string;
 		city?: string;
 		country?: string;
 		photoReference?: string;
+		rating?: number;
 	}>();
+
+	function ratingColor(r: number): string {
+		if (r >= 4.5) return 'text-emerald-500 dark:text-emerald-400';
+		if (r >= 3.5) return 'text-amber-500 dark:text-amber-400';
+		if (r >= 2.5) return 'text-orange-500 dark:text-orange-400';
+		return 'text-red-500 dark:text-red-400';
+	}
 
 	let isExpanded = $state(false);
 	let googleData = $state<Place | null>(null);
@@ -149,12 +157,20 @@
 	</div>
 
 	<!-- DB info section -->
-	<div class="space-y-1">
-		<h3 class="text-base leading-tight font-bold text-foreground">{name}</h3>
-		{#if address}
-			<div class="flex items-start gap-1.5">
-				<MapPin class="mt-0.5 h-3.5 w-3.5 shrink-0 text-muted-foreground" />
-				<p class="text-sm text-muted-foreground">{address}</p>
+	<div class="flex items-start gap-3">
+		<div class="min-w-0 flex-1 space-y-1">
+			<h3 class="text-base leading-tight font-bold text-foreground">{name}</h3>
+			{#if address}
+				<div class="flex items-start gap-1.5">
+					<MapPin class="mt-0.5 h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+					<p class="text-sm text-muted-foreground">{address}</p>
+				</div>
+			{/if}
+		</div>
+		{#if rating !== undefined}
+			<div class="flex shrink-0 flex-col items-center gap-0.5 {ratingColor(rating)}">
+				<span class="text-2xl font-bold tabular-nums leading-none">{rating.toFixed(1)}</span>
+				<Star class="h-4 w-4 fill-current" />
 			</div>
 		{/if}
 	</div>
