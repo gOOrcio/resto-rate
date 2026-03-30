@@ -1,4 +1,5 @@
 import type { UserProto } from '$lib/client/generated/users/v1/user_pb';
+import { locale, type Locale } from '$lib/state/locale.svelte';
 
 let currentUser = $state<UserProto | null>(null);
 let authLoading = $state(true);
@@ -20,6 +21,9 @@ export const auth = {
 	},
 	setUser(u: UserProto | null) {
 		currentUser = u;
+		if (u?.defaultLanguage) {
+			locale.set(u.defaultLanguage as Locale);
+		}
 	},
 	setLoaded() {
 		authLoading = false;
