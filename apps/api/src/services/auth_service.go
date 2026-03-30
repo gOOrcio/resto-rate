@@ -131,6 +131,14 @@ func (s *AuthService) UpdateMyProfile(
 	ctx context.Context,
 	req *connect.Request[authv1.UpdateMyProfileRequest],
 ) (*connect.Response[authv1.UpdateMyProfileResponse], error) {
+	// Cheap input validation before session lookup.
+	if req.Msg.DefaultLanguage != "" &&
+		req.Msg.DefaultLanguage != "en" &&
+		req.Msg.DefaultLanguage != "pl" {
+		return nil, connect.NewError(connect.CodeInvalidArgument,
+			errors.New("unsupported locale; supported values: en, pl"))
+	}
+
 	userID, err := getUserIDFromSession(ctx, req.Header(), s.Valkey)
 	if err != nil {
 		return nil, err
@@ -166,6 +174,10 @@ func (s *AuthService) UpdateMyProfile(
 
 	if req.Msg.SetIsDarkModeEnabled {
 		updates["IsDarkModeEnabled"] = req.Msg.IsDarkModeEnabled
+	}
+
+	if req.Msg.DefaultLanguage != "" {
+		updates["DefaultLanguage"] = req.Msg.DefaultLanguage
 	}
 
 	if len(updates) == 0 {
