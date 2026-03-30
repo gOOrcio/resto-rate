@@ -10,6 +10,7 @@
 		PriceLevel,
 		BusinessStatus
 	} from '$lib/client/generated/google_maps/v1/google_maps_service_pb';
+	import { PartySize, Occasion, WouldVisitAgain } from '$lib/client/generated/reviews/v1/review_pb';
 	import {
 		Star,
 		MapPin,
@@ -18,7 +19,9 @@
 		Check,
 		X,
 		Loader2,
-		ChevronLeft
+		ChevronLeft,
+		ChevronDown,
+		ChevronUp
 	} from '@lucide/svelte';
 	import RatingForm from '$lib/ui/components/RatingForm.svelte';
 
@@ -36,6 +39,8 @@
 	let isWishlisted = $state(false);
 	let wishlistLoading = $state(false);
 	let showRatingForm = $state(false);
+	let myReviewExpanded = $state(false);
+	let expandedFriendIds = $state<Set<string>>(new Set());
 	let photoLoadFailed = $state(false);
 
 	// Google Places data
@@ -45,15 +50,46 @@
 	const myReview = $derived(reviews.find((r) => r.userId === auth.user?.id));
 	const friendReviews = $derived(reviews.filter((r) => r.userId !== auth.user?.id));
 
+	const PARTY_SIZE_LABELS: Record<number, string> = {
+		[PartySize.SOLO]: 'Solo',
+		[PartySize.COUPLE]: 'Couple',
+		[PartySize.SMALL_GROUP]: 'Small group',
+		[PartySize.LARGE_GROUP]: 'Large group'
+	};
+	const OCCASION_LABELS: Record<number, string> = {
+		[Occasion.CASUAL]: 'Casual',
+		[Occasion.DATE_NIGHT]: 'Date night',
+		[Occasion.BUSINESS]: 'Business',
+		[Occasion.CELEBRATION]: 'Celebration',
+		[Occasion.QUICK_BITE]: 'Quick bite'
+	};
+	const WOULD_VISIT_AGAIN_LABELS: Record<number, { text: string; cls: string }> = {
+		[WouldVisitAgain.YES]: { text: 'Would visit again', cls: 'text-emerald-600 dark:text-emerald-400' },
+		[WouldVisitAgain.MAYBE]: { text: 'Maybe again', cls: 'text-amber-600 dark:text-amber-400' },
+		[WouldVisitAgain.NO]: { text: "Wouldn't return", cls: 'text-red-600 dark:text-red-400' }
+	};
+
+	function formatDate(ts: bigint | number): string {
+		if (!ts) return '';
+		return new Date(Number(ts) * 1000).toLocaleDateString(undefined, {
+			year: 'numeric', month: 'short', day: 'numeric'
+		});
+	}
+
+	function toggleFriend(id: string) {
+		const next = new Set(expandedFriendIds);
+		if (next.has(id)) next.delete(id);
+		else next.add(id);
+		expandedFriendIds = next;
+	}
+
 	async function loadRestaurantData() {
 		const [reviewsResult, wishlistResult] = await Promise.allSettled([
 			client.reviews.listRestaurantReviews({ googlePlacesId }),
 			client.wishlist.listWishlist({ googlePlacesId })
 		]);
 
-		if (reviewsResult.status === 'rejected') {
-			throw reviewsResult.reason;
-		}
+		if (reviewsResult.status === 'rejected') throw reviewsResult.reason;
 
 		const res = reviewsResult.value;
 		reviews = res.reviews;
@@ -62,7 +98,6 @@
 		restaurantAddress = res.restaurantAddress;
 		restaurantCity = res.restaurantCity;
 		restaurantCountry = res.restaurantCountry;
-		// Photo comes from the first review that has one
 		restaurantPhoto = res.reviews.find((r) => r.restaurantPhotoReference)?.restaurantPhotoReference || '';
 
 		if (wishlistResult.status === 'fulfilled') {
@@ -78,7 +113,6 @@
 				languageCode: 'en',
 				regionCode: 'pl'
 			});
-			// Prefer Google photo if we don't have one from the DB
 			if (!restaurantPhoto && googleData.photos?.[0]?.name) {
 				restaurantPhoto = googleData.photos[0].name;
 			}
@@ -115,9 +149,9 @@
 
 	function handleReviewSubmit(review: ReviewProto) {
 		reviews = [review, ...reviews.filter((r) => r.userId !== auth.user?.id)];
-		averageRating =
-			reviews.reduce((s, r) => s + r.rating, 0) / (reviews.length || 1);
+		averageRating = reviews.reduce((s, r) => s + r.rating, 0) / (reviews.length || 1);
 		showRatingForm = false;
+		myReviewExpanded = true;
 	}
 
 	function safeHostname(uri: string): string {
@@ -182,24 +216,16 @@
 	$effect(() => {
 		if (auth.loading || initialized) return;
 		initialized = true;
-		if (!auth.isLoggedIn) {
-			goto('/');
-			return;
-		}
+		if (!auth.isLoggedIn) { goto('/'); return; }
 		loading = true;
 		Promise.all([loadRestaurantData(), loadGoogleData()])
-			.catch((e) => {
-				console.error(e);
-				error = 'Failed to load restaurant data.';
-			})
-			.finally(() => {
-				loading = false;
-			});
+			.catch((e) => { console.error(e); error = 'Failed to load restaurant data.'; })
+			.finally(() => { loading = false; });
 	});
 </script>
 
-<div class="mx-auto max-w-3xl space-y-6 px-4 py-8 sm:px-6">
-	<!-- Back link -->
+<div class="mx-auto max-w-3xl space-y-5 px-4 py-8 sm:px-6">
+	<!-- Back -->
 	<button
 		onclick={() => history.back()}
 		class="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
@@ -216,7 +242,7 @@
 	{:else if error}
 		<p class="text-sm text-destructive">{error}</p>
 	{:else}
-		<!-- ── Hero: photo + name/address/wishlist ── -->
+		<!-- ── Hero card ── -->
 		<div class="overflow-hidden rounded-xl border border-border bg-card shadow-sm">
 			<!-- Photo -->
 			<div class="relative h-52 w-full bg-muted">
@@ -237,8 +263,8 @@
 				{/if}
 			</div>
 
-			<!-- Header: name, address, wishlist toggle -->
 			<div class="p-5">
+				<!-- Name + address + wishlist -->
 				<div class="flex items-start justify-between gap-4">
 					<div class="min-w-0 flex-1">
 						<h1 class="text-2xl font-bold text-foreground">{restaurantName || 'Restaurant'}</h1>
@@ -249,7 +275,7 @@
 							</div>
 						{/if}
 						{#if restaurantCity || restaurantCountry}
-							<p class="ml-5.5 mt-0.5 text-xs text-muted-foreground">
+							<p class="mt-0.5 pl-5 text-xs text-muted-foreground">
 								{[restaurantCity, restaurantCountry].filter(Boolean).join(', ')}
 							</p>
 						{/if}
@@ -273,28 +299,127 @@
 					{/if}
 				</div>
 
-				<!-- Average rating -->
-				{#if reviews.length > 0}
-					<div class="mt-4 flex items-center gap-2">
-						<div class="flex items-center gap-0.5">
-							{#each Array(5) as _, i}
-								<Star
-									class="h-4 w-4 {i < Math.round(averageRating)
-										? 'fill-amber-400 text-amber-400'
-										: 'fill-none text-gray-300 dark:text-gray-600'}"
-								/>
-							{/each}
+				<!-- Rating row — collapses into your review, or shows write CTA -->
+				<div class="mt-4 border-t border-border pt-4">
+					{#if showRatingForm}
+						<div class="space-y-3">
+							<RatingForm
+								{googlePlacesId}
+								restaurantName={restaurantName}
+								restaurantAddress={restaurantAddress}
+								existingReview={myReview}
+								onSubmit={handleReviewSubmit}
+							/>
+							<button
+								class="text-sm text-muted-foreground hover:text-foreground"
+								onclick={() => (showRatingForm = false)}
+							>
+								Cancel
+							</button>
 						</div>
-						<span class="font-semibold text-foreground">{averageRating.toFixed(1)}</span>
-						<span class="text-sm text-muted-foreground">
-							({reviews.length} {reviews.length === 1 ? 'review' : 'reviews'} from you &amp; friends)
-						</span>
-					</div>
-				{/if}
+					{:else if myReview}
+						<!-- Collapsible: summary row + expandable details -->
+						<button
+							class="flex w-full items-center justify-between gap-3 text-left"
+							onclick={() => (myReviewExpanded = !myReviewExpanded)}
+						>
+							<div class="flex items-center gap-2">
+								<div class="flex items-center gap-0.5">
+									{#each Array(5) as _, i}
+										<Star class="h-5 w-5 {i < Math.round(averageRating) ? 'fill-amber-400 text-amber-400' : 'fill-none text-gray-300 dark:text-gray-600'}" />
+									{/each}
+								</div>
+								<span class="font-semibold text-foreground">{averageRating.toFixed(1)}</span>
+								<span class="text-sm text-muted-foreground">
+									({reviews.length} {reviews.length === 1 ? 'review' : 'reviews'} from you &amp; friends)
+								</span>
+							</div>
+							{#if myReviewExpanded}
+								<ChevronUp class="h-4 w-4 shrink-0 text-muted-foreground" />
+							{:else}
+								<ChevronDown class="h-4 w-4 shrink-0 text-muted-foreground" />
+							{/if}
+						</button>
+
+						{#if myReviewExpanded}
+							<div class="mt-4 space-y-3 rounded-lg border border-border bg-muted/30 p-4">
+								<!-- Header: your rating + date + edit -->
+								<div class="flex items-center justify-between">
+									<div class="flex items-center gap-2">
+										<div class="flex items-center gap-0.5">
+											{#each Array(5) as _, i}
+												<Star class="h-4 w-4 {i < myReview.rating ? 'fill-amber-400 text-amber-400' : 'fill-none text-gray-300 dark:text-gray-600'}" />
+											{/each}
+										</div>
+										<span class="font-semibold text-foreground">{myReview.rating.toFixed(1)}</span>
+									</div>
+									<div class="flex items-center gap-3">
+										<span class="text-xs text-muted-foreground">{formatDate(myReview.createdAt)}</span>
+										<button
+											class="text-xs text-primary hover:underline"
+											onclick={(e) => { e.stopPropagation(); showRatingForm = true; myReviewExpanded = false; }}
+										>
+											Edit
+										</button>
+									</div>
+								</div>
+
+								{#if myReview.comment}
+									<p class="text-sm leading-relaxed text-muted-foreground">{myReview.comment}</p>
+								{/if}
+
+								{#if myReview.tags?.length}
+									<div class="flex flex-wrap gap-1.5">
+										{#each myReview.tags as tag}
+											<span class="rounded-full bg-muted px-2.5 py-0.5 text-xs font-medium text-muted-foreground">{tag}</span>
+										{/each}
+									</div>
+								{/if}
+
+								<!-- Extra fields -->
+								{#if myReview.visitedAt || myReview.partySize || myReview.occasion || myReview.pricePaidPerPerson || myReview.wouldVisitAgain || myReview.dishHighlights}
+									{@const visitDate = formatDate(myReview.visitedAt)}
+									{@const partyLabel = PARTY_SIZE_LABELS[myReview.partySize]}
+									{@const occasionLabel = OCCASION_LABELS[myReview.occasion]}
+									{@const wvaEntry = WOULD_VISIT_AGAIN_LABELS[myReview.wouldVisitAgain]}
+									<div class="border-t border-border pt-3 space-y-1.5">
+										<div class="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
+											{#if visitDate}<span>📅 {visitDate}</span>{/if}
+											{#if partyLabel}<span>👥 {partyLabel}</span>{/if}
+											{#if occasionLabel}<span>🎉 {occasionLabel}</span>{/if}
+											{#if myReview.pricePaidPerPerson}<span>💰 ${myReview.pricePaidPerPerson}/person</span>{/if}
+											{#if wvaEntry}<span class={wvaEntry.cls}>{wvaEntry.text}</span>{/if}
+										</div>
+										{#if myReview.dishHighlights}
+											<p class="text-xs text-muted-foreground">
+												<span class="font-medium text-foreground">Highlights:</span> {myReview.dishHighlights}
+											</p>
+										{/if}
+									</div>
+								{/if}
+							</div>
+						{/if}
+					{:else}
+						<!-- No review yet -->
+						<div class="flex items-center justify-between">
+							<span class="text-sm text-muted-foreground">
+								{reviews.length > 0
+									? `${reviews.length} ${reviews.length === 1 ? 'review' : 'reviews'} from friends`
+									: 'No reviews yet'}
+							</span>
+							<button
+								class="rounded-lg bg-primary px-4 py-1.5 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
+								onclick={() => (showRatingForm = true)}
+							>
+								Write a review
+							</button>
+						</div>
+					{/if}
+				</div>
 			</div>
 		</div>
 
-		<!-- ── Google Places details ── -->
+		<!-- ── Google Places ── -->
 		<div class="rounded-xl border border-border bg-card p-5 shadow-sm">
 			<div class="mb-4 flex items-center justify-between">
 				<img src="/GoogleMaps_Logo_Gray.svg" alt="Google Maps" class="h-4 w-auto" />
@@ -308,40 +433,28 @@
 				</div>
 			{:else if googleData}
 				<div class="space-y-4">
-					<!-- Rating + status + price -->
 					<div class="space-y-2">
 						{#if googleData.rating}
 							<div class="flex items-center gap-3">
 								<div class="flex items-center gap-0.5">
 									{#each Array(5) as _, i}
-										<Star
-											class="h-4 w-4 {i < Math.round(googleData.rating)
-												? 'fill-amber-400 text-amber-400'
-												: 'fill-none text-gray-300 dark:text-gray-600'}"
-										/>
+										<Star class="h-4 w-4 {i < Math.round(googleData.rating) ? 'fill-amber-400 text-amber-400' : 'fill-none text-gray-300 dark:text-gray-600'}" />
 									{/each}
 								</div>
 								<span class="font-semibold text-foreground">{googleData.rating.toFixed(1)}</span>
 								{#if googleData.userRatingCount}
-									<span class="text-sm text-muted-foreground">
-										({googleData.userRatingCount.toLocaleString()} Google reviews)
-									</span>
+									<span class="text-sm text-muted-foreground">({googleData.userRatingCount.toLocaleString()} Google reviews)</span>
 								{/if}
 							</div>
 						{/if}
 						<div class="flex items-center gap-2">
-							{#if status}
-								<span class="text-sm font-medium {status.color}">{status.label}</span>
-							{/if}
-							{#if priceLabel}
-								<span class="rounded bg-muted px-1.5 py-0.5 text-xs font-semibold text-muted-foreground">{priceLabel}</span>
-							{/if}
+							{#if status}<span class="text-sm font-medium {status.color}">{status.label}</span>{/if}
+							{#if priceLabel}<span class="rounded bg-muted px-1.5 py-0.5 text-xs font-semibold text-muted-foreground">{priceLabel}</span>{/if}
 						</div>
 					</div>
 
 					<hr class="border-border" />
 
-					<!-- Contact -->
 					<div class="space-y-2">
 						{#if googleData.nationalPhoneNumber || googleData.internationalPhoneNumber}
 							<div class="flex items-center gap-2">
@@ -401,79 +514,6 @@
 			{/if}
 		</div>
 
-		<!-- ── Your review ── -->
-		<div class="rounded-xl border border-border bg-card shadow-sm">
-			<div class="border-b border-border px-5 py-3">
-				<h2 class="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Your review</h2>
-			</div>
-
-			{#if showRatingForm}
-				<div class="p-5">
-					<RatingForm
-						{googlePlacesId}
-						restaurantName={restaurantName}
-						restaurantAddress={restaurantAddress}
-						existingReview={myReview}
-						onSubmit={handleReviewSubmit}
-					/>
-					<button
-						class="mt-3 text-sm text-muted-foreground hover:text-foreground"
-						onclick={() => (showRatingForm = false)}
-					>
-						Cancel
-					</button>
-				</div>
-			{:else if myReview}
-				<div class="p-5">
-					<div class="mb-3 flex items-center justify-between">
-						<div class="flex items-center gap-2">
-							<div class="flex items-center gap-0.5">
-								{#each Array(5) as _, i}
-									<Star
-										class="h-4 w-4 {i < myReview.rating
-											? 'fill-amber-400 text-amber-400'
-											: 'fill-none text-gray-300 dark:text-gray-600'}"
-									/>
-								{/each}
-							</div>
-							<span class="font-semibold text-foreground">{myReview.rating.toFixed(1)}</span>
-						</div>
-						<div class="flex items-center gap-3">
-							<span class="text-xs text-muted-foreground">
-								{new Date(Number(myReview.createdAt) * 1000).toLocaleDateString()}
-							</span>
-							<button
-								class="text-xs text-primary hover:underline"
-								onclick={() => (showRatingForm = true)}
-							>
-								Edit
-							</button>
-						</div>
-					</div>
-					{#if myReview.comment}
-						<p class="text-sm leading-relaxed text-muted-foreground">{myReview.comment}</p>
-					{/if}
-					{#if myReview.tags?.length}
-						<div class="mt-2 flex flex-wrap gap-1.5">
-							{#each myReview.tags as tag}
-								<span class="rounded-full bg-muted px-2.5 py-0.5 text-xs font-medium text-muted-foreground">{tag}</span>
-							{/each}
-						</div>
-					{/if}
-				</div>
-			{:else}
-				<div class="flex flex-col items-center gap-3 py-8 text-center">
-					<p class="text-sm text-muted-foreground">You haven't reviewed this place yet.</p>
-					<button
-						class="rounded-lg bg-primary px-5 py-2 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
-						onclick={() => (showRatingForm = true)}
-					>
-						Write a review
-					</button>
-				</div>
-			{/if}
-		</div>
-
 		<!-- ── Friends' reviews ── -->
 		{#if friendReviews.length > 0}
 			<div class="rounded-xl border border-border bg-card shadow-sm">
@@ -484,35 +524,71 @@
 				</div>
 				<ul class="divide-y divide-border">
 					{#each friendReviews as review (review.id)}
-						<li class="p-5">
-							<div class="mb-2 flex items-start justify-between gap-2">
-								<div>
-									<p class="font-medium text-foreground">{review.authorName || 'Friend'}</p>
-									<div class="mt-1 flex items-center gap-1.5">
-										<div class="flex items-center gap-0.5">
-											{#each Array(5) as _, i}
-												<Star
-													class="h-3.5 w-3.5 {i < review.rating
-														? 'fill-amber-400 text-amber-400'
-														: 'fill-none text-gray-300 dark:text-gray-600'}"
-												/>
-											{/each}
+						{@const expanded = expandedFriendIds.has(review.id)}
+						{@const hasDetails = !!(review.comment || review.tags?.length || review.visitedAt || review.partySize || review.occasion || review.pricePaidPerPerson || review.wouldVisitAgain || review.dishHighlights)}
+						<li>
+							<button
+								class="flex w-full items-center justify-between gap-3 px-5 py-4 text-left {hasDetails ? 'hover:bg-muted/40' : 'cursor-default'}"
+								onclick={() => hasDetails && toggleFriend(review.id)}
+								disabled={!hasDetails}
+							>
+								<div class="flex items-center gap-3">
+									<div class="flex flex-col">
+										<span class="font-medium text-foreground">{review.authorName || 'Friend'}</span>
+										<div class="mt-0.5 flex items-center gap-1.5">
+											<div class="flex items-center gap-0.5">
+												{#each Array(5) as _, i}
+													<Star class="h-3.5 w-3.5 {i < review.rating ? 'fill-amber-400 text-amber-400' : 'fill-none text-gray-300 dark:text-gray-600'}" />
+												{/each}
+											</div>
+											<span class="text-sm font-semibold text-foreground">{review.rating.toFixed(1)}</span>
 										</div>
-										<span class="text-sm font-semibold text-foreground">{review.rating.toFixed(1)}</span>
 									</div>
 								</div>
-								<span class="shrink-0 text-xs text-muted-foreground">
-									{new Date(Number(review.createdAt) * 1000).toLocaleDateString()}
-								</span>
-							</div>
-							{#if review.comment}
-								<p class="text-sm leading-relaxed text-muted-foreground">{review.comment}</p>
-							{/if}
-							{#if review.tags?.length}
-								<div class="mt-2 flex flex-wrap gap-1.5">
-									{#each review.tags as tag}
-										<span class="rounded-full bg-muted px-2.5 py-0.5 text-xs font-medium text-muted-foreground">{tag}</span>
-									{/each}
+								<div class="flex items-center gap-2 shrink-0">
+									<span class="text-xs text-muted-foreground">{formatDate(review.createdAt)}</span>
+									{#if hasDetails}
+										{#if expanded}
+											<ChevronUp class="h-4 w-4 text-muted-foreground" />
+										{:else}
+											<ChevronDown class="h-4 w-4 text-muted-foreground" />
+										{/if}
+									{/if}
+								</div>
+							</button>
+
+							{#if expanded && hasDetails}
+								<div class="space-y-3 border-t border-border bg-muted/20 px-5 py-4">
+									{#if review.comment}
+										<p class="text-sm leading-relaxed text-muted-foreground">{review.comment}</p>
+									{/if}
+									{#if review.tags?.length}
+										<div class="flex flex-wrap gap-1.5">
+											{#each review.tags as tag}
+												<span class="rounded-full bg-muted px-2.5 py-0.5 text-xs font-medium text-muted-foreground">{tag}</span>
+											{/each}
+										</div>
+									{/if}
+									{#if review.visitedAt || review.partySize || review.occasion || review.pricePaidPerPerson || review.wouldVisitAgain || review.dishHighlights}
+										{@const visitDate = formatDate(review.visitedAt)}
+										{@const partyLabel = PARTY_SIZE_LABELS[review.partySize]}
+										{@const occasionLabel = OCCASION_LABELS[review.occasion]}
+										{@const wvaEntry = WOULD_VISIT_AGAIN_LABELS[review.wouldVisitAgain]}
+										<div class="space-y-1.5 border-t border-border pt-3">
+											<div class="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
+												{#if visitDate}<span>📅 {visitDate}</span>{/if}
+												{#if partyLabel}<span>👥 {partyLabel}</span>{/if}
+												{#if occasionLabel}<span>🎉 {occasionLabel}</span>{/if}
+												{#if review.pricePaidPerPerson}<span>💰 ${review.pricePaidPerPerson}/person</span>{/if}
+												{#if wvaEntry}<span class={wvaEntry.cls}>{wvaEntry.text}</span>{/if}
+											</div>
+											{#if review.dishHighlights}
+												<p class="text-xs text-muted-foreground">
+													<span class="font-medium text-foreground">Highlights:</span> {review.dishHighlights}
+												</p>
+											{/if}
+										</div>
+									{/if}
 								</div>
 							{/if}
 						</li>
