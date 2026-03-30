@@ -433,23 +433,15 @@
 								{@const occasionLabel = OCCASION_LABELS[review.occasion]}
 								{@const wvaEntry = WOULD_VISIT_AGAIN_LABELS[review.wouldVisitAgain]}
 								<div class="space-y-1.5 border-t border-border pt-3">
-									<div class="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
-										{#if visitDate}
-											<span>📅 {visitDate}</span>
-										{/if}
-										{#if partyLabel}
-											<span>👥 {partyLabel}</span>
-										{/if}
-										{#if occasionLabel}
-											<span>🎉 {occasionLabel}</span>
-										{/if}
-										{#if review.pricePaidPerPerson}
-											<span>💰 ${review.pricePaidPerPerson}/person</span>
-										{/if}
-										{#if wvaEntry}
-											<span class={wvaEntry.cls}>{wvaEntry.text}</span>
-										{/if}
-									</div>
+									<p class="text-xs text-muted-foreground">
+										{[
+											visitDate,
+											partyLabel,
+											occasionLabel,
+											review.pricePaidPerPerson ? `$${review.pricePaidPerPerson}/person` : null,
+											wvaEntry?.text
+										].filter(Boolean).join(' · ')}
+									</p>
 									{#if review.dishHighlights}
 										<p class="text-xs text-muted-foreground">
 											<span class="font-medium text-foreground">Highlights:</span> {review.dishHighlights}

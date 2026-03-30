@@ -334,11 +334,14 @@
 									({reviews.length} {reviews.length === 1 ? 'review' : 'reviews'} from you &amp; friends)
 								</span>
 							</div>
-							{#if myReviewExpanded}
-								<ChevronUp class="h-4 w-4 shrink-0 text-muted-foreground" />
-							{:else}
-								<ChevronDown class="h-4 w-4 shrink-0 text-muted-foreground" />
-							{/if}
+							<div class="flex shrink-0 items-center gap-1 text-xs text-muted-foreground">
+								<span>Your review</span>
+								{#if myReviewExpanded}
+									<ChevronUp class="h-3.5 w-3.5" />
+								{:else}
+									<ChevronDown class="h-3.5 w-3.5" />
+								{/if}
+							</div>
 						</button>
 
 						{#if myReviewExpanded}
@@ -383,13 +386,15 @@
 									{@const occasionLabel = OCCASION_LABELS[myReview.occasion]}
 									{@const wvaEntry = WOULD_VISIT_AGAIN_LABELS[myReview.wouldVisitAgain]}
 									<div class="border-t border-border pt-3 space-y-1.5">
-										<div class="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
-											{#if visitDate}<span>📅 {visitDate}</span>{/if}
-											{#if partyLabel}<span>👥 {partyLabel}</span>{/if}
-											{#if occasionLabel}<span>🎉 {occasionLabel}</span>{/if}
-											{#if myReview.pricePaidPerPerson}<span>💰 ${myReview.pricePaidPerPerson}/person</span>{/if}
-											{#if wvaEntry}<span class={wvaEntry.cls}>{wvaEntry.text}</span>{/if}
-										</div>
+										<p class="text-xs text-muted-foreground">
+											{[
+												visitDate,
+												partyLabel,
+												occasionLabel,
+												myReview.pricePaidPerPerson ? `$${myReview.pricePaidPerPerson}/person` : null,
+												wvaEntry?.text
+											].filter(Boolean).join(' · ')}
+										</p>
 										{#if myReview.dishHighlights}
 											<p class="text-xs text-muted-foreground">
 												<span class="font-medium text-foreground">Highlights:</span> {myReview.dishHighlights}
@@ -575,13 +580,15 @@
 										{@const occasionLabel = OCCASION_LABELS[review.occasion]}
 										{@const wvaEntry = WOULD_VISIT_AGAIN_LABELS[review.wouldVisitAgain]}
 										<div class="space-y-1.5 border-t border-border pt-3">
-											<div class="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
-												{#if visitDate}<span>📅 {visitDate}</span>{/if}
-												{#if partyLabel}<span>👥 {partyLabel}</span>{/if}
-												{#if occasionLabel}<span>🎉 {occasionLabel}</span>{/if}
-												{#if review.pricePaidPerPerson}<span>💰 ${review.pricePaidPerPerson}/person</span>{/if}
-												{#if wvaEntry}<span class={wvaEntry.cls}>{wvaEntry.text}</span>{/if}
-											</div>
+											<p class="text-xs text-muted-foreground">
+												{[
+													visitDate,
+													partyLabel,
+													occasionLabel,
+													review.pricePaidPerPerson ? `$${review.pricePaidPerPerson}/person` : null,
+													wvaEntry?.text
+												].filter(Boolean).join(' · ')}
+											</p>
 											{#if review.dishHighlights}
 												<p class="text-xs text-muted-foreground">
 													<span class="font-medium text-foreground">Highlights:</span> {review.dishHighlights}
