@@ -149,7 +149,7 @@ func (s *AuthService) UpdateMyProfile(
 		return nil, connect.NewError(connect.CodeNotFound, errors.New("user not found"))
 	}
 
-	updates := map[string]interface{}{}
+	updates := map[string]any{}
 
 	if req.Msg.Username != "" {
 		// Validate username format: 3–30 chars, lowercase letters/digits/underscores
@@ -386,7 +386,7 @@ func (s *AuthService) upsertUser(ctx context.Context, provider authv1.AuthProvid
 			}
 		} else {
 			// Existing user — update email and name in case they changed in Google
-			if err := s.DB.WithContext(ctx).Model(&user).Updates(map[string]interface{}{
+			if err := s.DB.WithContext(ctx).Model(&user).Updates(map[string]any{
 				"Email": models.StringPtr(claims.Email),
 				"Name":  claims.Name,
 			}).Error; err != nil {
