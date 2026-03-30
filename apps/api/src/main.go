@@ -17,12 +17,17 @@ import (
 	"strconv"
 	"strings"
 
+	"context"
+	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
+	"net/url"
 	"os"
 
 	"connectrpc.com/connect"
 	"connectrpc.com/grpcreflect"
+	"golang.org/x/oauth2/google"
 
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
@@ -218,6 +223,9 @@ func setupHTTPHandlers(registrations []ServiceRegistration, db *gorm.DB, kv valk
 		slog.Info("Dev login available", slog.String("path", "/dev/login"))
 	}
 
+	mux.Handle("GET /place-photo", corsMiddleware(placePhotoHandler()))
+	slog.Info("Place photo proxy available", slog.String("path", "/place-photo"))
+
 	return mux
 }
 
@@ -306,6 +314,100 @@ func getWebUiPort() string {
 		log.Fatal("WEB_UI_PORT is not set in the environment variables")
 	}
 	return webUiPort
+}
+
+func placePhotoHandler() http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		name := r.URL.Query().Get("name")
+		if name == "" {
+			http.Error(w, "name is required", http.StatusBadRequest)
+			return
+		}
+		if len(name) < 7 || name[:7] != "places/" {
+			http.Error(w, "invalid name: must start with places/", http.StatusBadRequest)
+			return
+		}
+
+		params := url.Values{}
+		params.Set("maxWidthPx", "800")
+		params.Set("skipHttpRedirect", "true")
+
+		// Prefer API key from env; fall back to ADC bearer token (works with gcloud ADC).
+		apiKey := os.Getenv("GOOGLE_PLACES_API_KEY")
+		if apiKey != "" {
+			params.Set("key", apiKey)
+		}
+		googleURL := "https://places.googleapis.com/v1/" + name + "/media?" + params.Encode()
+
+		req, err := http.NewRequestWithContext(r.Context(), http.MethodGet, googleURL, nil)
+		if err != nil {
+			http.Error(w, "failed to build request", http.StatusInternalServerError)
+			return
+		}
+		if apiKey == "" {
+			// No API key — use ADC (same credentials the gRPC client uses).
+			tok, quotaProject, tokErr := getADCToken(r.Context())
+			if tokErr != nil {
+				slog.Error("place-photo: ADC token failed", slog.Any("error", tokErr))
+				http.Error(w, "auth unavailable", http.StatusInternalServerError)
+				return
+			}
+			req.Header.Set("Authorization", "Bearer "+tok)
+			if quotaProject != "" {
+				req.Header.Set("X-Goog-User-Project", quotaProject)
+			}
+		}
+
+		resp, err := http.DefaultClient.Do(req) //nolint:noctx
+		if err != nil {
+			slog.Error("place-photo: upstream request failed", slog.String("name", name), slog.Any("error", err))
+			http.Error(w, "upstream request failed", http.StatusBadGateway)
+			return
+		}
+		defer resp.Body.Close()
+
+		body, _ := io.ReadAll(resp.Body)
+		if resp.StatusCode != http.StatusOK {
+			slog.Error("place-photo: upstream error",
+				slog.String("name", name),
+				slog.Int("status", resp.StatusCode),
+				slog.String("body", string(body)),
+			)
+			http.Error(w, "upstream error", http.StatusBadGateway)
+			return
+		}
+
+		// skipHttpRedirect=true returns JSON: {"name":"...","photoUri":"https://..."}
+		// Redirect the browser to the CDN URI so it fetches the image directly.
+		var photoResp struct {
+			PhotoURI string `json:"photoUri"`
+		}
+		if err := json.Unmarshal(body, &photoResp); err != nil || photoResp.PhotoURI == "" {
+			slog.Error("place-photo: failed to parse photoUri", slog.String("body", string(body)), slog.Any("error", err))
+			http.Error(w, "invalid photo response", http.StatusBadGateway)
+			return
+		}
+		http.Redirect(w, r, photoResp.PhotoURI, http.StatusFound)
+	})
+}
+
+// getADCToken returns a bearer token and quota project from Application Default Credentials.
+func getADCToken(ctx context.Context) (token string, quotaProject string, err error) {
+	creds, err := google.FindDefaultCredentials(ctx, "https://www.googleapis.com/auth/cloud-platform")
+	if err != nil {
+		return "", "", err
+	}
+	tok, err := creds.TokenSource.Token()
+	if err != nil {
+		return "", "", err
+	}
+	// Extract quota_project_id from the raw credentials JSON if present
+	// (set by `gcloud auth application-default set-quota-project`).
+	var credFile struct {
+		QuotaProjectID string `json:"quota_project_id"`
+	}
+	_ = json.Unmarshal(creds.JSON, &credFile)
+	return tok.AccessToken, credFile.QuotaProjectID, nil
 }
 
 func envLogLevel() slog.Level {

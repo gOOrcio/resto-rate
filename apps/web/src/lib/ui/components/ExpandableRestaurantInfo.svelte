@@ -17,18 +17,28 @@
 		ChevronUp
 	} from '@lucide/svelte';
 
-	const { googlePlacesId, name, address, city, country } = $props<{
+	const { googlePlacesId, name, address, city, country, photoReference = '', rating = undefined } = $props<{
 		googlePlacesId: string;
 		name: string;
 		address?: string;
 		city?: string;
 		country?: string;
+		photoReference?: string;
+		rating?: number;
 	}>();
+
+	function ratingColor(r: number): string {
+		if (r >= 4.5) return 'text-emerald-500 dark:text-emerald-400';
+		if (r >= 3.5) return 'text-amber-500 dark:text-amber-400';
+		if (r >= 2.5) return 'text-orange-500 dark:text-orange-400';
+		return 'text-red-500 dark:text-red-400';
+	}
 
 	let isExpanded = $state(false);
 	let googleData = $state<Place | null>(null);
 	let isLoadingGoogle = $state(false);
 	let googleError = $state<string | null>(null);
+	let photoLoadFailed = $state(false);
 
 	let status = $derived(
 		googleData
@@ -117,13 +127,50 @@
 </script>
 
 <div class="flex flex-col">
+	<div class="relative mb-3 h-36 w-full overflow-hidden rounded-lg bg-muted">
+		{#if photoReference && !photoLoadFailed}
+			<img
+				src="{import.meta.env.VITE_API_URL || 'http://localhost:3001'}/place-photo?name={encodeURIComponent(photoReference)}"
+				alt="Restaurant cover"
+				class="h-full w-full object-cover"
+				onerror={() => { photoLoadFailed = true; }}
+			/>
+		{:else}
+			<div class="flex h-full w-full items-center justify-center">
+				<svg
+					xmlns="http://www.w3.org/2000/svg"
+					class="h-10 w-10 text-muted-foreground/30"
+					fill="none"
+					viewBox="0 0 24 24"
+					stroke="currentColor"
+					stroke-width="1"
+				>
+					<path
+						stroke-linecap="round"
+						stroke-linejoin="round"
+						d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"
+					/>
+					<path stroke-linecap="round" stroke-linejoin="round" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+				</svg>
+			</div>
+		{/if}
+	</div>
+
 	<!-- DB info section -->
-	<div class="space-y-1">
-		<h3 class="text-base leading-tight font-bold text-foreground">{name}</h3>
-		{#if address}
-			<div class="flex items-start gap-1.5">
-				<MapPin class="mt-0.5 h-3.5 w-3.5 shrink-0 text-muted-foreground" />
-				<p class="text-sm text-muted-foreground">{address}</p>
+	<div class="flex items-start gap-3">
+		<div class="min-w-0 flex-1 space-y-1">
+			<h3 class="text-base leading-tight font-bold text-foreground">{name}</h3>
+			{#if address}
+				<div class="flex items-start gap-1.5">
+					<MapPin class="mt-0.5 h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+					<p class="text-sm text-muted-foreground">{address}</p>
+				</div>
+			{/if}
+		</div>
+		{#if rating !== undefined}
+			<div class="flex shrink-0 items-center gap-1 rounded-md border border-current px-2 py-1 {ratingColor(rating)}">
+				<span class="text-lg font-bold tabular-nums leading-none">{rating.toFixed(1)}</span>
+				<Star class="h-4 w-4 fill-current" />
 			</div>
 		{/if}
 	</div>

@@ -25,6 +25,8 @@
 	let selectedIndex = $state(-1);
 	let showSuggestions = $state(false);
 	let queryPrediction = $state('');
+	let languageCode = $state('en');
+	let regionCode = $state('US');
 
 	let debounceTimer: ReturnType<typeof setTimeout> | null = null;
 
@@ -46,14 +48,13 @@
 		}, 300);
 	}
 
-	async function performAutocomplete(value: string, regionCode: string = 'pl') {
+	async function performAutocomplete(value: string) {
 		if (value.length < 2) return;
 		isLoading = true;
 		try {
 			const response = await clients.googleMaps.autocompletePlaces({
 				input: value,
-				languageCode: 'pl',
-				includedRegionCodes: [regionCode],
+				languageCode,
 				sessionToken: autocompleteSessionToken,
 				includeQueryPrediction: true
 			});
@@ -77,8 +78,8 @@
 		try {
 			const place = await clients.googleMaps.getRestaurantDetails({
 				name,
-				languageCode: 'pl',
-				regionCode: 'pl',
+				languageCode,
+				regionCode,
 				sessionToken: autocompleteSessionToken
 			});
 
@@ -153,6 +154,10 @@
 
 	onMount(() => {
 		autocompleteSessionToken = randomUUID();
+		const lang = navigator.language || 'en';
+		const parts = lang.split('-');
+		languageCode = parts[0].toLowerCase();
+		regionCode = (parts[1] ?? parts[0]).toUpperCase();
 	});
 
 	onDestroy(() => {
@@ -174,11 +179,11 @@
 				oninput={handleInputChange}
 				onkeydown={handleKeyDown}
 				{placeholder}
-				class="w-full bg-[url('/GoogleMaps_Logo_Gray.svg')] bg-[length:60px_60px] bg-[position:calc(100%-2.25rem)_50%] bg-no-repeat pr-10 text-foreground"
+				class="w-full bg-[url('/GoogleMaps_Logo_Gray.svg')] bg-[length:auto_14px] bg-[position:calc(100%-0.75rem)_50%] bg-no-repeat pr-[5.5rem] text-foreground"
 			/>
 			{#if isLoading}
-				<div class="absolute right-3 flex items-center">
-					<div class="border-t-primary-500 h-4 w-4 animate-spin rounded-full border-2 border-gray-300"></div>
+				<div class="pointer-events-none absolute right-[4.5rem] flex items-center">
+					<div class="h-4 w-4 animate-spin rounded-full border-2 border-border border-t-primary"></div>
 				</div>
 			{/if}
 		</div>

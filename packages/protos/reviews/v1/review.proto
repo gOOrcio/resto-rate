@@ -51,4 +51,5 @@ message ReviewProto {
   int32 price_paid_per_person = 18;
   WouldVisitAgain would_visit_again = 19;
   string dish_highlights = 20;
+  string restaurant_photo_reference = 21;
 }

@@ -9,13 +9,14 @@ import (
 
 type Restaurant struct {
 	UUIDv7
-	GoogleID  string    `gorm:"uniqueIndex" json:"googleId"`
-	Address   string    `gorm:"uniqueIndex" json:"email"`
-	Name      string    `gorm:"not null" json:"name"`
-	City      string    `gorm:"index"`
-	Country   string    `gorm:"index"`
-	CreatedAt time.Time `gorm:"autoCreateTime" json:"createdAt"`
-	UpdatedAt time.Time `gorm:"autoUpdateTime" json:"updatedAt"`
+	GoogleID       string    `gorm:"uniqueIndex" json:"googleId"`
+	Address        string    `gorm:"uniqueIndex" json:"email"`
+	Name           string    `gorm:"not null" json:"name"`
+	City           string    `gorm:"index"`
+	Country        string    `gorm:"index"`
+	PhotoReference string
+	CreatedAt      time.Time `gorm:"autoCreateTime" json:"createdAt"`
+	UpdatedAt      time.Time `gorm:"autoUpdateTime" json:"updatedAt"`
 }
 
 func (r *Restaurant) BeforeCreate(tx *gorm.DB) (err error) {
@@ -33,6 +34,7 @@ func (r *Restaurant) ToProto() *restaurantpb.RestaurantProto {
 		Name:           r.Name,
 		City:           r.City,
 		Country:        r.Country,
+		PhotoReference: r.PhotoReference,
 		CreatedAt:      r.CreatedAt.Unix(),
 		UpdatedAt:      r.UpdatedAt.Unix(),
 	}

@@ -3,10 +3,8 @@
 	import { auth } from '$lib/state/auth.svelte';
 	import { mode, setMode } from '$lib/state/theme.svelte';
 	import client from '$lib/client/client';
-	import type { Suggestion } from '$lib/client/generated/google_maps/v1/google_maps_service_pb';
 	import { Button } from '$lib/components/ui/button/index.js';
 	import { Input } from '$lib/components/ui/input/index.js';
-	import { v4 as uuidv4 } from 'uuid';
 
 	// ── Stats ────────────────────────────────────────────────────────────────
 	let stats = $state<{ reviewCount: number; wishlistCount: number; friendCount: number } | null>(null);
@@ -20,17 +18,6 @@
 
 	// ── Dark mode ─────────────────────────────────────────────────────────────
 	let darkModeSaving = $state(false);
-
-	// ── Home city ─────────────────────────────────────────────────────────────
-	let cityInput = $state('');
-	let citySuggestions = $state<Suggestion[]>([]);
-	let citySessionToken = uuidv4();
-	let cityDebounce: ReturnType<typeof setTimeout> | null = null;
-	let cityLoading = $state(false);
-	let showCitySuggestions = $state(false);
-	let citySearchSeq = 0;
-	let citySaving = $state(false);
-	let citySuccess = $state(false);
 
 	// ── Danger zone ──────────────────────────────────────────────────────────
 	let deleteConfirm = $state('');
@@ -89,86 +76,6 @@
 		}
 	}
 
-	// ── City autocomplete ─────────────────────────────────────────────────────
-	function onCityInput() {
-		const val = cityInput;
-		showCitySuggestions = false;
-		if (cityDebounce) clearTimeout(cityDebounce);
-		if (val.length < 2) {
-			citySuggestions = [];
-			return;
-		}
-		cityLoading = true;
-		cityDebounce = setTimeout(() => searchCity(val), 300);
-	}
-
-	async function searchCity(val: string) {
-		const seq = ++citySearchSeq;
-		try {
-			const res = await client.googleMaps.autocompletePlaces({
-				input: val,
-				includedPrimaryTypes: ['(cities)'],
-				sessionToken: citySessionToken,
-				includeQueryPrediction: false
-			});
-			if (seq !== citySearchSeq) return; // stale response — a newer search is in flight
-			citySuggestions = (res.suggestions || []).filter((s) => s.placePrediction);
-			showCitySuggestions = citySuggestions.length > 0;
-		} catch {
-			if (seq !== citySearchSeq) return;
-			citySuggestions = [];
-		} finally {
-			if (seq === citySearchSeq) cityLoading = false;
-		}
-	}
-
-	function selectCity(s: Suggestion) {
-		// Store only the main text (city name) as the region value
-		const main = s.placePrediction?.structuredFormat?.mainText?.text ?? s.placePrediction?.text?.text ?? '';
-		cityInput = main;
-		citySuggestions = [];
-		showCitySuggestions = false;
-		citySessionToken = uuidv4();
-	}
-
-	/** Build a highlighted span for the main city text (bolds matched chars). */
-	function highlightMain(s: Suggestion): string {
-		const fmt = s.placePrediction?.structuredFormat?.mainText;
-		if (!fmt) return '';
-		const text = fmt.text;
-		const ranges = [...fmt.matches].sort((a, b) => a.startOffset - b.startOffset);
-		if (!ranges.length) return escHtml(text);
-		let out = '';
-		let pos = 0;
-		for (const r of ranges) {
-			out += escHtml(text.slice(pos, r.startOffset));
-			out += `<strong>${escHtml(text.slice(r.startOffset, r.endOffset))}</strong>`;
-			pos = r.endOffset;
-		}
-		out += escHtml(text.slice(pos));
-		return out;
-	}
-
-	function escHtml(s: string): string {
-		return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-	}
-
-	async function saveCity() {
-		const val = cityInput.trim();
-		if (!val) return;
-		citySaving = true;
-		citySuccess = false;
-		try {
-			const res = await client.auth.updateMyProfile({ defaultRegion: val });
-			auth.setUser(res.user!);
-			citySuccess = true;
-		} catch {
-			// silent
-		} finally {
-			citySaving = false;
-		}
-	}
-
 	// ── Sign out all devices ──────────────────────────────────────────────────
 	async function signOutAll() {
 		signOutAllBusy = true;
@@ -202,7 +109,6 @@
 	let initialized = $state(false);
 
 	async function initPage() {
-		if (auth.user?.defaultRegion) cityInput = auth.user.defaultRegion;
 		usernameInput = auth.user?.username ?? '';
 		try {
 			const res = await client.auth.getMyStats({});
@@ -336,61 +242,6 @@
 			</button>
 		</div>
 
-		<!-- Home city -->
-		<div class="grid gap-2">
-			<label class="font-medium text-foreground" for="city-input">Home city</label>
-			<p class="text-sm text-muted-foreground -mt-1">Used to personalise restaurant suggestions</p>
-			<div class="relative">
-				<div class="flex gap-2">
-					<div class="relative flex-1">
-						<Input
-							id="city-input"
-							type="text"
-							placeholder="Search for a city…"
-							bind:value={cityInput}
-							oninput={onCityInput}
-							onblur={() => setTimeout(() => (showCitySuggestions = false), 150)}
-							onfocus={() => { if (citySuggestions.length) showCitySuggestions = true; }}
-							disabled={citySaving}
-							autocomplete="off"
-						/>
-						{#if showCitySuggestions}
-							<ul class="absolute left-0 right-0 top-full z-10 mt-1 max-h-48 overflow-y-auto rounded-md border border-border bg-card shadow-md">
-								{#each citySuggestions as s (s.placePrediction?.placeId)}
-									{@const sf = s.placePrediction?.structuredFormat}
-									<li>
-										<button
-											type="button"
-											class="w-full px-3 py-2 text-left hover:bg-muted transition-colors"
-											onmousedown={(e) => e.preventDefault()}
-											onclick={() => selectCity(s)}
-										>
-											<span class="block text-sm text-foreground">
-												<!-- eslint-disable-next-line svelte/no-at-html-tags -->
-												{@html highlightMain(s)}
-											</span>
-											{#if sf?.secondaryText?.text}
-												<span class="block text-xs text-muted-foreground truncate">{sf.secondaryText.text}</span>
-											{/if}
-										</button>
-									</li>
-								{/each}
-							</ul>
-						{/if}
-					</div>
-					<Button
-						size="sm"
-						disabled={citySaving || !cityInput.trim()}
-						onclick={saveCity}
-					>
-						{citySaving ? 'Saving…' : 'Save'}
-					</Button>
-				</div>
-			</div>
-			{#if citySuccess}
-				<p class="text-sm text-primary">Home city saved!</p>
-			{/if}
-		</div>
 	</section>
 
 	<!-- Danger zone -->

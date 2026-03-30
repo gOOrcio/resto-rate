@@ -8,7 +8,6 @@
 	import SocialSignIn from '$lib/ui/components/SocialSignIn.svelte';
 	import client from '$lib/client/client';
 
-	let loginOpen = $state(false);
 	let activeUrl = $derived(page.url.pathname);
 
 	function isActive(href: string) {
@@ -57,8 +56,8 @@
 	];
 
 	$effect(() => {
-		if (page.url.searchParams.get('login') === '1') {
-			loginOpen = true;
+		if (page.url.searchParams.get('login') === '1' && !auth.isLoggedIn && !auth.loading) {
+			auth.openLogin();
 		}
 	});
 </script>
@@ -100,8 +99,8 @@
 			{#if auth.loading}
 				<div class="h-8 w-8 animate-spin rounded-full border-2 border-border border-t-primary"></div>
 			{:else if auth.isLoggedIn}
-				<!-- Avatar + Dropdown (desktop) -->
-				<div class="hidden sm:block">
+				<!-- Avatar + Dropdown -->
+				<div>
 					<DropdownMenu.Root>
 						<DropdownMenu.Trigger>
 							{#snippet child({ props })}
@@ -134,7 +133,7 @@
 					</DropdownMenu.Root>
 				</div>
 			{:else}
-				<Button size="sm" onclick={() => (loginOpen = true)}>Sign in</Button>
+				<Button size="sm" onclick={() => auth.openLogin()}>Sign in</Button>
 			{/if}
 
 			<!-- Mobile hamburger -->
@@ -193,7 +192,7 @@
 								Sign out
 							</button>
 						{:else}
-							<Button size="sm" onclick={() => (loginOpen = true)}>Sign in</Button>
+							<Button size="sm" onclick={() => auth.openLogin()}>Sign in</Button>
 						{/if}
 					</nav>
 				</Sheet.Content>
@@ -203,10 +202,10 @@
 </header>
 
 <!-- Sign in dialog -->
-{#if loginOpen}
+{#if auth.loginOpen}
 	<dialog
 		use:initDialog
-		oncancel={() => (loginOpen = false)}
+		oncancel={() => auth.closeLogin()}
 		onclick={(e) => {
 			const rect = (e.currentTarget as HTMLDialogElement).getBoundingClientRect();
 			if (
@@ -215,14 +214,14 @@
 				e.clientY < rect.top ||
 				e.clientY > rect.bottom
 			) {
-				loginOpen = false;
+				auth.closeLogin();
 			}
 		}}
 		class="m-auto w-full max-w-[calc(100%-2rem)] rounded-xl bg-card p-6 shadow-xl backdrop:bg-foreground/20 sm:max-w-sm"
 	>
 		<div class="flex flex-col gap-4">
 			<h3 class="font-display text-xl font-semibold text-foreground">Sign in to Restorate</h3>
-			<SocialSignIn onSuccess={() => (loginOpen = false)} />
+			<SocialSignIn onSuccess={() => auth.closeLogin()} />
 		</div>
 	</dialog>
 {/if}

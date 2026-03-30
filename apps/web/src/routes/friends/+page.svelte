@@ -129,7 +129,7 @@
 		<section>
 			<h3 class="mb-3 text-lg font-medium text-foreground">Add a friend</h3>
 			<form
-				class="flex gap-2"
+				class="flex flex-col gap-2 sm:flex-row"
 				onsubmit={(e) => {
 					e.preventDefault();
 					sendRequest();
@@ -139,7 +139,7 @@
 					type="text"
 					placeholder="Email address or @username"
 					bind:value={addInput}
-					class="flex-1"
+					class="min-w-0 flex-1"
 					disabled={addLoading}
 				/>
 				<Button type="submit" disabled={addLoading || !addInput.trim()}>

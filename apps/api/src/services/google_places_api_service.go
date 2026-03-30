@@ -208,6 +208,7 @@ func predefinedRestaurantDetails() []string {
 		"good_for_groups",
 		"good_for_watching_sports",
 		"takeout",
+		"photos",
 		"generative_summary",
 		"review_summary",
 		"editorial_summary",

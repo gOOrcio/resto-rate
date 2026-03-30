@@ -6,6 +6,7 @@
 	import type { ReviewProto } from '$lib/client/generated/reviews/v1/review_pb';
 	import type { Place } from '$lib/client/generated/google_maps/v1/google_maps_service_pb';
 	import { Button } from '$lib/components/ui/button/index.js';
+	import { Calendar, Users, UtensilsCrossed, Receipt } from '@lucide/svelte';
 	import RatingForm from '$lib/ui/components/RatingForm.svelte';
 	import RestaurantSearch from '$lib/ui/components/RestaurantSearch.svelte';
 	import ExpandableRestaurantInfo from '$lib/ui/components/ExpandableRestaurantInfo.svelte';
@@ -40,6 +41,13 @@
 		}, 300);
 		return () => clearTimeout(id);
 	});
+
+	let uniqueCities = $derived(
+		[...new Set(reviews.map((r) => r.restaurantCity).filter(Boolean))].sort()
+	);
+	let uniqueCountries = $derived(
+		[...new Set(reviews.map((r) => r.restaurantCountry).filter(Boolean))].sort()
+	);
 
 	let ratingRangeError = $derived(
 		minRating > 0 && maxRating > 0 && minRating > maxRating
@@ -143,17 +151,6 @@
 		mounted = true;
 	});
 
-	function ratingLabel(r: number): string {
-		return r.toFixed(1);
-	}
-
-	function ratingClass(r: number): string {
-		if (r >= 4.5) return 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300';
-		if (r >= 3.5) return 'bg-amber-50 text-amber-700 dark:bg-amber-950 dark:text-amber-300';
-		if (r >= 2.5) return 'bg-orange-50 text-orange-700 dark:bg-orange-950 dark:text-orange-300';
-		return 'bg-red-50 text-red-700 dark:bg-red-950 dark:text-red-300';
-	}
-
 	const PARTY_SIZE_LABELS: Record<number, string> = {
 		[PartySize.SOLO]: 'Solo',
 		[PartySize.COUPLE]: 'Couple',
@@ -220,6 +217,9 @@
 						googlePlacesId={searchedPlace.name || ''}
 						restaurantName={searchedPlace.displayName?.text || ''}
 						restaurantAddress={searchedPlace.formattedAddress || ''}
+						city={searchedPlace.postalAddress?.locality || searchedPlace.postalAddress?.administrativeArea || ''}
+						country={searchedPlace.postalAddress?.country || ''}
+						photoReference={searchedPlace.photos?.[0]?.name || ''}
 						onSubmit={handleNewReview}
 					/>
 					<button
@@ -257,7 +257,7 @@
 				<select
 					id="reviews-sort"
 					bind:value={sortBy}
-					class="rounded-md border border-border bg-card px-2 py-1 text-sm text-foreground focus:ring-1 focus:ring-ring focus:outline-none"
+					class="rounded-md border border-border bg-card py-1 pl-2 pr-6 text-sm text-foreground focus:ring-1 focus:ring-ring focus:outline-none"
 				>
 					<option value="date-desc">Newest first</option>
 					<option value="date-asc">Oldest first</option>
@@ -320,23 +320,29 @@
 				<div class="grid grid-cols-2 gap-3">
 					<div>
 						<label for="filter-city" class="mb-1 block text-sm font-medium text-foreground">City</label>
-						<input
+						<select
 							id="filter-city"
-							type="text"
 							bind:value={city}
-							placeholder="e.g. Paris"
-							class="w-full rounded-md border border-border bg-card px-3 py-1.5 text-sm text-foreground placeholder:text-muted-foreground focus:ring-1 focus:ring-ring focus:outline-none"
-						/>
+							class="w-full rounded-md border border-border bg-card px-3 py-1.5 text-sm text-foreground focus:ring-1 focus:ring-ring focus:outline-none"
+						>
+							<option value="">All cities</option>
+							{#each uniqueCities as c}
+								<option value={c}>{c}</option>
+							{/each}
+						</select>
 					</div>
 					<div>
 						<label for="filter-country" class="mb-1 block text-sm font-medium text-foreground">Country</label>
-						<input
+						<select
 							id="filter-country"
-							type="text"
 							bind:value={country}
-							placeholder="e.g. France"
-							class="w-full rounded-md border border-border bg-card px-3 py-1.5 text-sm text-foreground placeholder:text-muted-foreground focus:ring-1 focus:ring-ring focus:outline-none"
-						/>
+							class="w-full rounded-md border border-border bg-card px-3 py-1.5 text-sm text-foreground focus:ring-1 focus:ring-ring focus:outline-none"
+						>
+							<option value="">All countries</option>
+							{#each uniqueCountries as c}
+								<option value={c}>{c}</option>
+							{/each}
+						</select>
 					</div>
 				</div>
 			</div>
@@ -391,22 +397,15 @@
 					{:else}
 						<div class="flex flex-col gap-3 p-5">
 							<!-- Restaurant info + rating badge -->
-							<div class="flex items-start justify-between gap-3">
-								<div class="min-w-0 flex-1">
-									<ExpandableRestaurantInfo
-										googlePlacesId={review.googlePlacesId}
-										name={review.restaurantName}
-										address={review.restaurantAddress}
-										city={review.restaurantCity}
-										country={review.restaurantCountry}
-									/>
-								</div>
-								<span
-									class="shrink-0 rounded-md px-2 py-0.5 text-sm font-semibold tabular-nums {ratingClass(review.rating)}"
-								>
-									{ratingLabel(review.rating)} ★
-								</span>
-							</div>
+							<ExpandableRestaurantInfo
+								googlePlacesId={review.googlePlacesId}
+								name={review.restaurantName}
+								address={review.restaurantAddress}
+								city={review.restaurantCity}
+								country={review.restaurantCountry}
+								photoReference={review.restaurantPhotoReference || ''}
+								rating={review.rating}
+							/>
 
 							<!-- Comment -->
 							{#if review.comment}
@@ -434,22 +433,32 @@
 								{@const partyLabel = PARTY_SIZE_LABELS[review.partySize]}
 								{@const occasionLabel = OCCASION_LABELS[review.occasion]}
 								{@const wvaEntry = WOULD_VISIT_AGAIN_LABELS[review.wouldVisitAgain]}
-								<div class="space-y-1.5 border-t border-border pt-3">
-									<div class="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
+								<div class="space-y-2 border-t border-border pt-3">
+									<div class="flex flex-wrap items-center gap-x-3 gap-y-1.5">
 										{#if visitDate}
-											<span>📅 {visitDate}</span>
+											<span class="flex items-center gap-1 text-xs text-muted-foreground">
+												<Calendar class="h-3 w-3 shrink-0" />{visitDate}
+											</span>
 										{/if}
 										{#if partyLabel}
-											<span>👥 {partyLabel}</span>
+											<span class="flex items-center gap-1 text-xs text-muted-foreground">
+												<Users class="h-3 w-3 shrink-0" />{partyLabel}
+											</span>
 										{/if}
 										{#if occasionLabel}
-											<span>🎉 {occasionLabel}</span>
+											<span class="flex items-center gap-1 text-xs text-muted-foreground">
+												<UtensilsCrossed class="h-3 w-3 shrink-0" />{occasionLabel}
+											</span>
 										{/if}
 										{#if review.pricePaidPerPerson}
-											<span>💰 ${review.pricePaidPerPerson}/person</span>
+											<span class="flex items-center gap-1 text-xs text-muted-foreground">
+												<Receipt class="h-3 w-3 shrink-0" />${review.pricePaidPerPerson}/person
+											</span>
 										{/if}
 										{#if wvaEntry}
-											<span class={wvaEntry.cls}>{wvaEntry.text}</span>
+											<span class="rounded-full border border-current px-2 py-0.5 text-xs font-medium {wvaEntry.cls}">
+												{wvaEntry.text}
+											</span>
 										{/if}
 									</div>
 									{#if review.dishHighlights}
@@ -468,7 +477,7 @@
 									href="/restaurants/{encodeURIComponent(review.googlePlacesId)}"
 									class="text-xs text-muted-foreground hover:text-foreground hover:underline"
 								>
-									See friends' reviews
+									Details and reviews
 								</a>
 							{:else}
 								<span></span>

@@ -38,6 +38,13 @@
 	let tagSlugs = $state<string[]>([]);
 	let tagMode = $state<'OR' | 'AND'>('OR');
 
+	let uniqueCities = $derived(
+		[...new Set(items.map((i) => i.city).filter(Boolean))].sort()
+	);
+	let uniqueCountries = $derived(
+		[...new Set(items.map((i) => i.country).filter(Boolean))].sort()
+	);
+
 	let activeFilterCount = $derived(
 		(city.trim() !== '' ? 1 : 0) +
 			(country.trim() !== '' ? 1 : 0) +
@@ -84,7 +91,8 @@
 				restaurantAddress: searchedPlace.formattedAddress || '',
 				city: extractCity(searchedPlace),
 				country: searchedPlace.postalAddress?.country ?? '',
-				tagSlugs: pendingTags
+				tagSlugs: pendingTags,
+				photoReference: searchedPlace.photos?.[0]?.name || ''
 			});
 			await loadWishlist();
 			searchedPlace = null;
@@ -249,6 +257,7 @@
 							googlePlacesId={searchedPlace.name || ''}
 							restaurantName={searchedPlace.displayName?.text || ''}
 							restaurantAddress={searchedPlace.formattedAddress || ''}
+							photoReference={searchedPlace.photos?.[0]?.name || ''}
 							onSubmit={handleSearchReview}
 						/>
 						<button
@@ -287,7 +296,7 @@
 				<select
 					id="wishlist-sort"
 					bind:value={sortBy}
-					class="rounded-md border border-border bg-card px-2 py-1 text-sm text-foreground focus:ring-1 focus:ring-ring focus:outline-none"
+					class="rounded-md border border-border bg-card py-1 pl-2 pr-6 text-sm text-foreground focus:ring-1 focus:ring-ring focus:outline-none"
 				>
 					<option value="date-desc">Newest first</option>
 					<option value="date-asc">Oldest first</option>
@@ -309,23 +318,29 @@
 				<div class="grid grid-cols-2 gap-3">
 					<div>
 						<label for="filter-city" class="mb-1 block text-sm font-medium text-foreground">City</label>
-						<input
+						<select
 							id="filter-city"
-							type="text"
 							bind:value={city}
-							placeholder="e.g. Paris"
-							class="w-full rounded-md border border-border bg-card px-3 py-1.5 text-sm text-foreground placeholder:text-muted-foreground focus:ring-1 focus:ring-ring focus:outline-none"
-						/>
+							class="w-full rounded-md border border-border bg-card px-3 py-1.5 text-sm text-foreground focus:ring-1 focus:ring-ring focus:outline-none"
+						>
+							<option value="">All cities</option>
+							{#each uniqueCities as c}
+								<option value={c}>{c}</option>
+							{/each}
+						</select>
 					</div>
 					<div>
 						<label for="filter-country" class="mb-1 block text-sm font-medium text-foreground">Country</label>
-						<input
+						<select
 							id="filter-country"
-							type="text"
 							bind:value={country}
-							placeholder="e.g. France"
-							class="w-full rounded-md border border-border bg-card px-3 py-1.5 text-sm text-foreground placeholder:text-muted-foreground focus:ring-1 focus:ring-ring focus:outline-none"
-						/>
+							class="w-full rounded-md border border-border bg-card px-3 py-1.5 text-sm text-foreground focus:ring-1 focus:ring-ring focus:outline-none"
+						>
+							<option value="">All countries</option>
+							{#each uniqueCountries as c}
+								<option value={c}>{c}</option>
+							{/each}
+						</select>
 					</div>
 				</div>
 			</div>
@@ -366,6 +381,7 @@
 								address={item.restaurantAddress}
 								city={item.city}
 								country={item.country}
+								photoReference={item.restaurantPhotoReference || ''}
 							/>
 
 							<!-- Tags section -->
@@ -420,19 +436,31 @@
 							</div>
 						</div>
 						<div class="flex items-center justify-between border-t border-border px-5 py-3">
-							<button
-								class="rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground transition-opacity hover:opacity-90"
-								onclick={() => (ratingId = item.id)}
-							>
-								Rate this place
-							</button>
-							<button
-								class="text-xs text-muted-foreground transition-colors hover:text-destructive disabled:opacity-40"
-								disabled={removing.has(item.googlePlacesId)}
-								onclick={() => remove(item.googlePlacesId)}
-							>
-								{removing.has(item.googlePlacesId) ? 'Removing…' : 'Remove'}
-							</button>
+							<div class="flex items-center gap-3">
+								{#if item.googlePlacesId}
+									<a
+										href="/restaurants/{encodeURIComponent(item.googlePlacesId)}"
+										class="text-xs text-muted-foreground hover:text-foreground hover:underline"
+									>
+										Details and reviews
+									</a>
+								{/if}
+							</div>
+							<div class="flex items-center gap-3">
+								<button
+									class="rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground transition-opacity hover:opacity-90"
+									onclick={() => (ratingId = item.id)}
+								>
+									Rate this place
+								</button>
+								<button
+									class="text-xs text-muted-foreground transition-colors hover:text-destructive disabled:opacity-40"
+									disabled={removing.has(item.googlePlacesId)}
+									onclick={() => remove(item.googlePlacesId)}
+								>
+									{removing.has(item.googlePlacesId) ? 'Removing…' : 'Remove'}
+								</button>
+							</div>
 						</div>
 					{:else}
 						<div class="flex flex-col gap-3 p-5">

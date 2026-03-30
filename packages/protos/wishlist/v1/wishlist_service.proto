@@ -33,6 +33,7 @@ message AddToWishlistRequest {
   string city = 4;
   string country = 5;
   repeated string tag_slugs = 6;
+  string photo_reference = 7;
 }
 
 message AddToWishlistResponse {
