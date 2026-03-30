@@ -17,6 +17,9 @@
 	let loading = $state(true);
 	let removing = $state<Set<string>>(new Set());
 	let ratingId = $state<string | null>(null);
+	let editingTagsId = $state<string | null>(null);
+	let editingTags = $state<string[]>([]);
+	let savingTags = $state(false);
 	let mounted = $state(false);
 
 	let searchedPlace = $state<Place | null>(null);
@@ -115,6 +118,26 @@
 			console.error('Failed to load wishlist:', e);
 		} finally {
 			loading = false;
+		}
+	}
+
+	async function saveTags(item: WishlistItemProto) {
+		savingTags = true;
+		try {
+			await client.wishlist.addToWishlist({
+				googlePlacesId: item.googlePlacesId,
+				restaurantName: item.restaurantName,
+				restaurantAddress: item.restaurantAddress,
+				tagSlugs: editingTags
+			});
+			items = items.map((i) =>
+				i.googlePlacesId === item.googlePlacesId ? { ...i, tags: [...editingTags] } : i
+			);
+			editingTagsId = null;
+		} catch (e) {
+			console.error('Failed to update tags:', e);
+		} finally {
+			savingTags = false;
 		}
 	}
 
@@ -332,15 +355,57 @@
 								city={item.city}
 								country={item.country}
 							/>
-							{#if item.tags && item.tags.length > 0}
-								<div class="mt-3 flex flex-wrap gap-1.5">
-									{#each item.tags as tag}
-										<span class="rounded-full bg-secondary px-2.5 py-0.5 text-xs font-medium text-secondary-foreground">
-											{tag}
-										</span>
-									{/each}
-								</div>
-							{/if}
+
+							<!-- Tags section -->
+							<div class="mt-3 rounded-lg border border-border">
+								<button
+									type="button"
+									class="flex w-full items-center justify-between px-3 py-2 text-sm font-medium text-foreground"
+									onclick={() => {
+										if (editingTagsId === item.id) {
+											editingTagsId = null;
+										} else {
+											editingTagsId = item.id;
+											editingTags = [...(item.tags ?? [])];
+										}
+									}}
+								>
+									<span>Tags{item.tags?.length ? ` (${item.tags.length})` : ''}</span>
+									<span class="text-muted-foreground transition-transform {editingTagsId === item.id ? 'rotate-90' : ''}">›</span>
+								</button>
+								{#if editingTagsId === item.id}
+									<div class="border-t border-border px-3 pb-3 pt-2">
+										<TagPicker bind:selected={editingTags} />
+										<div class="mt-3 flex gap-2">
+											<button
+												type="button"
+												disabled={savingTags}
+												onclick={() => saveTags(item)}
+												class="rounded-md bg-primary px-3 py-1 text-xs font-medium text-primary-foreground disabled:opacity-50 hover:opacity-90"
+											>
+												{savingTags ? 'Saving…' : 'Save tags'}
+											</button>
+											<button
+												type="button"
+												onclick={() => (editingTagsId = null)}
+												class="text-xs text-muted-foreground hover:text-foreground"
+											>
+												Cancel
+											</button>
+										</div>
+									</div>
+								{:else if item.tags?.length}
+									<div class="border-t border-border px-3 py-2">
+										<div class="flex flex-wrap gap-1.5">
+											{#each item.tags as tag}
+												<span class="rounded-full bg-secondary px-2.5 py-0.5 text-xs font-medium text-secondary-foreground">
+													{tag}
+												</span>
+											{/each}
+										</div>
+									</div>
+								{/if}
+							</div>
 						</div>
 						<div class="flex items-center justify-between border-t border-border px-5 py-3">
 							<button

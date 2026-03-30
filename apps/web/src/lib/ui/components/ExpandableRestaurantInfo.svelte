@@ -126,11 +126,6 @@
 				<p class="text-sm text-muted-foreground">{address}</p>
 			</div>
 		{/if}
-		{#if city || country}
-			<p class="text-xs text-muted-foreground">
-				{[city, country].filter(Boolean).join(', ')}
-			</p>
-		{/if}
 	</div>
 
 	<!-- Toggle button -->
