@@ -4,7 +4,11 @@
 	import RestaurantSearchSv from '$lib/ui/components/RestaurantSearchSv.svelte';
 </script>
 
-{#if auth.isLoggedIn}
+{#if auth.loading}
+	<div class="flex min-h-[60vh] items-center justify-center">
+		<div class="h-8 w-8 animate-spin rounded-full border-2 border-border border-t-primary"></div>
+	</div>
+{:else if auth.isLoggedIn}
 	<div class="mx-auto max-w-3xl space-y-6 px-4 py-8 sm:px-6">
 		<section class="space-y-4">
 			<h2 class="font-display text-2xl font-semibold text-foreground">Find a restaurant</h2>
