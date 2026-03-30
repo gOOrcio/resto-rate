@@ -254,21 +254,23 @@
 							</p>
 						{/if}
 					</div>
-					<button
-						onclick={toggleWishlist}
-						disabled={wishlistLoading}
-						class="flex shrink-0 items-center gap-1.5 rounded-md border px-3 py-1.5 text-sm font-medium transition-colors disabled:opacity-50
-							{isWishlisted
-								? 'border-amber-300 bg-amber-50 text-amber-700 hover:bg-amber-100 dark:border-amber-700 dark:bg-amber-950 dark:text-amber-300'
-								: 'border-border bg-card text-foreground hover:bg-muted'}"
-					>
-						{#if wishlistLoading}
-							<Loader2 class="h-3.5 w-3.5 animate-spin" />
-						{:else}
-							<Star class="h-3.5 w-3.5 {isWishlisted ? 'fill-amber-500 text-amber-500' : ''}" />
-						{/if}
-						{isWishlisted ? 'Wishlisted' : 'Wishlist'}
-					</button>
+					{#if !myReview}
+						<button
+							onclick={toggleWishlist}
+							disabled={wishlistLoading}
+							class="flex shrink-0 items-center gap-1.5 rounded-md border px-3 py-1.5 text-sm font-medium transition-colors disabled:opacity-50
+								{isWishlisted
+									? 'border-amber-300 bg-amber-50 text-amber-700 hover:bg-amber-100 dark:border-amber-700 dark:bg-amber-950 dark:text-amber-300'
+									: 'border-border bg-card text-foreground hover:bg-muted'}"
+						>
+							{#if wishlistLoading}
+								<Loader2 class="h-3.5 w-3.5 animate-spin" />
+							{:else}
+								<Star class="h-3.5 w-3.5 {isWishlisted ? 'fill-amber-500 text-amber-500' : ''}" />
+							{/if}
+							{isWishlisted ? 'Wishlisted' : 'Wishlist'}
+						</button>
+					{/if}
 				</div>
 
 				<!-- Average rating -->
