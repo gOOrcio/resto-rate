@@ -46,11 +46,11 @@
 			? (() => {
 					switch (googleData.businessStatus) {
 						case BusinessStatus.OPERATIONAL:
-							return { label: 'Operational', color: 'text-green-600 dark:text-green-400' };
+							return { label: m.restaurant_status_open(), color: 'text-green-600 dark:text-green-400' };
 						case BusinessStatus.CLOSED_TEMPORARILY:
-							return { label: 'Temporarily closed', color: 'text-yellow-600 dark:text-yellow-400' };
+							return { label: m.restaurant_status_temp_closed(), color: 'text-yellow-600 dark:text-yellow-400' };
 						case BusinessStatus.CLOSED_PERMANENTLY:
-							return { label: 'Permanently closed', color: 'text-red-600 dark:text-red-400' };
+							return { label: m.restaurant_status_perm_closed(), color: 'text-red-600 dark:text-red-400' };
 						default:
 							return null;
 					}
@@ -86,11 +86,11 @@
 	let amenities = $derived(
 		googleData
 			? [
-					{ label: 'Dine-in', value: googleData.dineIn },
-					{ label: 'Takeout', value: googleData.takeout },
-					{ label: 'Delivery', value: googleData.delivery },
-					{ label: 'Outdoor seating', value: googleData.outdoorSeating },
-					{ label: 'Reservations', value: googleData.reservable }
+					{ label: m.restaurant_feature_dine_in(), value: googleData.dineIn },
+					{ label: m.restaurant_feature_takeout(), value: googleData.takeout },
+					{ label: m.restaurant_feature_delivery(), value: googleData.delivery },
+					{ label: m.restaurant_feature_outdoor(), value: googleData.outdoorSeating },
+					{ label: m.restaurant_feature_reservations(), value: googleData.reservable }
 				].filter((a) => a.value !== undefined && a.value !== null)
 			: []
 	);
@@ -235,7 +235,7 @@
 								</div>
 								{#if googleData.userRatingCount}
 									<span class="text-xs text-muted-foreground">
-										({googleData.userRatingCount.toLocaleString()} reviews)
+										{m.restaurant_google_reviews({ count: String(googleData.userRatingCount) })}
 									</span>
 								{/if}
 							</div>
@@ -301,7 +301,7 @@
 						<div>
 							<hr class="border-border" />
 							<h4 class="mb-1.5 mt-4 text-xs font-semibold tracking-wide text-muted-foreground uppercase">
-								Today's hours
+								{m.restaurant_hours_today()}
 							</h4>
 							<p class="text-sm text-muted-foreground">{hoursToday}</p>
 						</div>
@@ -312,7 +312,7 @@
 						<div>
 							<hr class="border-border" />
 							<h4 class="mb-3 mt-4 text-xs font-semibold tracking-wide text-muted-foreground uppercase">
-								Features
+								{m.restaurant_features()}
 							</h4>
 							<div class="grid grid-cols-2 gap-2">
 								{#each amenities as feature}

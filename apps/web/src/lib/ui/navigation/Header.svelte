@@ -121,7 +121,7 @@
 							</DropdownMenu.Item>
 							<DropdownMenu.Item onclick={handleLogout}>{m.nav_sign_out()}</DropdownMenu.Item>
 							<DropdownMenu.Separator />
-							<DropdownMenu.Label>Navigate</DropdownMenu.Label>
+							<DropdownMenu.Label>{m.nav_navigate()}</DropdownMenu.Label>
 							<DropdownMenu.Item>
 								<a href="/friends" class="w-full">{m.nav_find_friend()}</a>
 							</DropdownMenu.Item>
@@ -165,7 +165,7 @@
 					</Sheet.Header>
 					<hr class="mb-4 border-border" />
 					<nav class="flex flex-col gap-4 px-2">
-						<a href="/" class="text-sm text-muted-foreground hover:text-foreground">Home</a>
+						<a href="/" class="text-sm text-muted-foreground hover:text-foreground">{m.nav_home()}</a>
 						{#if auth.loading}
 							<div class="h-4 w-4 animate-spin rounded-full border-2 border-border border-t-primary"></div>
 						{:else if auth.isLoggedIn}

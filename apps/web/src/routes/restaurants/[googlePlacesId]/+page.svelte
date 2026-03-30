@@ -227,7 +227,7 @@
 	{#if loading}
 		<div class="flex items-center gap-2 py-16 text-sm text-muted-foreground">
 			<div class="h-4 w-4 animate-spin rounded-full border-2 border-border border-t-primary"></div>
-			Loading…
+			{m.common_loading()}
 		</div>
 	{:else if error}
 		<p class="text-sm text-destructive">{error}</p>

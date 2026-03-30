@@ -123,7 +123,7 @@
 	{#if loading}
 		<div class="flex items-center gap-2 py-8 text-sm text-muted-foreground">
 			<div class="h-4 w-4 animate-spin rounded-full border-2 border-border border-t-primary"></div>
-			Loading…
+			{m.common_loading()}
 		</div>
 	{:else}
 		<!-- Add Friend -->
@@ -220,7 +220,7 @@
 									onclick={() => removeFriend(friend.userId)}
 									class="text-destructive hover:border-destructive/50 hover:text-destructive"
 								>
-									{removing.has(friend.userId) ? m.common_removing() : 'Remove'}
+									{removing.has(friend.userId) ? m.common_removing() : m.common_remove()}
 								</Button>
 							</div>
 						</li>
