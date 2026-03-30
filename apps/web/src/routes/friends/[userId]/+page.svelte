@@ -479,13 +479,13 @@
 					<input
 						type="text"
 						bind:value={wishlistCity}
-						placeholder="Filter by city…"
+						placeholder={m.friend_profile_city_placeholder()}
 						class="flex-1 rounded-md border border-border bg-card px-3 py-1.5 text-sm text-foreground placeholder:text-muted-foreground focus:ring-1 focus:ring-ring focus:outline-none"
 					/>
 					<input
 						type="text"
 						bind:value={wishlistCountry}
-						placeholder="Filter by country…"
+						placeholder={m.friend_profile_country_placeholder()}
 						class="flex-1 rounded-md border border-border bg-card px-3 py-1.5 text-sm text-foreground placeholder:text-muted-foreground focus:ring-1 focus:ring-ring focus:outline-none"
 					/>
 				</div>
