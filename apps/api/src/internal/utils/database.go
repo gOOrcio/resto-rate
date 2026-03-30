@@ -52,10 +52,24 @@ var RequiredTags = []models.Tag{
 	{Slug: "late-night", Label: "Late Night", Category: "Occasion"},
 }
 
+// removedSlugs lists tag slugs that were once seeded but have since been
+// removed. SeedRequiredData deletes them on every startup so they don't
+// linger in existing databases.
+var removedSlugs = []string{
+	"fast-service", "outdoor-seating", "delivery", "takeaway", "reservations", "dog-friendly",
+}
+
 // SeedRequiredData seeds production-required data unconditionally using upsert.
 // Safe to call on every startup — idempotent by slug.
 func SeedRequiredData(db *gorm.DB) error {
 	slog.Info("Seeding required data (tags)...")
+
+	// Remove tags that are no longer part of the canonical list.
+	if len(removedSlugs) > 0 {
+		if err := db.Where("slug IN ?", removedSlugs).Delete(&models.Tag{}).Error; err != nil {
+			return err
+		}
+	}
 
 	// Copy the list so GORM's ID-setting side-effect doesn't mutate RequiredTags
 	tags := make([]models.Tag, len(RequiredTags))
