@@ -151,147 +151,142 @@
 
 	<!-- Collapsible Google data section -->
 	{#if isExpanded}
-		<hr class="mt-3 border-border" />
-
-		{#if isLoadingGoogle}
-			<div class="flex items-center justify-center py-8">
-				<Loader2 class="h-8 w-8 animate-spin text-muted-foreground" />
-			</div>
-		{:else if googleError}
-			<div class="flex flex-col items-center gap-3 py-6 text-center">
-				<p class="text-sm text-destructive">{googleError}</p>
-				<button
-					onclick={fetchGoogleData}
-					class="rounded-lg bg-primary px-4 py-2 text-sm text-primary-foreground transition-colors hover:bg-primary/90"
-				>
-					Retry
-				</button>
-			</div>
-		{:else if googleData}
-			<div class="mt-4 space-y-5">
-				<!-- Header -->
-				<div class="flex items-center justify-between">
-					<img src="/GoogleMaps_Logo_Gray.svg" alt="Google Maps" class="h-4 w-auto" />
-					<span class="text-xs text-muted-foreground">Data from Google Places API</span>
+		<div class="mt-3 rounded-lg border border-border bg-muted/30 p-4">
+			{#if isLoadingGoogle}
+				<div class="flex items-center justify-center py-8">
+					<Loader2 class="h-8 w-8 animate-spin text-muted-foreground" />
 				</div>
+			{:else if googleError}
+				<div class="flex flex-col items-center gap-3 py-6 text-center">
+					<p class="text-sm text-destructive">{googleError}</p>
+					<button
+						onclick={fetchGoogleData}
+						class="rounded-lg bg-primary px-4 py-2 text-sm text-primary-foreground transition-colors hover:bg-primary/90"
+					>
+						Retry
+					</button>
+				</div>
+			{:else if googleData}
+				<div class="space-y-4">
+					<!-- Header -->
+					<div class="flex items-center justify-between">
+						<img src="/GoogleMaps_Logo_Gray.svg" alt="Google Maps" class="h-4 w-auto" />
+						<span class="text-xs text-muted-foreground">Data from Google Places API</span>
+					</div>
 
-				<!-- Core info: rating, status, price -->
-				<div class="space-y-2">
-					{#if googleData.rating}
-						<div class="flex items-center gap-3">
-							<div class="flex items-center gap-0.5">
-								{#each Array(5) as _, i}
-									<Star
-										class="h-4 w-4 {i < Math.round(googleData.rating)
-											? 'fill-amber-400 text-amber-400'
-											: 'fill-none text-gray-300 dark:text-gray-600'}"
-									/>
-								{/each}
-								<span class="ml-1 text-sm font-semibold text-foreground">
-									{googleData.rating.toFixed(1)}
-								</span>
+					<!-- Core info: rating, status, price -->
+					<div class="space-y-2">
+						{#if googleData.rating}
+							<div class="flex items-center gap-3">
+								<div class="flex items-center gap-0.5">
+									{#each Array(5) as _, i}
+										<Star
+											class="h-4 w-4 {i < Math.round(googleData.rating)
+												? 'fill-amber-400 text-amber-400'
+												: 'fill-none text-gray-300 dark:text-gray-600'}"
+										/>
+									{/each}
+									<span class="ml-1 text-sm font-semibold text-foreground">
+										{googleData.rating.toFixed(1)}
+									</span>
+								</div>
+								{#if googleData.userRatingCount}
+									<span class="text-xs text-muted-foreground">
+										({googleData.userRatingCount.toLocaleString()} reviews)
+									</span>
+								{/if}
 							</div>
-							{#if googleData.userRatingCount}
-								<span class="text-xs text-muted-foreground">
-									({googleData.userRatingCount.toLocaleString()} reviews)
+						{/if}
+
+						<div class="flex items-center gap-2">
+							{#if status}
+								<span class="text-sm font-medium {status.color}">{status.label}</span>
+							{/if}
+							{#if priceLabel}
+								<span class="rounded bg-muted px-1.5 py-0.5 text-xs font-semibold text-muted-foreground">
+									{priceLabel}
 								</span>
 							{/if}
 						</div>
-					{/if}
+					</div>
 
-					<div class="flex items-center gap-2">
-						{#if status}
-							<span class="text-sm font-medium {status.color}">{status.label}</span>
+					<hr class="border-border" />
+
+					<!-- Contact & location -->
+					<div class="space-y-3">
+						{#if googleData.nationalPhoneNumber || googleData.internationalPhoneNumber}
+							<div class="flex items-center gap-2">
+								<Phone class="h-4 w-4 shrink-0 text-muted-foreground" />
+								<a
+									href="tel:{googleData.internationalPhoneNumber || googleData.nationalPhoneNumber}"
+									class="text-sm text-primary hover:underline"
+								>
+									{googleData.nationalPhoneNumber || googleData.internationalPhoneNumber}
+								</a>
+							</div>
 						{/if}
-						{#if priceLabel}
-							<span class="rounded bg-muted px-1.5 py-0.5 text-xs font-semibold text-muted-foreground">
-								{priceLabel}
-							</span>
+						{#if googleData.websiteUri}
+							<div class="flex items-center gap-2 overflow-hidden">
+								<Globe class="h-4 w-4 shrink-0 text-muted-foreground" />
+								<a
+									href={googleData.websiteUri}
+									target="_blank"
+									rel="noopener noreferrer"
+									class="truncate text-sm text-primary hover:underline"
+								>
+									{safeHostname(googleData.websiteUri)}
+								</a>
+							</div>
+						{/if}
+						{#if googleData.googleMapsUri}
+							<div class="flex items-center gap-2">
+								<img src="/GoogleMaps_Logo_Gray.svg" alt="" class="h-3.5 w-auto shrink-0" />
+								<a
+									href={googleData.googleMapsUri}
+									target="_blank"
+									rel="noopener noreferrer"
+									class="text-sm text-primary hover:underline"
+								>
+									Open in Maps
+								</a>
+							</div>
 						{/if}
 					</div>
-				</div>
 
-				<hr class="border-border" />
-
-				<!-- Contact & location -->
-				<div class="space-y-3">
-					{#if googleData.nationalPhoneNumber || googleData.internationalPhoneNumber}
-						<div class="flex items-center gap-2">
-							<Phone class="h-4 w-4 shrink-0 text-muted-foreground" />
-							<a
-								href="tel:{googleData.internationalPhoneNumber || googleData.nationalPhoneNumber}"
-								class="text-sm text-primary hover:underline"
-							>
-								{googleData.nationalPhoneNumber || googleData.internationalPhoneNumber}
-							</a>
+					<!-- Opening hours: today -->
+					{#if hoursToday}
+						<div>
+							<hr class="border-border" />
+							<h4 class="mb-1.5 mt-4 text-xs font-semibold tracking-wide text-muted-foreground uppercase">
+								Today's hours
+							</h4>
+							<p class="text-sm text-muted-foreground">{hoursToday}</p>
 						</div>
 					{/if}
-					{#if googleData.websiteUri}
-						<div class="flex items-center gap-2 overflow-hidden">
-							<Globe class="h-4 w-4 shrink-0 text-muted-foreground" />
-							<a
-								href={googleData.websiteUri}
-								target="_blank"
-								rel="noopener noreferrer"
-								class="truncate text-sm text-primary hover:underline"
-							>
-								{safeHostname(googleData.websiteUri)}
-							</a>
-						</div>
-					{/if}
-					{#if googleData.googleMapsUri}
-						<div class="flex items-center gap-2">
-							<img src="/GoogleMaps_Logo_Gray.svg" alt="" class="h-3.5 w-auto shrink-0" />
-							<a
-								href={googleData.googleMapsUri}
-								target="_blank"
-								rel="noopener noreferrer"
-								class="text-sm text-primary hover:underline"
-							>
-								Open in Maps
-							</a>
+
+					<!-- Amenities -->
+					{#if amenities.length > 0}
+						<div>
+							<hr class="border-border" />
+							<h4 class="mb-3 mt-4 text-xs font-semibold tracking-wide text-muted-foreground uppercase">
+								Features
+							</h4>
+							<div class="grid grid-cols-2 gap-2">
+								{#each amenities as feature}
+									<div class="flex items-center gap-1.5">
+										{#if feature.value}
+											<Check class="h-3.5 w-3.5 shrink-0 text-green-500 dark:text-green-400" />
+										{:else}
+											<X class="h-3.5 w-3.5 shrink-0 text-muted-foreground/40" />
+										{/if}
+										<span class="text-xs text-muted-foreground">{feature.label}</span>
+									</div>
+								{/each}
+							</div>
 						</div>
 					{/if}
 				</div>
-
-				<!-- Opening hours: today -->
-				{#if hoursToday}
-					<div>
-						<hr class="mb-4 border-border" />
-						<h4 class="mb-1.5 text-xs font-semibold tracking-wide text-muted-foreground uppercase">
-							Today's hours
-						</h4>
-						<p class="text-sm text-muted-foreground">{hoursToday}</p>
-					</div>
-				{/if}
-
-				<!-- Amenities -->
-				{#if amenities.length > 0}
-					<div>
-						<hr class="mb-4 border-border" />
-						<h4 class="mb-3 text-xs font-semibold tracking-wide text-muted-foreground uppercase">
-							Features
-						</h4>
-						<div class="grid grid-cols-2 gap-2">
-							{#each amenities as feature}
-								<div class="flex items-center gap-1.5">
-									{#if feature.value}
-										<Check class="h-3.5 w-3.5 shrink-0 text-green-500 dark:text-green-400" />
-									{:else}
-										<X class="h-3.5 w-3.5 shrink-0 text-muted-foreground/40" />
-									{/if}
-									<span class="text-xs text-muted-foreground">{feature.label}</span>
-								</div>
-							{/each}
-						</div>
-					</div>
-				{/if}
-
-				<!-- Attribution -->
-				<div class="border-t border-border pt-3">
-					<p class="text-xs text-muted-foreground">Data from Google Places API</p>
-				</div>
-			</div>
-		{/if}
+			{/if}
+		</div>
 	{/if}
 </div>
