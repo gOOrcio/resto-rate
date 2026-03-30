@@ -121,7 +121,10 @@
 	<div class="space-y-1">
 		<h3 class="text-base leading-tight font-bold text-foreground">{name}</h3>
 		{#if address}
-			<p class="text-sm text-muted-foreground">{address}</p>
+			<div class="flex items-start gap-1.5">
+				<MapPin class="mt-0.5 h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+				<p class="text-sm text-muted-foreground">{address}</p>
+			</div>
 		{/if}
 		{#if city || country}
 			<p class="text-xs text-muted-foreground">
@@ -169,7 +172,7 @@
 				<!-- Header -->
 				<div class="flex items-center justify-between">
 					<img src="/GoogleMaps_Logo_Gray.svg" alt="Google Maps" class="h-4 w-auto" />
-					<span class="text-xs text-muted-foreground">Live · not cached</span>
+					<span class="text-xs text-muted-foreground">Data from Google Places API</span>
 				</div>
 
 				<!-- Core info: rating, status, price -->
@@ -212,14 +215,6 @@
 
 				<!-- Contact & location -->
 				<div class="space-y-3">
-					{#if googleData.formattedAddress}
-						<div class="flex items-start gap-2">
-							<MapPin class="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
-							<p class="text-sm leading-relaxed text-muted-foreground">
-								{googleData.formattedAddress}
-							</p>
-						</div>
-					{/if}
 					{#if googleData.nationalPhoneNumber || googleData.internationalPhoneNumber}
 						<div class="flex items-center gap-2">
 							<Phone class="h-4 w-4 shrink-0 text-muted-foreground" />
