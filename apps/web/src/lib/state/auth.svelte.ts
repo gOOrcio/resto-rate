@@ -15,7 +15,8 @@ export const auth = {
 		return authLoading;
 	},
 	get loginOpen() {
-		return loginDialogOpen;
+		// Auto-close whenever the user becomes logged in, regardless of call path.
+		return loginDialogOpen && currentUser === null;
 	},
 	setUser(u: UserProto | null) {
 		currentUser = u;
