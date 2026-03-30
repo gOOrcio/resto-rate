@@ -3,6 +3,7 @@
 	import { auth } from '$lib/state/auth.svelte';
 	import client from '$lib/client/client';
 	import { WishlistSortBy, WishlistTagFilterMode } from '$lib/client/generated/wishlist/v1/wishlist_service_pb';
+	import { ConnectError, Code } from '@connectrpc/connect';
 	import type { WishlistItemProto } from '$lib/client/generated/wishlist/v1/wishlist_item_pb';
 	import type { ReviewProto } from '$lib/client/generated/reviews/v1/review_pb';
 	import type { Place } from '$lib/client/generated/google_maps/v1/google_maps_service_pb';
@@ -25,6 +26,7 @@
 	let searchedPlace = $state<Place | null>(null);
 	let searchAction = $state<'review' | null>(null);
 	let savingToWishlist = $state(false);
+	let saveError = $state<string | null>(null);
 	let showSearch = $state(false);
 	let pendingTags = $state<string[]>([]);
 
@@ -68,11 +70,13 @@
 		searchedPlace = place;
 		searchAction = null;
 		pendingTags = [];
+		saveError = null;
 	}
 
 	async function saveToWishlist() {
 		if (!searchedPlace) return;
 		savingToWishlist = true;
+		saveError = null;
 		try {
 			await client.wishlist.addToWishlist({
 				googlePlacesId: searchedPlace.name || '',
@@ -87,7 +91,12 @@
 			showSearch = false;
 			pendingTags = [];
 		} catch (e) {
-			console.error('Failed to add to wishlist:', e);
+			if (ConnectError.from(e).code === Code.FailedPrecondition) {
+				saveError = "You've already reviewed this place — it can't be added to your wishlist.";
+			} else {
+				console.error('Failed to add to wishlist:', e);
+				saveError = 'Failed to save. Please try again.';
+			}
 		} finally {
 			savingToWishlist = false;
 		}
@@ -211,6 +220,9 @@
 					{#if !searchAction}
 						<TagPicker bind:selected={pendingTags} />
 
+						{#if saveError}
+							<p class="text-sm text-destructive">{saveError}</p>
+						{/if}
 						<div class="flex flex-wrap gap-2">
 							<button
 								class="rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-50"

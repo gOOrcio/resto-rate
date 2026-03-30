@@ -55,6 +55,17 @@ func (s *WishlistService) AddToWishlist(
 		return nil, result.Error
 	}
 
+	// Block if the user already reviewed this restaurant
+	var reviewCount int64
+	if err := s.DB.WithContext(ctx).Model(&models.Review{}).
+		Where("user_id = ? AND restaurant_id = ?", userID, restaurant.ID).
+		Count(&reviewCount).Error; err != nil {
+		return nil, err
+	}
+	if reviewCount > 0 {
+		return nil, connect.NewError(connect.CodeFailedPrecondition, errors.New("you have already reviewed this restaurant"))
+	}
+
 	tags := req.Msg.TagSlugs
 	if tags == nil {
 		tags = []string{}
