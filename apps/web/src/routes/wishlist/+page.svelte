@@ -38,6 +38,13 @@
 	let tagSlugs = $state<string[]>([]);
 	let tagMode = $state<'OR' | 'AND'>('OR');
 
+	let uniqueCities = $derived(
+		[...new Set(items.map((i) => i.city).filter(Boolean))].sort()
+	);
+	let uniqueCountries = $derived(
+		[...new Set(items.map((i) => i.country).filter(Boolean))].sort()
+	);
+
 	let activeFilterCount = $derived(
 		(city.trim() !== '' ? 1 : 0) +
 			(country.trim() !== '' ? 1 : 0) +
@@ -311,23 +318,29 @@
 				<div class="grid grid-cols-2 gap-3">
 					<div>
 						<label for="filter-city" class="mb-1 block text-sm font-medium text-foreground">City</label>
-						<input
+						<select
 							id="filter-city"
-							type="text"
 							bind:value={city}
-							placeholder="e.g. Paris"
-							class="w-full rounded-md border border-border bg-card px-3 py-1.5 text-sm text-foreground placeholder:text-muted-foreground focus:ring-1 focus:ring-ring focus:outline-none"
-						/>
+							class="w-full rounded-md border border-border bg-card px-3 py-1.5 text-sm text-foreground focus:ring-1 focus:ring-ring focus:outline-none"
+						>
+							<option value="">All cities</option>
+							{#each uniqueCities as c}
+								<option value={c}>{c}</option>
+							{/each}
+						</select>
 					</div>
 					<div>
 						<label for="filter-country" class="mb-1 block text-sm font-medium text-foreground">Country</label>
-						<input
+						<select
 							id="filter-country"
-							type="text"
 							bind:value={country}
-							placeholder="e.g. France"
-							class="w-full rounded-md border border-border bg-card px-3 py-1.5 text-sm text-foreground placeholder:text-muted-foreground focus:ring-1 focus:ring-ring focus:outline-none"
-						/>
+							class="w-full rounded-md border border-border bg-card px-3 py-1.5 text-sm text-foreground focus:ring-1 focus:ring-ring focus:outline-none"
+						>
+							<option value="">All countries</option>
+							{#each uniqueCountries as c}
+								<option value={c}>{c}</option>
+							{/each}
+						</select>
 					</div>
 				</div>
 			</div>

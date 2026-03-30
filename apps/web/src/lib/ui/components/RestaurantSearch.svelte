@@ -25,6 +25,8 @@
 	let selectedIndex = $state(-1);
 	let showSuggestions = $state(false);
 	let queryPrediction = $state('');
+	let languageCode = $state('en');
+	let regionCode = $state('US');
 
 	let debounceTimer: ReturnType<typeof setTimeout> | null = null;
 
@@ -46,14 +48,13 @@
 		}, 300);
 	}
 
-	async function performAutocomplete(value: string, regionCode: string = 'pl') {
+	async function performAutocomplete(value: string) {
 		if (value.length < 2) return;
 		isLoading = true;
 		try {
 			const response = await clients.googleMaps.autocompletePlaces({
 				input: value,
-				languageCode: 'pl',
-				includedRegionCodes: [regionCode],
+				languageCode,
 				sessionToken: autocompleteSessionToken,
 				includeQueryPrediction: true
 			});
@@ -77,8 +78,8 @@
 		try {
 			const place = await clients.googleMaps.getRestaurantDetails({
 				name,
-				languageCode: 'pl',
-				regionCode: 'pl',
+				languageCode,
+				regionCode,
 				sessionToken: autocompleteSessionToken
 			});
 
@@ -153,6 +154,10 @@
 
 	onMount(() => {
 		autocompleteSessionToken = randomUUID();
+		const lang = navigator.language || 'en';
+		const parts = lang.split('-');
+		languageCode = parts[0].toLowerCase();
+		regionCode = (parts[1] ?? parts[0]).toUpperCase();
 	});
 
 	onDestroy(() => {
