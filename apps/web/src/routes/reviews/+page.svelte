@@ -6,6 +6,7 @@
 	import type { ReviewProto } from '$lib/client/generated/reviews/v1/review_pb';
 	import type { Place } from '$lib/client/generated/google_maps/v1/google_maps_service_pb';
 	import { Button } from '$lib/components/ui/button/index.js';
+	import { Calendar, Users, UtensilsCrossed, Receipt } from '@lucide/svelte';
 	import RatingForm from '$lib/ui/components/RatingForm.svelte';
 	import RestaurantSearch from '$lib/ui/components/RestaurantSearch.svelte';
 	import ExpandableRestaurantInfo from '$lib/ui/components/ExpandableRestaurantInfo.svelte';
@@ -432,16 +433,34 @@
 								{@const partyLabel = PARTY_SIZE_LABELS[review.partySize]}
 								{@const occasionLabel = OCCASION_LABELS[review.occasion]}
 								{@const wvaEntry = WOULD_VISIT_AGAIN_LABELS[review.wouldVisitAgain]}
-								<div class="space-y-1.5 border-t border-border pt-3">
-									<p class="text-xs text-muted-foreground">
-										{[
-											visitDate,
-											partyLabel,
-											occasionLabel,
-											review.pricePaidPerPerson ? `$${review.pricePaidPerPerson}/person` : null,
-											wvaEntry?.text
-										].filter(Boolean).join(' · ')}
-									</p>
+								<div class="space-y-2 border-t border-border pt-3">
+									<div class="flex flex-wrap items-center gap-x-3 gap-y-1.5">
+										{#if visitDate}
+											<span class="flex items-center gap-1 text-xs text-muted-foreground">
+												<Calendar class="h-3 w-3 shrink-0" />{visitDate}
+											</span>
+										{/if}
+										{#if partyLabel}
+											<span class="flex items-center gap-1 text-xs text-muted-foreground">
+												<Users class="h-3 w-3 shrink-0" />{partyLabel}
+											</span>
+										{/if}
+										{#if occasionLabel}
+											<span class="flex items-center gap-1 text-xs text-muted-foreground">
+												<UtensilsCrossed class="h-3 w-3 shrink-0" />{occasionLabel}
+											</span>
+										{/if}
+										{#if review.pricePaidPerPerson}
+											<span class="flex items-center gap-1 text-xs text-muted-foreground">
+												<Receipt class="h-3 w-3 shrink-0" />${review.pricePaidPerPerson}/person
+											</span>
+										{/if}
+										{#if wvaEntry}
+											<span class="rounded-full border border-current px-2 py-0.5 text-xs font-medium {wvaEntry.cls}">
+												{wvaEntry.text}
+											</span>
+										{/if}
+									</div>
 									{#if review.dishHighlights}
 										<p class="text-xs text-muted-foreground">
 											<span class="font-medium text-foreground">Highlights:</span> {review.dishHighlights}

@@ -21,7 +21,11 @@
 		Loader2,
 		ChevronLeft,
 		ChevronDown,
-		ChevronUp
+		ChevronUp,
+		Calendar,
+		Users,
+		UtensilsCrossed,
+		Receipt
 	} from '@lucide/svelte';
 	import RatingForm from '$lib/ui/components/RatingForm.svelte';
 
@@ -385,16 +389,34 @@
 									{@const partyLabel = PARTY_SIZE_LABELS[myReview.partySize]}
 									{@const occasionLabel = OCCASION_LABELS[myReview.occasion]}
 									{@const wvaEntry = WOULD_VISIT_AGAIN_LABELS[myReview.wouldVisitAgain]}
-									<div class="border-t border-border pt-3 space-y-1.5">
-										<p class="text-xs text-muted-foreground">
-											{[
-												visitDate,
-												partyLabel,
-												occasionLabel,
-												myReview.pricePaidPerPerson ? `$${myReview.pricePaidPerPerson}/person` : null,
-												wvaEntry?.text
-											].filter(Boolean).join(' · ')}
-										</p>
+									<div class="border-t border-border pt-3 space-y-2">
+										<div class="flex flex-wrap items-center gap-x-3 gap-y-1.5">
+											{#if visitDate}
+												<span class="flex items-center gap-1 text-xs text-muted-foreground">
+													<Calendar class="h-3 w-3 shrink-0" />{visitDate}
+												</span>
+											{/if}
+											{#if partyLabel}
+												<span class="flex items-center gap-1 text-xs text-muted-foreground">
+													<Users class="h-3 w-3 shrink-0" />{partyLabel}
+												</span>
+											{/if}
+											{#if occasionLabel}
+												<span class="flex items-center gap-1 text-xs text-muted-foreground">
+													<UtensilsCrossed class="h-3 w-3 shrink-0" />{occasionLabel}
+												</span>
+											{/if}
+											{#if myReview.pricePaidPerPerson}
+												<span class="flex items-center gap-1 text-xs text-muted-foreground">
+													<Receipt class="h-3 w-3 shrink-0" />${myReview.pricePaidPerPerson}/person
+												</span>
+											{/if}
+											{#if wvaEntry}
+												<span class="rounded-full border border-current px-2 py-0.5 text-xs font-medium {wvaEntry.cls}">
+													{wvaEntry.text}
+												</span>
+											{/if}
+										</div>
 										{#if myReview.dishHighlights}
 											<p class="text-xs text-muted-foreground">
 												<span class="font-medium text-foreground">Highlights:</span> {myReview.dishHighlights}
@@ -579,16 +601,34 @@
 										{@const partyLabel = PARTY_SIZE_LABELS[review.partySize]}
 										{@const occasionLabel = OCCASION_LABELS[review.occasion]}
 										{@const wvaEntry = WOULD_VISIT_AGAIN_LABELS[review.wouldVisitAgain]}
-										<div class="space-y-1.5 border-t border-border pt-3">
-											<p class="text-xs text-muted-foreground">
-												{[
-													visitDate,
-													partyLabel,
-													occasionLabel,
-													review.pricePaidPerPerson ? `$${review.pricePaidPerPerson}/person` : null,
-													wvaEntry?.text
-												].filter(Boolean).join(' · ')}
-											</p>
+										<div class="space-y-2 border-t border-border pt-3">
+											<div class="flex flex-wrap items-center gap-x-3 gap-y-1.5">
+												{#if visitDate}
+													<span class="flex items-center gap-1 text-xs text-muted-foreground">
+														<Calendar class="h-3 w-3 shrink-0" />{visitDate}
+													</span>
+												{/if}
+												{#if partyLabel}
+													<span class="flex items-center gap-1 text-xs text-muted-foreground">
+														<Users class="h-3 w-3 shrink-0" />{partyLabel}
+													</span>
+												{/if}
+												{#if occasionLabel}
+													<span class="flex items-center gap-1 text-xs text-muted-foreground">
+														<UtensilsCrossed class="h-3 w-3 shrink-0" />{occasionLabel}
+													</span>
+												{/if}
+												{#if review.pricePaidPerPerson}
+													<span class="flex items-center gap-1 text-xs text-muted-foreground">
+														<Receipt class="h-3 w-3 shrink-0" />${review.pricePaidPerPerson}/person
+													</span>
+												{/if}
+												{#if wvaEntry}
+													<span class="rounded-full border border-current px-2 py-0.5 text-xs font-medium {wvaEntry.cls}">
+														{wvaEntry.text}
+													</span>
+												{/if}
+											</div>
 											{#if review.dishHighlights}
 												<p class="text-xs text-muted-foreground">
 													<span class="font-medium text-foreground">Highlights:</span> {review.dishHighlights}
