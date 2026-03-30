@@ -333,21 +333,23 @@ func placePhotoHandler() http.Handler {
 
 		resp, err := http.Get(googleURL) //nolint:noctx
 		if err != nil {
+			slog.Error("place-photo: upstream request failed", slog.String("name", name), slog.Any("error", err))
 			http.Error(w, "upstream request failed", http.StatusBadGateway)
 			return
 		}
 		defer resp.Body.Close()
 
 		if resp.StatusCode != http.StatusOK {
+			slog.Error("place-photo: upstream error", slog.String("name", name), slog.Int("status", resp.StatusCode))
 			http.Error(w, "upstream error", http.StatusBadGateway)
 			return
 		}
 
-		if ct := resp.Header.Get("Content-Type"); ct != "" {
+		ct := resp.Header.Get("Content-Type")
+		if ct != "" {
 			w.Header().Set("Content-Type", ct)
 		}
 		w.Header().Set("Cache-Control", "public, max-age=86400")
-		w.WriteHeader(http.StatusOK)
 		_, _ = io.Copy(w, resp.Body)
 	})
 }

@@ -30,6 +30,7 @@
 	let googleData = $state<Place | null>(null);
 	let isLoadingGoogle = $state(false);
 	let googleError = $state<string | null>(null);
+	let photoLoadFailed = $state(false);
 
 	let status = $derived(
 		googleData
@@ -119,11 +120,12 @@
 
 <div class="flex flex-col">
 	<div class="relative mb-3 h-36 w-full overflow-hidden rounded-lg bg-muted">
-		{#if photoReference}
+		{#if photoReference && !photoLoadFailed}
 			<img
 				src="{import.meta.env.VITE_API_URL || 'http://localhost:3001'}/place-photo?name={encodeURIComponent(photoReference)}"
 				alt="Restaurant cover"
 				class="h-full w-full object-cover"
+				onerror={() => { photoLoadFailed = true; }}
 			/>
 		{:else}
 			<div class="flex h-full w-full items-center justify-center">
