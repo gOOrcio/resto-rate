@@ -453,7 +453,7 @@
 									href="/restaurants/{encodeURIComponent(review.googlePlacesId)}"
 									class="text-xs text-muted-foreground hover:text-foreground hover:underline"
 								>
-									See friends' reviews
+									Details and reviews
 								</a>
 							{:else}
 								<span></span>

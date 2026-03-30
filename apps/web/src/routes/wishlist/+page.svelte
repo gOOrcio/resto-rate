@@ -423,19 +423,31 @@
 							</div>
 						</div>
 						<div class="flex items-center justify-between border-t border-border px-5 py-3">
-							<button
-								class="rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground transition-opacity hover:opacity-90"
-								onclick={() => (ratingId = item.id)}
-							>
-								Rate this place
-							</button>
-							<button
-								class="text-xs text-muted-foreground transition-colors hover:text-destructive disabled:opacity-40"
-								disabled={removing.has(item.googlePlacesId)}
-								onclick={() => remove(item.googlePlacesId)}
-							>
-								{removing.has(item.googlePlacesId) ? 'Removing…' : 'Remove'}
-							</button>
+							<div class="flex items-center gap-3">
+								{#if item.googlePlacesId}
+									<a
+										href="/restaurants/{encodeURIComponent(item.googlePlacesId)}"
+										class="text-xs text-muted-foreground hover:text-foreground hover:underline"
+									>
+										Details and reviews
+									</a>
+								{/if}
+							</div>
+							<div class="flex items-center gap-3">
+								<button
+									class="rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground transition-opacity hover:opacity-90"
+									onclick={() => (ratingId = item.id)}
+								>
+									Rate this place
+								</button>
+								<button
+									class="text-xs text-muted-foreground transition-colors hover:text-destructive disabled:opacity-40"
+									disabled={removing.has(item.googlePlacesId)}
+									onclick={() => remove(item.googlePlacesId)}
+								>
+									{removing.has(item.googlePlacesId) ? 'Removing…' : 'Remove'}
+								</button>
+							</div>
 						</div>
 					{:else}
 						<div class="flex flex-col gap-3 p-5">

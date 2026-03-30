@@ -168,8 +168,8 @@
 			{/if}
 		</div>
 		{#if rating !== undefined}
-			<div class="flex shrink-0 flex-col items-center gap-0.5 {ratingColor(rating)}">
-				<span class="text-2xl font-bold tabular-nums leading-none">{rating.toFixed(1)}</span>
+			<div class="flex shrink-0 items-center gap-1 rounded-md border border-current px-2 py-1 {ratingColor(rating)}">
+				<span class="text-lg font-bold tabular-nums leading-none">{rating.toFixed(1)}</span>
 				<Star class="h-4 w-4 fill-current" />
 			</div>
 		{/if}
