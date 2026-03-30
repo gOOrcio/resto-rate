@@ -348,9 +348,83 @@ Flat JSON, one file per locale. Key naming: `section_description`. See the full 
 
 ---
 
-## Tag Labels (Out of Scope)
+## Tag Translation via Slugs
 
-Tag labels (`solo`, `couple`, `romantic`, etc.) are stored in the `tags` table with a single `label` column. They are **not translated** in this feature. A future `label_pl` column migration can address this separately.
+Tag slugs are stable identifiers — they map directly to message keys. No DB schema change is needed.
+
+### Lookup utility — `src/lib/i18n/tags.ts`
+
+```ts
+import * as m from '$lib/paraglide/messages';
+
+type MessageKey = keyof typeof m;
+
+export function tagLabel(slug: string): string {
+  const key = `tag_${slug.replace(/-/g, '_')}` as MessageKey;
+  return typeof m[key] === 'function' ? (m[key] as () => string)() : slug;
+}
+
+export function tagCategoryLabel(category: string): string {
+  const key = `tag_category_${category.toLowerCase()}` as MessageKey;
+  return typeof m[key] === 'function' ? (m[key] as () => string)() : category;
+}
+```
+
+`TagPicker` and `TagFilter` call `tagLabel(tag.slug)` instead of `tag.label`. The `label` column in the DB remains as the English seed reference but is never used for display.
+
+### `tag_category_*` — category headings (6 keys)
+
+| Key | English | Polish |
+|-----|---------|--------|
+| `tag_category_cuisine` | Cuisine | Kuchnia |
+| `tag_category_vibe` | Vibe | Klimat |
+| `tag_category_price` | Price | Cena |
+| `tag_category_dietary` | Dietary | Dieta |
+| `tag_category_group` | Group | Grupa |
+| `tag_category_occasion` | Occasion | Okazja |
+
+### `tag_*` — individual tag labels (36 keys)
+
+| Key | English | Polish |
+|-----|---------|--------|
+| `tag_italian` | Italian | Włoska |
+| `tag_japanese` | Japanese | Japońska |
+| `tag_mexican` | Mexican | Meksykańska |
+| `tag_chinese` | Chinese | Chińska |
+| `tag_indian` | Indian | Indyjska |
+| `tag_french` | French | Francuska |
+| `tag_thai` | Thai | Tajska |
+| `tag_american` | American | Amerykańska |
+| `tag_mediterranean` | Mediterranean | Śródziemnomorska |
+| `tag_korean` | Korean | Koreańska |
+| `tag_romantic` | Romantic | Romantyczna |
+| `tag_casual` | Casual | Na luzie |
+| `tag_family_friendly` | Family Friendly | Rodzinna |
+| `tag_date_night` | Date Night | Randka |
+| `tag_business_lunch` | Business Lunch | Biznesowy lunch |
+| `tag_lively` | Lively | Tętniąca życiem |
+| `tag_quiet` | Quiet | Spokojna |
+| `tag_trendy` | Trendy | Modna |
+| `tag_budget` | Budget | Budżetowa |
+| `tag_mid_range` | Mid-Range | Średnia półka |
+| `tag_expensive` | Expensive | Droga |
+| `tag_splurge` | Splurge | Na bogato |
+| `tag_vegan` | Vegan | Wegańska |
+| `tag_vegetarian` | Vegetarian | Wegetariańska |
+| `tag_gluten_free` | Gluten-Free | Bezglutenowa |
+| `tag_halal` | Halal | Halal |
+| `tag_kosher` | Kosher | Koszerna |
+| `tag_dairy_free` | Dairy-Free | Bez nabiału |
+| `tag_solo` | Solo | Solo |
+| `tag_couple` | Couple | Para |
+| `tag_small_group` | Small Group | Mała grupa |
+| `tag_large_group` | Large Group | Duża grupa |
+| `tag_birthday` | Birthday | Urodziny |
+| `tag_anniversary` | Anniversary | Rocznica |
+| `tag_brunch` | Brunch | Brunch |
+| `tag_late_night` | Late Night | Późny wieczór |
+| `tag_celebration` | Celebration | Świętowanie |
+| `tag_quick_bite` | Quick Bite | Szybki kąsek |
 
 ---
 
@@ -396,12 +470,14 @@ test('pl has no extra keys not present in en', () => {
 
 1. Proto change + codegen (`default_language` in `UpdateMyProfileRequest`)
 2. Go: `UpdateMyProfile` handler — save `default_language`
-3. Message files — fill `en.json` + `pl.json` with all keys above
+3. Message files — fill `en.json` + `pl.json` with all UI keys + tag keys above
 4. `locale.svelte.ts` — locale state module
-5. Auth integration — `setLocale` on login
-6. Profile page — EN/PL segmented control
-7. Replace all hardcoded strings in pages + components with `m.key()` calls
-8. Tests — `messages.test.ts` + `locale.svelte.test.ts`
-9. Fix existing `page.svelte.test.ts`
-10. `bunx nx run api:build` + `bunx nx run web:check` + `bunx nx run web:test`
-11. Open PR → Copilot review loop
+5. `src/lib/i18n/tags.ts` — `tagLabel()` + `tagCategoryLabel()` utilities
+6. Auth integration — `setLocale` on login
+7. Profile page — EN/PL segmented control
+8. Replace all hardcoded strings in pages + components with `m.key()` calls
+9. Update `TagPicker` + `TagFilter` to use `tagLabel()` / `tagCategoryLabel()`
+10. Tests — `messages.test.ts` + `locale.svelte.test.ts`
+11. Fix existing `page.svelte.test.ts`
+12. `bunx nx run api:build` + `bunx nx run web:check` + `bunx nx run web:test`
+13. Open PR → Copilot review loop
