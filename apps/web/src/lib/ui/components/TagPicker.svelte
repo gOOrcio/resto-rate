@@ -1,6 +1,8 @@
 <script lang="ts">
 	import client from '$lib/client/client';
 	import type { TagProto } from '$lib/client/generated/tags/v1/tag_pb';
+	import { tagLabel, tagCategoryLabel } from '$lib/i18n/tags';
+	import * as m from '$lib/paraglide/messages';
 
 	let { selected = $bindable([]), onchange } = $props<{
 		selected?: string[];
@@ -50,19 +52,19 @@
 </script>
 
 {#if loading}
-	<p class="text-sm text-muted-foreground">Loading tags…</p>
+	<p class="text-sm text-muted-foreground">{m.tag_picker_loading()}</p>
 {:else if loadError}
 	<div class="flex items-center gap-2 text-sm text-destructive">
-		<span>Failed to load tags.</span>
-		<button type="button" onclick={loadTags} class="underline hover:no-underline">Retry</button>
+		<span>{m.tag_picker_error()}</span>
+		<button type="button" onclick={loadTags} class="underline hover:no-underline">{m.common_retry()}</button>
 	</div>
 {:else if tags.length === 0}
-	<p class="text-sm text-muted-foreground">No tags available.</p>
+	<p class="text-sm text-muted-foreground">{m.tag_picker_empty()}</p>
 {:else}
 	<div class="flex flex-col gap-3">
 		{#each Object.entries(grouped) as [category, categoryTags]}
 			<div>
-				<p class="mb-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">{category}</p>
+				<p class="mb-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">{tagCategoryLabel(category)}</p>
 				<div class="flex flex-wrap gap-1.5">
 					{#each categoryTags as tag}
 						<button
@@ -73,7 +75,7 @@
 								? 'bg-primary text-primary-foreground'
 								: 'bg-muted text-muted-foreground hover:bg-muted/70'}"
 						>
-							{tag.label}
+							{tagLabel(tag.slug)}
 						</button>
 					{/each}
 				</div>

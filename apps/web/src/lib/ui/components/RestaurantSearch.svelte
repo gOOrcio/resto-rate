@@ -8,6 +8,7 @@
 	import { Input } from '$lib/components/ui/input/index.js';
 	import { v4 as uuidv4 } from 'uuid';
 	import { auth } from '$lib/state/auth.svelte';
+	import * as m from '$lib/paraglide/messages';
 
 	function randomUUID(): string {
 		return uuidv4();
@@ -169,7 +170,7 @@
 </script>
 
 {#if !auth.isLoggedIn}
-	<p class="text-sm text-gray-500">Please log in to search restaurants.</p>
+	<p class="text-sm text-gray-500">{m.search_login_required()}</p>
 {:else}
 	<div class="relative w-full max-w-md">
 		<div class="relative flex items-center">
@@ -224,7 +225,7 @@
 
 		{#if input.length > 0 && input.length < 2}
 			<div class="absolute left-0 right-0 top-full mt-1 rounded border border-border bg-muted p-2 text-sm text-muted-foreground">
-				Type at least 2 characters to search...
+				{m.search_min_chars()}
 			</div>
 		{/if}
 	</div>

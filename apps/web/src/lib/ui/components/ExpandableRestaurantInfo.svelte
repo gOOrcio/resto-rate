@@ -16,6 +16,7 @@
 		ChevronRight,
 		ChevronUp
 	} from '@lucide/svelte';
+	import * as m from '$lib/paraglide/messages';
 
 	const { googlePlacesId, name, address, city, country, photoReference = '', rating = undefined } = $props<{
 		googlePlacesId: string;
@@ -104,7 +105,7 @@
 				regionCode: 'pl'
 			});
 		} catch {
-			googleError = 'Failed to load Google details.';
+			googleError = m.expandable_load_failed();
 		} finally {
 			isLoadingGoogle = false;
 		}
@@ -182,10 +183,10 @@
 			class="flex items-center gap-1.5 text-sm font-medium text-primary transition-colors hover:text-primary/80"
 		>
 			{#if isExpanded}
-				Hide details
+				{m.expandable_hide_details()}
 				<ChevronUp class="h-4 w-4" />
 			{:else}
-				Show Google details
+				{m.expandable_show_google()}
 				<ChevronRight class="h-4 w-4" />
 			{/if}
 		</button>
@@ -205,7 +206,7 @@
 						onclick={fetchGoogleData}
 						class="rounded-lg bg-primary px-4 py-2 text-sm text-primary-foreground transition-colors hover:bg-primary/90"
 					>
-						Retry
+						{m.common_retry()}
 					</button>
 				</div>
 			{:else if googleData}
@@ -213,7 +214,7 @@
 					<!-- Header -->
 					<div class="flex items-center justify-between">
 						<img src="/GoogleMaps_Logo_Gray.svg" alt="Google Maps" class="h-4 w-auto" />
-						<span class="text-xs text-muted-foreground">Data from Google Places API</span>
+						<span class="text-xs text-muted-foreground">{m.expandable_google_source()}</span>
 					</div>
 
 					<!-- Core info: rating, status, price -->
@@ -289,7 +290,7 @@
 									rel="noopener noreferrer"
 									class="text-sm text-primary hover:underline"
 								>
-									Open in Maps
+									{m.expandable_open_maps()}
 								</a>
 							</div>
 						{/if}
