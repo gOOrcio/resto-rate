@@ -17,6 +17,7 @@ import (
 	"strconv"
 	"strings"
 
+	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
@@ -329,6 +330,7 @@ func placePhotoHandler() http.Handler {
 		params := url.Values{}
 		params.Set("key", apiKey)
 		params.Set("maxWidthPx", "800")
+		params.Set("skipHttpRedirect", "true")
 		googleURL := "https://places.googleapis.com/v1/" + name + "/media?" + params.Encode()
 
 		resp, err := http.Get(googleURL) //nolint:noctx
@@ -339,8 +341,8 @@ func placePhotoHandler() http.Handler {
 		}
 		defer resp.Body.Close()
 
+		body, _ := io.ReadAll(resp.Body)
 		if resp.StatusCode != http.StatusOK {
-			body, _ := io.ReadAll(resp.Body)
 			slog.Error("place-photo: upstream error",
 				slog.String("name", name),
 				slog.Int("status", resp.StatusCode),
@@ -350,12 +352,17 @@ func placePhotoHandler() http.Handler {
 			return
 		}
 
-		ct := resp.Header.Get("Content-Type")
-		if ct != "" {
-			w.Header().Set("Content-Type", ct)
+		// skipHttpRedirect=true returns JSON: {"name":"...","photoUri":"https://..."}
+		// Redirect the browser to the CDN URI so it fetches the image directly.
+		var photoResp struct {
+			PhotoURI string `json:"photoUri"`
 		}
-		w.Header().Set("Cache-Control", "public, max-age=86400")
-		_, _ = io.Copy(w, resp.Body)
+		if err := json.Unmarshal(body, &photoResp); err != nil || photoResp.PhotoURI == "" {
+			slog.Error("place-photo: failed to parse photoUri", slog.String("body", string(body)), slog.Any("error", err))
+			http.Error(w, "invalid photo response", http.StatusBadGateway)
+			return
+		}
+		http.Redirect(w, r, photoResp.PhotoURI, http.StatusFound)
 	})
 }
 
