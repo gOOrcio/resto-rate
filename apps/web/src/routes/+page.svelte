@@ -1,6 +1,5 @@
 <script lang="ts">
 	import { auth } from '$lib/state/auth.svelte';
-	import SocialSignIn from '$lib/ui/components/SocialSignIn.svelte';
 	import RestaurantSearchSv from '$lib/ui/components/RestaurantSearchSv.svelte';
 </script>
 
@@ -28,8 +27,22 @@
 				</p>
 			</div>
 
-			<div class="w-full max-w-xs">
-				<SocialSignIn />
+			<div class="flex flex-col items-center gap-3">
+				<button
+					onclick={() => auth.openLogin()}
+					class="rounded-lg bg-primary px-8 py-3 text-base font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
+				>
+					Get started — it's free
+				</button>
+				<p class="text-sm text-muted-foreground">
+					Already have an account?
+					<button
+						onclick={() => auth.openLogin()}
+						class="underline underline-offset-2 hover:text-foreground"
+					>
+						Sign in
+					</button>
+				</p>
 			</div>
 		</section>
 
@@ -58,7 +71,5 @@
 				</p>
 			</div>
 		</section>
-
-		<p class="text-center text-sm text-muted-foreground">Already have an account? Sign in above ↑</p>
 	</div>
 {/if}

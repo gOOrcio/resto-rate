@@ -84,7 +84,8 @@
 				restaurantAddress: searchedPlace.formattedAddress || '',
 				city: extractCity(searchedPlace),
 				country: searchedPlace.postalAddress?.country ?? '',
-				tagSlugs: pendingTags
+				tagSlugs: pendingTags,
+				photoReference: searchedPlace.photos?.[0]?.name || ''
 			});
 			await loadWishlist();
 			searchedPlace = null;
@@ -249,6 +250,7 @@
 							googlePlacesId={searchedPlace.name || ''}
 							restaurantName={searchedPlace.displayName?.text || ''}
 							restaurantAddress={searchedPlace.formattedAddress || ''}
+							photoReference={searchedPlace.photos?.[0]?.name || ''}
 							onSubmit={handleSearchReview}
 						/>
 						<button
@@ -284,16 +286,23 @@
 			{/if}
 			<div class="ml-auto flex items-center gap-2">
 				<label for="wishlist-sort" class="text-sm text-muted-foreground">Sort</label>
-				<select
-					id="wishlist-sort"
-					bind:value={sortBy}
-					class="rounded-md border border-border bg-card px-2 py-1 text-sm text-foreground focus:ring-1 focus:ring-ring focus:outline-none"
-				>
-					<option value="date-desc">Newest first</option>
-					<option value="date-asc">Oldest first</option>
-					<option value="name-asc">Name A–Z</option>
-					<option value="name-desc">Name Z–A</option>
-				</select>
+				<div class="relative">
+					<select
+						id="wishlist-sort"
+						bind:value={sortBy}
+						class="appearance-none rounded-md border border-border bg-card py-1 pl-2 pr-7 text-sm text-foreground focus:ring-1 focus:ring-ring focus:outline-none"
+					>
+						<option value="date-desc">Newest first</option>
+						<option value="date-asc">Oldest first</option>
+						<option value="name-asc">Name A–Z</option>
+						<option value="name-desc">Name Z–A</option>
+					</select>
+					<div class="pointer-events-none absolute inset-y-0 right-2 flex items-center">
+						<svg class="h-3.5 w-3.5 text-muted-foreground" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+							<path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
+						</svg>
+					</div>
+				</div>
 			</div>
 		</div>
 
@@ -366,6 +375,7 @@
 								address={item.restaurantAddress}
 								city={item.city}
 								country={item.country}
+								photoReference={item.restaurantPhotoReference || ''}
 							/>
 
 							<!-- Tags section -->

@@ -220,6 +220,9 @@
 						googlePlacesId={searchedPlace.name || ''}
 						restaurantName={searchedPlace.displayName?.text || ''}
 						restaurantAddress={searchedPlace.formattedAddress || ''}
+						city={searchedPlace.postalAddress?.locality || searchedPlace.postalAddress?.administrativeArea || ''}
+						country={searchedPlace.postalAddress?.country || ''}
+						photoReference={searchedPlace.photos?.[0]?.name || ''}
 						onSubmit={handleNewReview}
 					/>
 					<button
@@ -254,16 +257,23 @@
 			{/if}
 			<div class="ml-auto flex items-center gap-2">
 				<label for="reviews-sort" class="text-sm text-muted-foreground">Sort</label>
-				<select
-					id="reviews-sort"
-					bind:value={sortBy}
-					class="rounded-md border border-border bg-card px-2 py-1 text-sm text-foreground focus:ring-1 focus:ring-ring focus:outline-none"
-				>
-					<option value="date-desc">Newest first</option>
-					<option value="date-asc">Oldest first</option>
-					<option value="rating-desc">Highest rated</option>
-					<option value="rating-asc">Lowest rated</option>
-				</select>
+				<div class="relative">
+					<select
+						id="reviews-sort"
+						bind:value={sortBy}
+						class="appearance-none rounded-md border border-border bg-card py-1 pl-2 pr-7 text-sm text-foreground focus:ring-1 focus:ring-ring focus:outline-none"
+					>
+						<option value="date-desc">Newest first</option>
+						<option value="date-asc">Oldest first</option>
+						<option value="rating-desc">Highest rated</option>
+						<option value="rating-asc">Lowest rated</option>
+					</select>
+					<div class="pointer-events-none absolute inset-y-0 right-2 flex items-center">
+						<svg class="h-3.5 w-3.5 text-muted-foreground" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+							<path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
+						</svg>
+					</div>
+				</div>
 			</div>
 		</div>
 
@@ -399,6 +409,7 @@
 										address={review.restaurantAddress}
 										city={review.restaurantCity}
 										country={review.restaurantCountry}
+										photoReference={review.restaurantPhotoReference || ''}
 									/>
 								</div>
 								<span

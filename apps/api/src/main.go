@@ -18,7 +18,9 @@ import (
 	"strings"
 
 	"fmt"
+	"io"
 	"net/http"
+	"net/url"
 	"os"
 
 	"connectrpc.com/connect"
@@ -218,6 +220,9 @@ func setupHTTPHandlers(registrations []ServiceRegistration, db *gorm.DB, kv valk
 		slog.Info("Dev login available", slog.String("path", "/dev/login"))
 	}
 
+	mux.Handle("GET /place-photo", corsMiddleware(placePhotoHandler()))
+	slog.Info("Place photo proxy available", slog.String("path", "/place-photo"))
+
 	return mux
 }
 
@@ -306,6 +311,45 @@ func getWebUiPort() string {
 		log.Fatal("WEB_UI_PORT is not set in the environment variables")
 	}
 	return webUiPort
+}
+
+func placePhotoHandler() http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		name := r.URL.Query().Get("name")
+		if name == "" {
+			http.Error(w, "name is required", http.StatusBadRequest)
+			return
+		}
+		if len(name) < 7 || name[:7] != "places/" {
+			http.Error(w, "invalid name: must start with places/", http.StatusBadRequest)
+			return
+		}
+
+		apiKey := os.Getenv("GOOGLE_PLACES_API_KEY")
+		params := url.Values{}
+		params.Set("key", apiKey)
+		params.Set("maxWidthPx", "800")
+		googleURL := "https://places.googleapis.com/v1/" + name + "/media?" + params.Encode()
+
+		resp, err := http.Get(googleURL) //nolint:noctx
+		if err != nil {
+			http.Error(w, "upstream request failed", http.StatusBadGateway)
+			return
+		}
+		defer resp.Body.Close()
+
+		if resp.StatusCode != http.StatusOK {
+			http.Error(w, "upstream error", http.StatusBadGateway)
+			return
+		}
+
+		if ct := resp.Header.Get("Content-Type"); ct != "" {
+			w.Header().Set("Content-Type", ct)
+		}
+		w.Header().Set("Cache-Control", "public, max-age=86400")
+		w.WriteHeader(http.StatusOK)
+		_, _ = io.Copy(w, resp.Body)
+	})
 }
 
 func envLogLevel() slog.Level {

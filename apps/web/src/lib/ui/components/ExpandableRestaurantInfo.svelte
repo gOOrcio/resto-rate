@@ -17,12 +17,13 @@
 		ChevronUp
 	} from '@lucide/svelte';
 
-	const { googlePlacesId, name, address, city, country } = $props<{
+	const { googlePlacesId, name, address, city, country, photoReference = '' } = $props<{
 		googlePlacesId: string;
 		name: string;
 		address?: string;
 		city?: string;
 		country?: string;
+		photoReference?: string;
 	}>();
 
 	let isExpanded = $state(false);
@@ -117,6 +118,34 @@
 </script>
 
 <div class="flex flex-col">
+	<div class="relative mb-3 h-36 w-full overflow-hidden rounded-lg bg-muted">
+		{#if photoReference}
+			<img
+				src="{import.meta.env.VITE_API_URL || 'http://localhost:3001'}/place-photo?name={encodeURIComponent(photoReference)}"
+				alt="Restaurant cover"
+				class="h-full w-full object-cover"
+			/>
+		{:else}
+			<div class="flex h-full w-full items-center justify-center">
+				<svg
+					xmlns="http://www.w3.org/2000/svg"
+					class="h-10 w-10 text-muted-foreground/30"
+					fill="none"
+					viewBox="0 0 24 24"
+					stroke="currentColor"
+					stroke-width="1"
+				>
+					<path
+						stroke-linecap="round"
+						stroke-linejoin="round"
+						d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"
+					/>
+					<path stroke-linecap="round" stroke-linejoin="round" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+				</svg>
+			</div>
+		{/if}
+	</div>
+
 	<!-- DB info section -->
 	<div class="space-y-1">
 		<h3 class="text-base leading-tight font-bold text-foreground">{name}</h3>

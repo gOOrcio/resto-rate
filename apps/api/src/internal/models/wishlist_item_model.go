@@ -27,13 +27,14 @@ func (w *WishlistItem) ToProto() *wishlistv1.WishlistItemProto {
 		tags = []string{}
 	}
 	return &wishlistv1.WishlistItemProto{
-		Id:                w.ID,
-		GooglePlacesId:    w.GooglePlacesID,
-		RestaurantName:    w.Restaurant.Name,
-		RestaurantAddress: w.Restaurant.Address,
-		City:              w.Restaurant.City,
-		Country:           w.Restaurant.Country,
-		CreatedAt:         w.CreatedAt.Unix(),
-		Tags:              tags,
+		Id:                       w.ID,
+		GooglePlacesId:           w.GooglePlacesID,
+		RestaurantName:           w.Restaurant.Name,
+		RestaurantAddress:        w.Restaurant.Address,
+		City:                     w.Restaurant.City,
+		Country:                  w.Restaurant.Country,
+		RestaurantPhotoReference: w.Restaurant.PhotoReference,
+		CreatedAt:                w.CreatedAt.Unix(),
+		Tags:                     tags,
 	}
 }

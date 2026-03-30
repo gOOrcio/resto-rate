@@ -45,14 +45,31 @@ func (s *WishlistService) AddToWishlist(
 	result := s.DB.WithContext(ctx).
 		Where(models.Restaurant{GoogleID: req.Msg.GooglePlacesId}).
 		Attrs(models.Restaurant{
-			Name:    req.Msg.RestaurantName,
-			Address: req.Msg.RestaurantAddress,
-			City:    req.Msg.City,
-			Country: req.Msg.Country,
+			Name:           req.Msg.RestaurantName,
+			Address:        req.Msg.RestaurantAddress,
+			City:           req.Msg.City,
+			Country:        req.Msg.Country,
+			PhotoReference: req.Msg.PhotoReference,
 		}).
 		FirstOrCreate(&restaurant)
 	if result.Error != nil {
 		return nil, result.Error
+	}
+
+	// Backfill city/country/photo_reference on existing restaurants that were created before these fields were tracked.
+	if updates := missingRestaurantFields(&restaurant, req.Msg.City, req.Msg.Country, req.Msg.PhotoReference); len(updates) > 0 {
+		if err := s.DB.WithContext(ctx).Model(&restaurant).Updates(updates).Error; err != nil {
+			return nil, err
+		}
+		if v, ok := updates["city"].(string); ok {
+			restaurant.City = v
+		}
+		if v, ok := updates["country"].(string); ok {
+			restaurant.Country = v
+		}
+		if v, ok := updates["photo_reference"].(string); ok {
+			restaurant.PhotoReference = v
+		}
 	}
 
 	// Block if the user already reviewed this restaurant
@@ -214,7 +231,7 @@ func applyWishlistTagFilter(query *gorm.DB, slugs []string, mode wishlistv1.Wish
 	}
 	// OR (default): at least one specified tag must appear
 	conditions := make([]string, len(slugs))
-	args := make([]interface{}, len(slugs))
+	args := make([]any, len(slugs))
 	for i, slug := range slugs {
 		conditions[i] = "wishlist_items.tags LIKE ?"
 		args[i] = fmt.Sprintf(`%%"%s"%%`, slug)

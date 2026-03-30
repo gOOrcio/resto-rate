@@ -45,6 +45,7 @@ message CreateReviewRequest {
   int32 price_paid_per_person = 12;
   WouldVisitAgain would_visit_again = 13;
   string dish_highlights = 14;
+  string photo_reference = 15;
 }
 
 message CreateReviewResponse {

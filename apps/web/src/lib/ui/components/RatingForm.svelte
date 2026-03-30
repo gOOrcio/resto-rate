@@ -12,6 +12,7 @@
 		restaurantAddress,
 		city = '',
 		country = '',
+		photoReference = '',
 		existingReview,
 		initialTags,
 		onSubmit
@@ -21,6 +22,7 @@
 		restaurantAddress: string;
 		city?: string;
 		country?: string;
+		photoReference?: string;
 		existingReview?: ReviewProto;
 		initialTags?: string[];
 		onSubmit: (review: ReviewProto) => void;
@@ -89,6 +91,7 @@
 					restaurantAddress,
 					city,
 					country,
+					photoReference,
 					comment,
 					rating,
 					tags,

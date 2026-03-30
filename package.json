@@ -6,6 +6,8 @@
 		"dev": "nx run-many -t dev",
 		"dev:api": "nx run api:dev",
 		"dev:web": "nx run web:dev",
+		"dev:clean": "bash scripts/db-reset.sh && SEED=true bun run dev",
+		"db:reset": "bash scripts/db-reset.sh",
 		"lint": "nx run-many -t lint",
 		"format": "prettier --write \"**/*.{ts,tsx,js,jsx,svelte,json,md,css}\"",
 		"check-types": "nx run-many -t check-types",

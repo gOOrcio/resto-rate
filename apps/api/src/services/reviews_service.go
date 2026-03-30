@@ -80,14 +80,31 @@ func (s *ReviewsService) CreateReview(
 		// Find or create restaurant by Google Places ID
 		result := tx.Where(models.Restaurant{GoogleID: req.Msg.GooglePlacesId}).
 			Attrs(models.Restaurant{
-				Name:    req.Msg.RestaurantName,
-				Address: req.Msg.RestaurantAddress,
-				City:    req.Msg.City,
-				Country: req.Msg.Country,
+				Name:           req.Msg.RestaurantName,
+				Address:        req.Msg.RestaurantAddress,
+				City:           req.Msg.City,
+				Country:        req.Msg.Country,
+				PhotoReference: req.Msg.PhotoReference,
 			}).
 			FirstOrCreate(&restaurant)
 		if result.Error != nil {
 			return result.Error
+		}
+
+		// Backfill city/country/photo_reference on existing restaurants that were created before these fields were tracked.
+		if updates := missingRestaurantFields(&restaurant, req.Msg.City, req.Msg.Country, req.Msg.PhotoReference); len(updates) > 0 {
+			if err := tx.Model(&restaurant).Updates(updates).Error; err != nil {
+				return err
+			}
+			if v, ok := updates["city"].(string); ok {
+				restaurant.City = v
+			}
+			if v, ok := updates["country"].(string); ok {
+				restaurant.Country = v
+			}
+			if v, ok := updates["photo_reference"].(string); ok {
+				restaurant.PhotoReference = v
+			}
 		}
 
 		// Remove from wishlist if present (review supersedes wishlist)
@@ -448,7 +465,7 @@ func applyTagFilter(query *gorm.DB, slugs []string, mode v1.TagFilterMode) *gorm
 	}
 	// OR (default): at least one specified tag must appear
 	conditions := make([]string, len(slugs))
-	args := make([]interface{}, len(slugs))
+	args := make([]any, len(slugs))
 	for i, slug := range slugs {
 		conditions[i] = "reviews.tags LIKE ?"
 		args[i] = fmt.Sprintf(`%%"%s"%%`, slug)
