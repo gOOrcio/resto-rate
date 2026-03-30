@@ -17,6 +17,7 @@ import (
 	"strconv"
 	"strings"
 
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -26,6 +27,7 @@ import (
 
 	"connectrpc.com/connect"
 	"connectrpc.com/grpcreflect"
+	"golang.org/x/oauth2/google"
 
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
@@ -326,14 +328,37 @@ func placePhotoHandler() http.Handler {
 			return
 		}
 
-		apiKey := os.Getenv("GOOGLE_PLACES_API_KEY")
 		params := url.Values{}
-		params.Set("key", apiKey)
 		params.Set("maxWidthPx", "800")
 		params.Set("skipHttpRedirect", "true")
+
+		// Prefer API key from env; fall back to ADC bearer token (works with gcloud ADC).
+		apiKey := os.Getenv("GOOGLE_PLACES_API_KEY")
+		if apiKey != "" {
+			params.Set("key", apiKey)
+		}
 		googleURL := "https://places.googleapis.com/v1/" + name + "/media?" + params.Encode()
 
-		resp, err := http.Get(googleURL) //nolint:noctx
+		req, err := http.NewRequestWithContext(r.Context(), http.MethodGet, googleURL, nil)
+		if err != nil {
+			http.Error(w, "failed to build request", http.StatusInternalServerError)
+			return
+		}
+		if apiKey == "" {
+			// No API key — use ADC (same credentials the gRPC client uses).
+			tok, quotaProject, tokErr := getADCToken(r.Context())
+			if tokErr != nil {
+				slog.Error("place-photo: ADC token failed", slog.Any("error", tokErr))
+				http.Error(w, "auth unavailable", http.StatusInternalServerError)
+				return
+			}
+			req.Header.Set("Authorization", "Bearer "+tok)
+			if quotaProject != "" {
+				req.Header.Set("X-Goog-User-Project", quotaProject)
+			}
+		}
+
+		resp, err := http.DefaultClient.Do(req) //nolint:noctx
 		if err != nil {
 			slog.Error("place-photo: upstream request failed", slog.String("name", name), slog.Any("error", err))
 			http.Error(w, "upstream request failed", http.StatusBadGateway)
@@ -364,6 +389,25 @@ func placePhotoHandler() http.Handler {
 		}
 		http.Redirect(w, r, photoResp.PhotoURI, http.StatusFound)
 	})
+}
+
+// getADCToken returns a bearer token and quota project from Application Default Credentials.
+func getADCToken(ctx context.Context) (token string, quotaProject string, err error) {
+	creds, err := google.FindDefaultCredentials(ctx, "https://www.googleapis.com/auth/cloud-platform")
+	if err != nil {
+		return "", "", err
+	}
+	tok, err := creds.TokenSource.Token()
+	if err != nil {
+		return "", "", err
+	}
+	// Extract quota_project_id from the raw credentials JSON if present
+	// (set by `gcloud auth application-default set-quota-project`).
+	var credFile struct {
+		QuotaProjectID string `json:"quota_project_id"`
+	}
+	_ = json.Unmarshal(creds.JSON, &credFile)
+	return tok.AccessToken, credFile.QuotaProjectID, nil
 }
 
 func envLogLevel() slog.Level {
