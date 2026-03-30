@@ -12,6 +12,7 @@
 	import ExpandableRestaurantInfo from '$lib/ui/components/ExpandableRestaurantInfo.svelte';
 	import TagFilter from '$lib/ui/components/TagFilter.svelte';
 	import { WouldVisitAgain } from '$lib/client/generated/reviews/v1/review_pb';
+	import * as m from '$lib/paraglide/messages';
 
 	let reviews = $state<ReviewProto[]>([]);
 	let loading = $state(true);
@@ -49,10 +50,8 @@
 		[...new Set(reviews.map((r) => r.restaurantCountry).filter(Boolean))].sort()
 	);
 
-	let ratingRangeError = $derived(
+	let hasRatingRangeError = $derived(
 		minRating > 0 && maxRating > 0 && minRating > maxRating
-			? 'Min rating cannot exceed max rating'
-			: null
 	);
 
 	let activeFilterCount = $derived(
@@ -112,7 +111,7 @@
 
 	$effect(() => {
 		if (!mounted) return;
-		if (ratingRangeError) return;
+		if (hasRatingRangeError) return;
 		void [tagSlugs, tagMode, minRating, maxRating, commentSearch, city, country, sortBy];
 		loadReviews();
 	});
@@ -151,10 +150,10 @@
 		mounted = true;
 	});
 
-	const WOULD_VISIT_AGAIN_LABELS: Record<number, { text: string; cls: string }> = {
-		[WouldVisitAgain.YES]: { text: 'Would visit again', cls: 'text-emerald-600 dark:text-emerald-400' },
-		[WouldVisitAgain.MAYBE]: { text: 'Maybe again', cls: 'text-amber-600 dark:text-amber-400' },
-		[WouldVisitAgain.NO]: { text: "Wouldn't return", cls: 'text-red-600 dark:text-red-400' },
+	const WOULD_VISIT_AGAIN_LABELS: Record<number, { text: () => string; cls: string }> = {
+		[WouldVisitAgain.YES]: { text: m.common_would_visit_again_yes, cls: 'text-emerald-600 dark:text-emerald-400' },
+		[WouldVisitAgain.MAYBE]: { text: m.common_would_visit_again_maybe, cls: 'text-amber-600 dark:text-amber-400' },
+		[WouldVisitAgain.NO]: { text: m.common_would_visit_again_no, cls: 'text-red-600 dark:text-red-400' },
 	};
 
 	function formatVisitDate(ts: bigint): string {
@@ -167,7 +166,7 @@
 	<!-- Page header -->
 	<div class="flex items-start justify-between gap-4">
 		<div>
-			<h1 class="font-display text-3xl font-semibold text-foreground">My Reviews</h1>
+			<h1 class="font-display text-3xl font-semibold text-foreground">{m.reviews_page_title()}</h1>
 			{#if !loading}
 				<p class="mt-1 text-sm text-muted-foreground">
 					{reviews.length === 0 && activeFilterCount === 0
@@ -180,14 +179,14 @@
 			class="shrink-0 rounded-md border border-border px-3 py-1.5 text-sm font-medium text-foreground transition-colors hover:bg-muted"
 			onclick={() => { showAddReview = !showAddReview; searchedPlace = null; }}
 		>
-			{showAddReview ? 'Cancel' : '+ Add review'}
+			{showAddReview ? m.common_cancel() : m.reviews_add()}
 		</button>
 	</div>
 
 	<!-- Add review panel -->
 	{#if showAddReview}
 		<div class="relative z-10 card-reveal rounded-lg border border-border bg-card p-5">
-			<p class="mb-3 text-sm font-medium text-foreground">Search for a restaurant to review</p>
+			<p class="mb-3 text-sm font-medium text-foreground">{m.reviews_search_label()}</p>
 			<RestaurantSearch
 				placeholder="Restaurant name or address…"
 				onSelect={handleSearchSelect}
@@ -211,7 +210,7 @@
 						class="text-sm text-muted-foreground hover:text-foreground"
 						onclick={() => (searchedPlace = null)}
 					>
-						Choose different restaurant
+						{m.reviews_choose_different()}
 					</button>
 				</div>
 			{/if}
@@ -234,20 +233,20 @@
 					class="text-sm text-muted-foreground hover:text-foreground"
 					onclick={clearFilters}
 				>
-					Clear all
+					{m.common_clear_all()}
 				</button>
 			{/if}
 			<div class="ml-auto flex items-center gap-2">
-				<label for="reviews-sort" class="text-sm text-muted-foreground">Sort</label>
+				<label for="reviews-sort" class="text-sm text-muted-foreground">{m.common_sort()}</label>
 				<select
 					id="reviews-sort"
 					bind:value={sortBy}
 					class="rounded-md border border-border bg-card py-1 pl-2 pr-6 text-sm text-foreground focus:ring-1 focus:ring-ring focus:outline-none"
 				>
-					<option value="date-desc">Newest first</option>
-					<option value="date-asc">Oldest first</option>
-					<option value="rating-desc">Highest rated</option>
-					<option value="rating-asc">Lowest rated</option>
+					<option value="date-desc">{m.common_sort_newest()}</option>
+					<option value="date-asc">{m.common_sort_oldest()}</option>
+					<option value="rating-desc">{m.common_sort_rating_high()}</option>
+					<option value="rating-asc">{m.common_sort_rating_low()}</option>
 				</select>
 			</div>
 		</div>
@@ -256,47 +255,47 @@
 			<div class="card-reveal space-y-4 rounded-lg border border-border bg-card p-4">
 				<!-- Tags -->
 				<div>
-					<span class="mb-2 block text-sm font-medium text-foreground">Tags</span>
+					<span class="mb-2 block text-sm font-medium text-foreground">{m.common_filter_tags()}</span>
 					<TagFilter bind:selected={tagSlugs} bind:mode={tagMode} />
 				</div>
 
 				<!-- Rating range -->
 				<div class="flex flex-wrap items-center gap-2">
-					<span class="text-sm font-medium text-foreground">Rating</span>
+					<span class="text-sm font-medium text-foreground">{m.common_filter_rating()}</span>
 					<select
 						bind:value={minRating}
 						class="rounded-md border border-border bg-card px-2 py-1 text-sm text-foreground focus:ring-1 focus:ring-ring focus:outline-none"
 					>
-						<option value={0}>Min ★</option>
+						<option value={0}>{m.common_filter_min_rating()}</option>
 						{#each [1, 2, 3, 4, 5] as n}
 							<option value={n}>{n} ★</option>
 						{/each}
 					</select>
-					<span class="text-sm text-muted-foreground">to</span>
+					<span class="text-sm text-muted-foreground">{m.common_filter_rating_to()}</span>
 					<select
 						bind:value={maxRating}
 						class="rounded-md border border-border bg-card px-2 py-1 text-sm text-foreground focus:ring-1 focus:ring-ring focus:outline-none"
 					>
-						<option value={0}>Max ★</option>
+						<option value={0}>{m.common_filter_max_rating()}</option>
 						{#each [1, 2, 3, 4, 5] as n}
 							<option value={n}>{n} ★</option>
 						{/each}
 					</select>
-					{#if ratingRangeError}
-						<p class="w-full text-xs text-destructive">{ratingRangeError}</p>
+					{#if hasRatingRangeError}
+						<p class="w-full text-xs text-destructive">{m.common_filter_rating_error()}</p>
 					{/if}
 				</div>
 
 				<!-- Comment search -->
 				<div>
 					<label for="comment-search" class="mb-1 block text-sm font-medium text-foreground">
-						Comment contains
+						{m.common_filter_comment()}
 					</label>
 					<input
 						id="comment-search"
 						type="text"
 						bind:value={commentRaw}
-						placeholder="Search in comments…"
+						placeholder={m.common_filter_comment_placeholder()}
 						class="w-full rounded-md border border-border bg-card px-3 py-1.5 text-sm text-foreground placeholder:text-muted-foreground focus:ring-1 focus:ring-ring focus:outline-none"
 					/>
 				</div>
@@ -304,26 +303,26 @@
 				<!-- City + Country -->
 				<div class="grid grid-cols-2 gap-3">
 					<div>
-						<label for="filter-city" class="mb-1 block text-sm font-medium text-foreground">City</label>
+						<label for="filter-city" class="mb-1 block text-sm font-medium text-foreground">{m.common_filter_city()}</label>
 						<select
 							id="filter-city"
 							bind:value={city}
 							class="w-full rounded-md border border-border bg-card px-3 py-1.5 text-sm text-foreground focus:ring-1 focus:ring-ring focus:outline-none"
 						>
-							<option value="">All cities</option>
+							<option value="">{m.common_filter_all_cities()}</option>
 							{#each uniqueCities as c}
 								<option value={c}>{c}</option>
 							{/each}
 						</select>
 					</div>
 					<div>
-						<label for="filter-country" class="mb-1 block text-sm font-medium text-foreground">Country</label>
+						<label for="filter-country" class="mb-1 block text-sm font-medium text-foreground">{m.common_filter_country()}</label>
 						<select
 							id="filter-country"
 							bind:value={country}
 							class="w-full rounded-md border border-border bg-card px-3 py-1.5 text-sm text-foreground focus:ring-1 focus:ring-ring focus:outline-none"
 						>
-							<option value="">All countries</option>
+							<option value="">{m.common_filter_all_countries()}</option>
 							{#each uniqueCountries as c}
 								<option value={c}>{c}</option>
 							{/each}
@@ -338,18 +337,18 @@
 	{#if loading}
 		<div class="flex items-center gap-2 py-8 text-sm text-muted-foreground">
 			<div class="h-4 w-4 animate-spin rounded-full border-2 border-border border-t-primary"></div>
-			Loading…
+			{m.common_loading()}
 		</div>
 	{:else if reviews.length === 0}
 		<div class="py-16 text-center">
 			<p class="text-muted-foreground">
 				{#if activeFilterCount > 0}
-					No reviews match the current filters.
+					{m.reviews_empty_with_filters()}
 					<button type="button" onclick={clearFilters} class="underline hover:no-underline">
-						Clear filters
+						{m.common_clear_filters()}
 					</button>
 				{:else}
-					No reviews yet. Add your first one above.
+					{m.reviews_empty_no_filters()}
 				{/if}
 			</p>
 		</div>
@@ -376,7 +375,7 @@
 								class="mt-3 text-sm text-muted-foreground hover:text-foreground"
 								onclick={() => (editingId = null)}
 							>
-								Cancel
+								{m.common_cancel()}
 							</button>
 						</div>
 					{:else}
@@ -430,13 +429,13 @@
 										{/if}
 										{#if wvaEntry}
 											<span class="rounded-full border border-current px-2 py-0.5 text-xs font-medium {wvaEntry.cls}">
-												{wvaEntry.text}
+												{wvaEntry.text()}
 											</span>
 										{/if}
 									</div>
 									{#if review.dishHighlights}
 										<p class="text-xs text-muted-foreground">
-											<span class="font-medium text-foreground">Highlights:</span> {review.dishHighlights}
+											<span class="font-medium text-foreground">{m.common_highlights()}</span> {review.dishHighlights}
 										</p>
 									{/if}
 								</div>
@@ -450,7 +449,7 @@
 									href="/restaurants/{encodeURIComponent(review.googlePlacesId)}"
 									class="text-xs text-muted-foreground hover:text-foreground hover:underline"
 								>
-									Details and reviews
+									{m.common_details_and_reviews()}
 								</a>
 							{:else}
 								<span></span>
@@ -460,14 +459,14 @@
 									class="text-xs text-muted-foreground transition-colors hover:text-foreground"
 									onclick={() => (editingId = review.id)}
 								>
-									Edit
+									{m.common_edit()}
 								</button>
 								<button
 									class="text-xs text-muted-foreground transition-colors hover:text-destructive disabled:opacity-40"
 									disabled={deleting.has(review.id)}
 									onclick={() => deleteReview(review.id)}
 								>
-									{deleting.has(review.id) ? 'Deleting…' : 'Delete'}
+									{deleting.has(review.id) ? m.common_deleting() : m.common_delete()}
 								</button>
 							</div>
 						</div>

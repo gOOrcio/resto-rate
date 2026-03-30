@@ -26,6 +26,7 @@
 		Receipt
 	} from '@lucide/svelte';
 	import RatingForm from '$lib/ui/components/RatingForm.svelte';
+	import * as m from '$lib/paraglide/messages';
 
 	const googlePlacesId = $derived(decodeURIComponent(page.params.googlePlacesId ?? ''));
 
@@ -52,10 +53,10 @@
 	const myReview = $derived(reviews.find((r) => r.userId === auth.user?.id));
 	const friendReviews = $derived(reviews.filter((r) => r.userId !== auth.user?.id));
 
-	const WOULD_VISIT_AGAIN_LABELS: Record<number, { text: string; cls: string }> = {
-		[WouldVisitAgain.YES]: { text: 'Would visit again', cls: 'text-emerald-600 dark:text-emerald-400' },
-		[WouldVisitAgain.MAYBE]: { text: 'Maybe again', cls: 'text-amber-600 dark:text-amber-400' },
-		[WouldVisitAgain.NO]: { text: "Wouldn't return", cls: 'text-red-600 dark:text-red-400' }
+	const WOULD_VISIT_AGAIN_LABELS: Record<number, { text: () => string; cls: string }> = {
+		[WouldVisitAgain.YES]: { text: m.common_would_visit_again_yes, cls: 'text-emerald-600 dark:text-emerald-400' },
+		[WouldVisitAgain.MAYBE]: { text: m.common_would_visit_again_maybe, cls: 'text-amber-600 dark:text-amber-400' },
+		[WouldVisitAgain.NO]: { text: m.common_would_visit_again_no, cls: 'text-red-600 dark:text-red-400' }
 	};
 
 	function formatDate(ts: bigint | number): string {
@@ -152,11 +153,11 @@
 			? (() => {
 					switch (googleData.businessStatus) {
 						case BusinessStatus.OPERATIONAL:
-							return { label: 'Open', color: 'text-emerald-600 dark:text-emerald-400' };
+							return { label: m.restaurant_status_open(), color: 'text-emerald-600 dark:text-emerald-400' };
 						case BusinessStatus.CLOSED_TEMPORARILY:
-							return { label: 'Temporarily closed', color: 'text-amber-600 dark:text-amber-400' };
+							return { label: m.restaurant_status_temp_closed(), color: 'text-amber-600 dark:text-amber-400' };
 						case BusinessStatus.CLOSED_PERMANENTLY:
-							return { label: 'Permanently closed', color: 'text-red-600 dark:text-red-400' };
+							return { label: m.restaurant_status_perm_closed(), color: 'text-red-600 dark:text-red-400' };
 						default:
 							return null;
 					}
@@ -192,11 +193,11 @@
 	let amenities = $derived(
 		googleData
 			? [
-					{ label: 'Dine-in', value: googleData.dineIn },
-					{ label: 'Takeout', value: googleData.takeout },
-					{ label: 'Delivery', value: googleData.delivery },
-					{ label: 'Outdoor seating', value: googleData.outdoorSeating },
-					{ label: 'Reservations', value: googleData.reservable }
+					{ label: m.restaurant_feature_dine_in(), value: googleData.dineIn },
+					{ label: m.restaurant_feature_takeout(), value: googleData.takeout },
+					{ label: m.restaurant_feature_delivery(), value: googleData.delivery },
+					{ label: m.restaurant_feature_outdoor(), value: googleData.outdoorSeating },
+					{ label: m.restaurant_feature_reservations(), value: googleData.reservable }
 				].filter((a) => a.value !== undefined && a.value !== null)
 			: []
 	);
@@ -208,7 +209,7 @@
 		if (!auth.isLoggedIn) { goto('/'); return; }
 		loading = true;
 		Promise.all([loadRestaurantData(), loadGoogleData()])
-			.catch((e) => { console.error(e); error = 'Failed to load restaurant data.'; })
+			.catch((e) => { console.error(e); error = m.restaurant_load_error(); })
 			.finally(() => { loading = false; });
 	});
 </script>
@@ -220,13 +221,13 @@
 		class="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
 	>
 		<ChevronLeft class="h-4 w-4" />
-		Back
+		{m.common_back()}
 	</button>
 
 	{#if loading}
 		<div class="flex items-center gap-2 py-16 text-sm text-muted-foreground">
 			<div class="h-4 w-4 animate-spin rounded-full border-2 border-border border-t-primary"></div>
-			Loading…
+			{m.common_loading()}
 		</div>
 	{:else if error}
 		<p class="text-sm text-destructive">{error}</p>
@@ -283,7 +284,7 @@
 							{:else}
 								<Star class="h-3.5 w-3.5 {isWishlisted ? 'fill-amber-500 text-amber-500' : ''}" />
 							{/if}
-							{isWishlisted ? 'Wishlisted' : 'Wishlist'}
+							{isWishlisted ? m.restaurant_wishlisted_btn() : m.restaurant_wishlist_btn()}
 						</button>
 					{/if}
 				</div>
@@ -303,7 +304,7 @@
 								class="text-sm text-muted-foreground hover:text-foreground"
 								onclick={() => (showRatingForm = false)}
 							>
-								Cancel
+								{m.common_cancel()}
 							</button>
 						</div>
 					{:else if myReview}
@@ -324,7 +325,7 @@
 								</span>
 							</div>
 							<div class="flex shrink-0 items-center gap-1 text-xs text-muted-foreground">
-								<span>Your review</span>
+								<span>{m.restaurant_your_review()}</span>
 								{#if myReviewExpanded}
 									<ChevronUp class="h-3.5 w-3.5" />
 								{:else}
@@ -351,7 +352,7 @@
 											class="text-xs text-primary hover:underline"
 											onclick={(e) => { e.stopPropagation(); showRatingForm = true; myReviewExpanded = false; }}
 										>
-											Edit
+											{m.common_edit()}
 										</button>
 									</div>
 								</div>
@@ -386,13 +387,13 @@
 											{/if}
 											{#if wvaEntry}
 												<span class="rounded-full border border-current px-2 py-0.5 text-xs font-medium {wvaEntry.cls}">
-													{wvaEntry.text}
+													{wvaEntry.text()}
 												</span>
 											{/if}
 										</div>
 										{#if myReview.dishHighlights}
 											<p class="text-xs text-muted-foreground">
-												<span class="font-medium text-foreground">Highlights:</span> {myReview.dishHighlights}
+												<span class="font-medium text-foreground">{m.common_highlights()}</span> {myReview.dishHighlights}
 											</p>
 										{/if}
 									</div>
@@ -405,13 +406,13 @@
 							<span class="text-sm text-muted-foreground">
 								{reviews.length > 0
 									? `${reviews.length} ${reviews.length === 1 ? 'review' : 'reviews'} from friends`
-									: 'No reviews yet'}
+									: m.restaurant_no_reviews_yet()}
 							</span>
 							<button
 								class="rounded-lg bg-primary px-4 py-1.5 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
 								onclick={() => (showRatingForm = true)}
 							>
-								Write a review
+								{m.restaurant_write_review()}
 							</button>
 						</div>
 					{/if}
@@ -423,13 +424,13 @@
 		<div class="rounded-xl border border-border bg-card p-5 shadow-sm">
 			<div class="mb-4 flex items-center justify-between">
 				<img src="/GoogleMaps_Logo_Gray.svg" alt="Google Maps" class="h-4 w-auto" />
-				<span class="text-xs text-muted-foreground">Google Places data</span>
+				<span class="text-xs text-muted-foreground">{m.restaurant_google_label()}</span>
 			</div>
 
 			{#if googleLoading}
 				<div class="flex items-center gap-2 py-6 text-sm text-muted-foreground">
 					<Loader2 class="h-4 w-4 animate-spin" />
-					Loading Google details…
+					{m.restaurant_google_loading()}
 				</div>
 			{:else if googleData}
 				<div class="space-y-4">
@@ -443,7 +444,7 @@
 								</div>
 								<span class="font-semibold text-foreground">{googleData.rating.toFixed(1)}</span>
 								{#if googleData.userRatingCount}
-									<span class="text-sm text-muted-foreground">({googleData.userRatingCount.toLocaleString()} Google reviews)</span>
+									<span class="text-sm text-muted-foreground">{m.restaurant_google_reviews({ count: String(googleData.userRatingCount.toLocaleString()) })}</span>
 								{/if}
 							</div>
 						{/if}
@@ -476,7 +477,7 @@
 							<div class="flex items-center gap-2">
 								<img src="/GoogleMaps_Logo_Gray.svg" alt="" class="h-3.5 w-auto shrink-0" />
 								<a href={googleData.googleMapsUri} target="_blank" rel="noopener noreferrer" class="text-sm text-primary hover:underline">
-									Open in Google Maps
+									{m.restaurant_open_maps()}
 								</a>
 							</div>
 						{/if}
@@ -485,7 +486,7 @@
 					{#if hoursToday}
 						<hr class="border-border" />
 						<div>
-							<h4 class="mb-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Today's hours</h4>
+							<h4 class="mb-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">{m.restaurant_hours_today()}</h4>
 							<p class="text-sm text-muted-foreground">{hoursToday}</p>
 						</div>
 					{/if}
@@ -493,7 +494,7 @@
 					{#if amenities.length > 0}
 						<hr class="border-border" />
 						<div>
-							<h4 class="mb-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Features</h4>
+							<h4 class="mb-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground">{m.restaurant_features()}</h4>
 							<div class="grid grid-cols-2 gap-2">
 								{#each amenities as feature}
 									<div class="flex items-center gap-1.5">
@@ -510,7 +511,7 @@
 					{/if}
 				</div>
 			{:else}
-				<p class="text-sm text-muted-foreground">Google details unavailable.</p>
+				<p class="text-sm text-muted-foreground">{m.restaurant_google_unavailable()}</p>
 			{/if}
 		</div>
 
@@ -519,7 +520,7 @@
 			<div class="rounded-xl border border-border bg-card shadow-sm">
 				<div class="border-b border-border px-5 py-3">
 					<h2 class="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
-						Friends' reviews ({friendReviews.length})
+						{m.restaurant_friends_reviews({ count: String(friendReviews.length) })}
 					</h2>
 				</div>
 				<ul class="divide-y divide-border">
@@ -534,7 +535,7 @@
 							>
 								<div class="flex items-center gap-3">
 									<div class="flex flex-col">
-										<span class="font-medium text-foreground">{review.authorName || 'Friend'}</span>
+										<span class="font-medium text-foreground">{review.authorName || m.restaurant_friend_fallback()}</span>
 										<div class="mt-0.5 flex items-center gap-1.5">
 											<div class="flex items-center gap-0.5">
 												{#each Array(5) as _, i}
@@ -586,13 +587,13 @@
 												{/if}
 												{#if wvaEntry}
 													<span class="rounded-full border border-current px-2 py-0.5 text-xs font-medium {wvaEntry.cls}">
-														{wvaEntry.text}
+														{wvaEntry.text()}
 													</span>
 												{/if}
 											</div>
 											{#if review.dishHighlights}
 												<p class="text-xs text-muted-foreground">
-													<span class="font-medium text-foreground">Highlights:</span> {review.dishHighlights}
+													<span class="font-medium text-foreground">{m.common_highlights()}</span> {review.dishHighlights}
 												</p>
 											{/if}
 										</div>

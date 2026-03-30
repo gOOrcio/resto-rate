@@ -48,6 +48,7 @@ message UpdateMyProfileRequest {
   string default_region = 2;
   bool is_dark_mode_enabled = 3;
   bool set_is_dark_mode_enabled = 4; // explicit setter flag (false is a valid value)
+  string default_language = 5; // "en" or "pl"; empty = no change
 }
 
 message UpdateMyProfileResponse {

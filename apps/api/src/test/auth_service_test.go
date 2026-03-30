@@ -101,6 +101,24 @@ func TestLogin_UnspecifiedProvider(t *testing.T) {
 	}
 }
 
+// TestUpdateMyProfile_InvalidLocale verifies that an unsupported language code
+// is rejected BEFORE session auth (cheap input validation first).
+func TestUpdateMyProfile_InvalidLocale(t *testing.T) {
+	svc := &services.AuthService{} // nil Valkey — must never reach session check
+	req := connect.NewRequest(&authv1.UpdateMyProfileRequest{DefaultLanguage: "de"})
+	_, err := svc.UpdateMyProfile(context.Background(), req)
+	if err == nil {
+		t.Fatal("expected error for unsupported locale, got nil")
+	}
+	connectErr, ok := err.(*connect.Error)
+	if !ok {
+		t.Fatalf("expected *connect.Error, got %T", err)
+	}
+	if connectErr.Code() != connect.CodeInvalidArgument {
+		t.Fatalf("expected CodeInvalidArgument, got %v", connectErr.Code())
+	}
+}
+
 // TestLogin_EmptyToken verifies that Login rejects an empty id_token.
 func TestLogin_EmptyToken(t *testing.T) {
 	svc := &services.AuthService{}

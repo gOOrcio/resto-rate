@@ -13,6 +13,7 @@
 	import RestaurantSearch from '$lib/ui/components/RestaurantSearch.svelte';
 	import TagPicker from '$lib/ui/components/TagPicker.svelte';
 	import TagFilter from '$lib/ui/components/TagFilter.svelte';
+	import * as m from '$lib/paraglide/messages';
 
 	let items = $state<WishlistItemProto[]>([]);
 	let loading = $state(true);
@@ -100,10 +101,10 @@
 			pendingTags = [];
 		} catch (e) {
 			if (ConnectError.from(e).code === Code.FailedPrecondition) {
-				saveError = "You've already reviewed this place — it can't be added to your wishlist.";
+				saveError = m.wishlist_already_reviewed();
 			} else {
 				console.error('Failed to add to wishlist:', e);
-				saveError = 'Failed to save. Please try again.';
+				saveError = m.wishlist_save_error();
 			}
 		} finally {
 			savingToWishlist = false;
@@ -191,7 +192,7 @@
 	<!-- Page header -->
 	<div class="flex items-start justify-between gap-4">
 		<div>
-			<h1 class="font-display text-3xl font-semibold text-foreground">My Wishlist</h1>
+			<h1 class="font-display text-3xl font-semibold text-foreground">{m.wishlist_page_title()}</h1>
 			{#if !loading}
 				<p class="mt-1 text-sm text-muted-foreground">
 					{items.length === 0 && activeFilterCount === 0
@@ -204,14 +205,14 @@
 			class="shrink-0 rounded-md border border-border px-3 py-1.5 text-sm font-medium text-foreground transition-colors hover:bg-muted"
 			onclick={() => { showSearch = !showSearch; searchedPlace = null; searchAction = null; pendingTags = []; }}
 		>
-			{showSearch ? 'Cancel' : '+ Add place'}
+			{showSearch ? m.common_cancel() : m.wishlist_add()}
 		</button>
 	</div>
 
 	<!-- Add place panel -->
 	{#if showSearch}
 		<div class="relative z-10 card-reveal rounded-lg border border-border bg-card p-5">
-			<p class="mb-3 text-sm font-medium text-foreground">Search for a restaurant to save</p>
+			<p class="mb-3 text-sm font-medium text-foreground">{m.wishlist_search_label()}</p>
 			<RestaurantSearch
 				placeholder="Restaurant name or address…"
 				onSelect={handleSearchSelect}
@@ -237,19 +238,19 @@
 								onclick={saveToWishlist}
 								disabled={savingToWishlist}
 							>
-								{savingToWishlist ? 'Saving…' : 'Save to wishlist'}
+								{savingToWishlist ? m.common_saving() : m.wishlist_save_btn()}
 							</button>
 							<button
 								class="rounded-md border border-border px-3 py-1.5 text-sm font-medium text-foreground transition-colors hover:bg-muted"
 								onclick={() => (searchAction = 'review')}
 							>
-								Write a review instead
+								{m.wishlist_rate_instead()}
 							</button>
 							<button
 								class="text-sm text-muted-foreground hover:text-foreground"
 								onclick={() => (searchedPlace = null)}
 							>
-								Clear
+								{m.common_clear()}
 							</button>
 						</div>
 					{:else if searchAction === 'review'}
@@ -264,7 +265,7 @@
 							class="text-sm text-muted-foreground hover:text-foreground"
 							onclick={() => (searchAction = null)}
 						>
-							Back
+							{m.common_back()}
 						</button>
 					{/if}
 				</div>
@@ -288,20 +289,20 @@
 					class="text-sm text-muted-foreground hover:text-foreground"
 					onclick={clearFilters}
 				>
-					Clear all
+					{m.common_clear_all()}
 				</button>
 			{/if}
 			<div class="ml-auto flex items-center gap-2">
-				<label for="wishlist-sort" class="text-sm text-muted-foreground">Sort</label>
+				<label for="wishlist-sort" class="text-sm text-muted-foreground">{m.common_sort()}</label>
 				<select
 					id="wishlist-sort"
 					bind:value={sortBy}
 					class="rounded-md border border-border bg-card py-1 pl-2 pr-6 text-sm text-foreground focus:ring-1 focus:ring-ring focus:outline-none"
 				>
-					<option value="date-desc">Newest first</option>
-					<option value="date-asc">Oldest first</option>
-					<option value="name-asc">Name A–Z</option>
-					<option value="name-desc">Name Z–A</option>
+					<option value="date-desc">{m.common_sort_newest()}</option>
+					<option value="date-asc">{m.common_sort_oldest()}</option>
+					<option value="name-asc">{m.common_sort_name_az()}</option>
+					<option value="name-desc">{m.common_sort_name_za()}</option>
 				</select>
 			</div>
 		</div>
@@ -310,33 +311,33 @@
 			<div class="card-reveal space-y-4 rounded-lg border border-border bg-card p-4">
 				<!-- Tags -->
 				<div>
-					<span class="mb-2 block text-sm font-medium text-foreground">Tags</span>
+					<span class="mb-2 block text-sm font-medium text-foreground">{m.common_filter_tags()}</span>
 					<TagFilter bind:selected={tagSlugs} bind:mode={tagMode} />
 				</div>
 
 				<!-- City + Country -->
 				<div class="grid grid-cols-2 gap-3">
 					<div>
-						<label for="filter-city" class="mb-1 block text-sm font-medium text-foreground">City</label>
+						<label for="filter-city" class="mb-1 block text-sm font-medium text-foreground">{m.common_filter_city()}</label>
 						<select
 							id="filter-city"
 							bind:value={city}
 							class="w-full rounded-md border border-border bg-card px-3 py-1.5 text-sm text-foreground focus:ring-1 focus:ring-ring focus:outline-none"
 						>
-							<option value="">All cities</option>
+							<option value="">{m.common_filter_all_cities()}</option>
 							{#each uniqueCities as c}
 								<option value={c}>{c}</option>
 							{/each}
 						</select>
 					</div>
 					<div>
-						<label for="filter-country" class="mb-1 block text-sm font-medium text-foreground">Country</label>
+						<label for="filter-country" class="mb-1 block text-sm font-medium text-foreground">{m.common_filter_country()}</label>
 						<select
 							id="filter-country"
 							bind:value={country}
 							class="w-full rounded-md border border-border bg-card px-3 py-1.5 text-sm text-foreground focus:ring-1 focus:ring-ring focus:outline-none"
 						>
-							<option value="">All countries</option>
+							<option value="">{m.common_filter_all_countries()}</option>
 							{#each uniqueCountries as c}
 								<option value={c}>{c}</option>
 							{/each}
@@ -351,18 +352,18 @@
 	{#if loading}
 		<div class="flex items-center gap-2 py-8 text-sm text-muted-foreground">
 			<div class="h-4 w-4 animate-spin rounded-full border-2 border-border border-t-primary"></div>
-			Loading…
+			{m.common_loading()}
 		</div>
 	{:else if items.length === 0}
 		<div class="py-16 text-center">
 			<p class="text-muted-foreground">
 				{#if activeFilterCount > 0}
-					No wishlist items match the current filters.
+					{m.wishlist_empty_with_filters()}
 					<button type="button" onclick={clearFilters} class="underline hover:no-underline">
-						Clear filters
+						{m.common_clear_filters()}
 					</button>
 				{:else}
-					Your wishlist is empty. Add a place to get started.
+					{m.wishlist_empty_no_filters()}
 				{/if}
 			</p>
 		</div>
@@ -411,14 +412,14 @@
 												onclick={() => saveTags(item)}
 												class="rounded-md bg-primary px-3 py-1 text-xs font-medium text-primary-foreground disabled:opacity-50 hover:opacity-90"
 											>
-												{savingTags ? 'Saving…' : 'Save tags'}
+												{savingTags ? m.common_saving() : m.wishlist_save_tags()}
 											</button>
 											<button
 												type="button"
 												onclick={() => (editingTagsId = null)}
 												class="text-xs text-muted-foreground hover:text-foreground"
 											>
-												Cancel
+												{m.common_cancel()}
 											</button>
 										</div>
 									</div>
@@ -442,7 +443,7 @@
 										href="/restaurants/{encodeURIComponent(item.googlePlacesId)}"
 										class="text-xs text-muted-foreground hover:text-foreground hover:underline"
 									>
-										Details and reviews
+										{m.common_details_and_reviews()}
 									</a>
 								{/if}
 							</div>
@@ -451,14 +452,14 @@
 									class="rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground transition-opacity hover:opacity-90"
 									onclick={() => (ratingId = item.id)}
 								>
-									Rate this place
+									{m.wishlist_rate_place()}
 								</button>
 								<button
 									class="text-xs text-muted-foreground transition-colors hover:text-destructive disabled:opacity-40"
 									disabled={removing.has(item.googlePlacesId)}
 									onclick={() => remove(item.googlePlacesId)}
 								>
-									{removing.has(item.googlePlacesId) ? 'Removing…' : 'Remove'}
+									{removing.has(item.googlePlacesId) ? m.common_removing() : m.common_delete()}
 								</button>
 							</div>
 						</div>
@@ -478,7 +479,7 @@
 								class="text-sm text-muted-foreground hover:text-foreground"
 								onclick={() => (ratingId = null)}
 							>
-								Cancel
+								{m.common_cancel()}
 							</button>
 						</div>
 					{/if}

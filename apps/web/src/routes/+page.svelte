@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { auth } from '$lib/state/auth.svelte';
+	import * as m from '$lib/paraglide/messages';
 </script>
 
 {#if auth.loading}
@@ -12,10 +13,10 @@
 		<section class="flex flex-col items-center gap-8 text-center">
 			<div class="space-y-4">
 				<h1 class="font-display text-4xl font-bold tracking-tight text-foreground sm:text-5xl">
-					Your personal restaurant diary
+					{m.home_hero_title()}
 				</h1>
 				<p class="mx-auto max-w-xl text-lg text-muted-foreground">
-					Track every meal, build your wishlist, and discover where your friends love to eat.
+					{m.home_hero_subtitle()}
 				</p>
 			</div>
 
@@ -24,25 +25,25 @@
 					href="/reviews"
 					class="rounded-lg bg-primary px-6 py-3 text-base font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
 				>
-					My Reviews
+					{m.nav_my_reviews()}
 				</a>
 				<a
 					href="/wishlist"
 					class="rounded-lg border border-border bg-card px-6 py-3 text-base font-semibold text-foreground transition-colors hover:bg-muted"
 				>
-					Wishlist
+					{m.nav_wishlist()}
 				</a>
 				<a
 					href="/friends"
 					class="rounded-lg border border-border bg-card px-6 py-3 text-base font-semibold text-foreground transition-colors hover:bg-muted"
 				>
-					Friends
+					{m.nav_friends()}
 				</a>
 				<a
 					href="/profile"
 					class="rounded-lg border border-border bg-card px-6 py-3 text-base font-semibold text-foreground transition-colors hover:bg-muted"
 				>
-					My Profile
+					{m.nav_my_profile()}
 				</a>
 			</div>
 		</section>
@@ -50,25 +51,23 @@
 		<!-- Feature highlights -->
 		<section class="grid gap-4 sm:grid-cols-3">
 			<a href="/reviews" class="rounded-lg border border-border bg-card p-6 transition-colors hover:bg-muted">
-				<h3 class="mb-2 font-semibold text-foreground">Rate &amp; Review</h3>
+				<h3 class="mb-2 font-semibold text-foreground">{m.home_feature_review_title()}</h3>
 				<p class="text-sm text-muted-foreground">
-					Leave personal ratings and notes for every restaurant you visit. Add tags like Romantic,
-					Business lunch, or Great value.
+					{m.home_feature_review_desc()}
 				</p>
 			</a>
 
 			<a href="/wishlist" class="rounded-lg border border-border bg-card p-6 transition-colors hover:bg-muted">
-				<h3 class="mb-2 font-semibold text-foreground">Wishlist</h3>
+				<h3 class="mb-2 font-semibold text-foreground">{m.home_feature_wishlist_title()}</h3>
 				<p class="text-sm text-muted-foreground">
-					Save restaurants you want to try. They're automatically removed when you leave a review.
+					{m.home_feature_wishlist_desc()}
 				</p>
 			</a>
 
 			<a href="/friends" class="rounded-lg border border-border bg-card p-6 transition-colors hover:bg-muted">
-				<h3 class="mb-2 font-semibold text-foreground">Friends</h3>
+				<h3 class="mb-2 font-semibold text-foreground">{m.home_feature_friends_title()}</h3>
 				<p class="text-sm text-muted-foreground">
-					Connect with friends and see their reviews when you search. Discover hidden gems through
-					people you trust.
+					{m.home_feature_friends_desc()}
 				</p>
 			</a>
 		</section>
@@ -79,10 +78,10 @@
 		<section class="flex flex-col items-center gap-8 text-center">
 			<div class="space-y-4">
 				<h1 class="font-display text-4xl font-bold tracking-tight text-foreground sm:text-5xl">
-					Your personal restaurant diary
+					{m.home_hero_title()}
 				</h1>
 				<p class="mx-auto max-w-xl text-lg text-muted-foreground">
-					Track every meal, build your wishlist, and discover where your friends love to eat.
+					{m.home_hero_subtitle()}
 				</p>
 			</div>
 
@@ -91,15 +90,15 @@
 					onclick={() => auth.openLogin()}
 					class="rounded-lg bg-primary px-8 py-3 text-base font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
 				>
-					Get started — it's free
+					{m.home_get_started()}
 				</button>
 				<p class="text-sm text-muted-foreground">
-					Already have an account?
+					{m.home_already_account()}
 					<button
 						onclick={() => auth.openLogin()}
 						class="underline underline-offset-2 hover:text-foreground"
 					>
-						Sign in
+						{m.nav_sign_in()}
 					</button>
 				</p>
 			</div>
@@ -108,25 +107,23 @@
 		<!-- Feature highlights -->
 		<section class="grid gap-4 sm:grid-cols-3">
 			<div class="rounded-lg border border-border bg-card p-6">
-				<h3 class="mb-2 font-semibold text-foreground">Rate &amp; Review</h3>
+				<h3 class="mb-2 font-semibold text-foreground">{m.home_feature_review_title()}</h3>
 				<p class="text-sm text-muted-foreground">
-					Leave personal ratings and notes for every restaurant you visit. Add tags like Romantic,
-					Business lunch, or Great value.
+					{m.home_feature_review_desc()}
 				</p>
 			</div>
 
 			<div class="rounded-lg border border-border bg-card p-6">
-				<h3 class="mb-2 font-semibold text-foreground">Wishlist</h3>
+				<h3 class="mb-2 font-semibold text-foreground">{m.home_feature_wishlist_title()}</h3>
 				<p class="text-sm text-muted-foreground">
-					Save restaurants you want to try. They're automatically removed when you leave a review.
+					{m.home_feature_wishlist_desc()}
 				</p>
 			</div>
 
 			<div class="rounded-lg border border-border bg-card p-6">
-				<h3 class="mb-2 font-semibold text-foreground">Friends</h3>
+				<h3 class="mb-2 font-semibold text-foreground">{m.home_feature_friends_title()}</h3>
 				<p class="text-sm text-muted-foreground">
-					Connect with friends and see their reviews when you search. Discover hidden gems through
-					people you trust.
+					{m.home_feature_friends_desc()}
 				</p>
 			</div>
 		</section>

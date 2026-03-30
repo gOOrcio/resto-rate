@@ -16,6 +16,7 @@
 		ChevronRight,
 		ChevronUp
 	} from '@lucide/svelte';
+	import * as m from '$lib/paraglide/messages';
 
 	const { googlePlacesId, name, address, city, country, photoReference = '', rating = undefined } = $props<{
 		googlePlacesId: string;
@@ -45,11 +46,11 @@
 			? (() => {
 					switch (googleData.businessStatus) {
 						case BusinessStatus.OPERATIONAL:
-							return { label: 'Operational', color: 'text-green-600 dark:text-green-400' };
+							return { label: m.restaurant_status_open(), color: 'text-green-600 dark:text-green-400' };
 						case BusinessStatus.CLOSED_TEMPORARILY:
-							return { label: 'Temporarily closed', color: 'text-yellow-600 dark:text-yellow-400' };
+							return { label: m.restaurant_status_temp_closed(), color: 'text-yellow-600 dark:text-yellow-400' };
 						case BusinessStatus.CLOSED_PERMANENTLY:
-							return { label: 'Permanently closed', color: 'text-red-600 dark:text-red-400' };
+							return { label: m.restaurant_status_perm_closed(), color: 'text-red-600 dark:text-red-400' };
 						default:
 							return null;
 					}
@@ -85,11 +86,11 @@
 	let amenities = $derived(
 		googleData
 			? [
-					{ label: 'Dine-in', value: googleData.dineIn },
-					{ label: 'Takeout', value: googleData.takeout },
-					{ label: 'Delivery', value: googleData.delivery },
-					{ label: 'Outdoor seating', value: googleData.outdoorSeating },
-					{ label: 'Reservations', value: googleData.reservable }
+					{ label: m.restaurant_feature_dine_in(), value: googleData.dineIn },
+					{ label: m.restaurant_feature_takeout(), value: googleData.takeout },
+					{ label: m.restaurant_feature_delivery(), value: googleData.delivery },
+					{ label: m.restaurant_feature_outdoor(), value: googleData.outdoorSeating },
+					{ label: m.restaurant_feature_reservations(), value: googleData.reservable }
 				].filter((a) => a.value !== undefined && a.value !== null)
 			: []
 	);
@@ -104,7 +105,7 @@
 				regionCode: 'pl'
 			});
 		} catch {
-			googleError = 'Failed to load Google details.';
+			googleError = m.expandable_load_failed();
 		} finally {
 			isLoadingGoogle = false;
 		}
@@ -182,10 +183,10 @@
 			class="flex items-center gap-1.5 text-sm font-medium text-primary transition-colors hover:text-primary/80"
 		>
 			{#if isExpanded}
-				Hide details
+				{m.expandable_hide_details()}
 				<ChevronUp class="h-4 w-4" />
 			{:else}
-				Show Google details
+				{m.expandable_show_google()}
 				<ChevronRight class="h-4 w-4" />
 			{/if}
 		</button>
@@ -205,7 +206,7 @@
 						onclick={fetchGoogleData}
 						class="rounded-lg bg-primary px-4 py-2 text-sm text-primary-foreground transition-colors hover:bg-primary/90"
 					>
-						Retry
+						{m.common_retry()}
 					</button>
 				</div>
 			{:else if googleData}
@@ -213,7 +214,7 @@
 					<!-- Header -->
 					<div class="flex items-center justify-between">
 						<img src="/GoogleMaps_Logo_Gray.svg" alt="Google Maps" class="h-4 w-auto" />
-						<span class="text-xs text-muted-foreground">Data from Google Places API</span>
+						<span class="text-xs text-muted-foreground">{m.expandable_google_source()}</span>
 					</div>
 
 					<!-- Core info: rating, status, price -->
@@ -234,7 +235,7 @@
 								</div>
 								{#if googleData.userRatingCount}
 									<span class="text-xs text-muted-foreground">
-										({googleData.userRatingCount.toLocaleString()} reviews)
+										{m.restaurant_google_reviews({ count: String(googleData.userRatingCount) })}
 									</span>
 								{/if}
 							</div>
@@ -289,7 +290,7 @@
 									rel="noopener noreferrer"
 									class="text-sm text-primary hover:underline"
 								>
-									Open in Maps
+									{m.expandable_open_maps()}
 								</a>
 							</div>
 						{/if}
@@ -300,7 +301,7 @@
 						<div>
 							<hr class="border-border" />
 							<h4 class="mb-1.5 mt-4 text-xs font-semibold tracking-wide text-muted-foreground uppercase">
-								Today's hours
+								{m.restaurant_hours_today()}
 							</h4>
 							<p class="text-sm text-muted-foreground">{hoursToday}</p>
 						</div>
@@ -311,7 +312,7 @@
 						<div>
 							<hr class="border-border" />
 							<h4 class="mb-3 mt-4 text-xs font-semibold tracking-wide text-muted-foreground uppercase">
-								Features
+								{m.restaurant_features()}
 							</h4>
 							<div class="grid grid-cols-2 gap-2">
 								{#each amenities as feature}

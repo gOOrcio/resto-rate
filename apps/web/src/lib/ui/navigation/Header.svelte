@@ -7,6 +7,7 @@
 	import { mode, setMode } from '$lib/state/theme.svelte';
 	import SocialSignIn from '$lib/ui/components/SocialSignIn.svelte';
 	import client from '$lib/client/client';
+	import * as m from '$lib/paraglide/messages';
 
 	let activeUrl = $derived(page.url.pathname);
 
@@ -49,11 +50,11 @@
 		return '?';
 	}
 
-	const authNavLinks = [
-		{ href: '/reviews', label: 'My Reviews' },
-		{ href: '/wishlist', label: 'Wishlist' },
-		{ href: '/friends', label: 'Friends' }
-	];
+	const authNavLinks = $derived([
+		{ href: '/reviews', label: m.nav_my_reviews() },
+		{ href: '/wishlist', label: m.nav_wishlist() },
+		{ href: '/friends', label: m.nav_friends() }
+	]);
 
 	$effect(() => {
 		if (page.url.searchParams.get('login') === '1' && !auth.isLoggedIn && !auth.loading) {
@@ -72,7 +73,7 @@
 				R
 			</div>
 			<span class="font-display text-lg font-semibold tracking-tight text-foreground">
-				Restorate
+				{m.nav_brand()}
 			</span>
 		</a>
 
@@ -114,26 +115,26 @@
 							{/snippet}
 						</DropdownMenu.Trigger>
 						<DropdownMenu.Content align="end" class="w-48">
-							<DropdownMenu.Label>Account</DropdownMenu.Label>
+							<DropdownMenu.Label>{m.nav_account()}</DropdownMenu.Label>
 							<DropdownMenu.Item>
-								<a href="/profile" class="w-full">My Profile</a>
+								<a href="/profile" class="w-full">{m.nav_my_profile()}</a>
 							</DropdownMenu.Item>
-							<DropdownMenu.Item onclick={handleLogout}>Sign out</DropdownMenu.Item>
+							<DropdownMenu.Item onclick={handleLogout}>{m.nav_sign_out()}</DropdownMenu.Item>
 							<DropdownMenu.Separator />
-							<DropdownMenu.Label>Navigate</DropdownMenu.Label>
+							<DropdownMenu.Label>{m.nav_navigate()}</DropdownMenu.Label>
 							<DropdownMenu.Item>
-								<a href="/friends" class="w-full">Find a Friend</a>
+								<a href="/friends" class="w-full">{m.nav_find_friend()}</a>
 							</DropdownMenu.Item>
 							<DropdownMenu.Separator />
-							<DropdownMenu.Label>Preferences</DropdownMenu.Label>
+							<DropdownMenu.Label>{m.nav_preferences()}</DropdownMenu.Label>
 							<DropdownMenu.Item onclick={toggleDarkMode}>
-								{mode.current === 'dark' ? 'Light mode' : 'Dark mode'}
+								{mode.current === 'dark' ? m.nav_light_mode() : m.nav_dark_mode()}
 							</DropdownMenu.Item>
 						</DropdownMenu.Content>
 					</DropdownMenu.Root>
 				</div>
 			{:else}
-				<Button size="sm" onclick={() => auth.openLogin()}>Sign in</Button>
+				<Button size="sm" onclick={() => auth.openLogin()}>{m.nav_sign_in()}</Button>
 			{/if}
 
 			<!-- Mobile hamburger -->
@@ -159,12 +160,12 @@
 							>
 								R
 							</div>
-							<span class="font-display font-semibold text-foreground">Restorate</span>
+							<span class="font-display font-semibold text-foreground">{m.nav_brand()}</span>
 						</div>
 					</Sheet.Header>
 					<hr class="mb-4 border-border" />
 					<nav class="flex flex-col gap-4 px-2">
-						<a href="/" class="text-sm text-muted-foreground hover:text-foreground">Home</a>
+						<a href="/" class="text-sm text-muted-foreground hover:text-foreground">{m.nav_home()}</a>
 						{#if auth.loading}
 							<div class="h-4 w-4 animate-spin rounded-full border-2 border-border border-t-primary"></div>
 						{:else if auth.isLoggedIn}
@@ -183,16 +184,16 @@
 								class="text-left text-sm text-muted-foreground hover:text-foreground"
 								onclick={toggleDarkMode}
 							>
-								{mode.current === 'dark' ? 'Light mode' : 'Dark mode'}
+								{mode.current === 'dark' ? m.nav_light_mode() : m.nav_dark_mode()}
 							</button>
 							<button
 								class="text-left text-sm text-muted-foreground hover:text-foreground"
 								onclick={handleLogout}
 							>
-								Sign out
+								{m.nav_sign_out()}
 							</button>
 						{:else}
-							<Button size="sm" onclick={() => auth.openLogin()}>Sign in</Button>
+							<Button size="sm" onclick={() => auth.openLogin()}>{m.nav_sign_in()}</Button>
 						{/if}
 					</nav>
 				</Sheet.Content>
@@ -220,7 +221,7 @@
 		class="m-auto w-full max-w-[calc(100%-2rem)] rounded-xl bg-card p-6 shadow-xl backdrop:bg-foreground/20 sm:max-w-sm"
 	>
 		<div class="flex flex-col gap-4">
-			<h3 class="font-display text-xl font-semibold text-foreground">Sign in to Restorate</h3>
+			<h3 class="font-display text-xl font-semibold text-foreground">{m.nav_sign_in_to_restorate()}</h3>
 			<SocialSignIn onSuccess={() => auth.closeLogin()} />
 		</div>
 	</dialog>

@@ -1,5 +1,6 @@
 <script lang="ts">
 	import TagPicker from './TagPicker.svelte';
+	import * as m from '$lib/paraglide/messages';
 
 	let {
 		selected = $bindable([]),
@@ -16,15 +17,15 @@
 		onchange?.(slugs, mode);
 	}
 
-	function setMode(m: 'AND' | 'OR') {
-		mode = m;
-		onchange?.(selected, m);
+	function setMode(m_: 'AND' | 'OR') {
+		mode = m_;
+		onchange?.(selected, m_);
 	}
 </script>
 
 <div class="flex flex-col gap-3">
 	<div class="flex items-center gap-2">
-		<span class="text-xs font-medium text-muted-foreground">Match:</span>
+		<span class="text-xs font-medium text-muted-foreground">{m.common_filter_tag_mode_match()}</span>
 		<div class="flex overflow-hidden rounded-md border border-border text-xs">
 			<button
 				type="button"
@@ -33,7 +34,7 @@
 					? 'bg-primary text-primary-foreground'
 					: 'bg-card text-muted-foreground hover:bg-muted'}"
 			>
-				Any
+				{m.common_filter_tag_mode_any()}
 			</button>
 			<button
 				type="button"
@@ -42,7 +43,7 @@
 					? 'bg-primary text-primary-foreground'
 					: 'bg-card text-muted-foreground hover:bg-muted'}"
 			>
-				All
+				{m.common_filter_tag_mode_all()}
 			</button>
 		</div>
 	</div>

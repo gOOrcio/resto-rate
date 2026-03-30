@@ -5,6 +5,7 @@
 	import TagPicker from './TagPicker.svelte';
 	import type { ReviewProto } from '$lib/client/generated/reviews/v1/review_pb';
 	import { WouldVisitAgain } from '$lib/client/generated/reviews/v1/review_pb';
+	import * as m from '$lib/paraglide/messages';
 
 	const {
 		googlePlacesId,
@@ -62,7 +63,7 @@
 
 	async function handleSubmit() {
 		if (rating < 1) {
-			error = 'Please select a star rating';
+			error = m.rating_form_select_star();
 			return;
 		}
 		error = null;
@@ -97,7 +98,7 @@
 				if (res.review) onSubmit(res.review);
 			}
 		} catch (e: unknown) {
-			error = e instanceof Error ? e.message : 'Failed to save review';
+			error = e instanceof Error ? e.message : m.rating_form_save_error();
 		} finally {
 			loading = false;
 		}
@@ -108,7 +109,7 @@
 	<!-- Header -->
 	<div class="mb-5">
 		<p class="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-			{isEdit ? 'Editing review' : 'Rate this place'}
+			{isEdit ? m.rating_form_editing() : m.rating_form_rate()}
 		</p>
 		<h4 class="mt-0.5 text-base font-semibold text-foreground">{restaurantName}</h4>
 	</div>
@@ -147,7 +148,7 @@
 				class="flex w-full items-center justify-between px-4 py-2.5 text-sm font-medium text-foreground"
 				onclick={() => (showComment = !showComment)}
 			>
-				<span>Add comment</span>
+				<span>{m.rating_form_add_comment()}</span>
 				<span class="text-muted-foreground transition-transform {showComment ? 'rotate-90' : ''}">›</span>
 			</button>
 			{#if showComment}
@@ -156,7 +157,7 @@
 						id="comment"
 						bind:value={comment}
 						rows="3"
-						placeholder="What did you think?"
+						placeholder={m.rating_form_comment_placeholder()}
 						class="w-full resize-none rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
 					></textarea>
 				</div>
@@ -170,7 +171,7 @@
 				class="flex w-full items-center justify-between px-4 py-2.5 text-sm font-medium text-foreground"
 				onclick={() => (showTags = !showTags)}
 			>
-				<span>Add tags{tags.length > 0 ? ` (${tags.length})` : ''}</span>
+				<span>{m.rating_form_add_tags({ count: String(tags.length) })}</span>
 				<span class="text-muted-foreground transition-transform {showTags ? 'rotate-90' : ''}">›</span>
 			</button>
 			{#if showTags}
@@ -187,7 +188,7 @@
 				class="flex w-full items-center justify-between px-4 py-2.5 text-sm font-medium text-foreground"
 				onclick={() => (showVisitDetails = !showVisitDetails)}
 			>
-				<span>Add visit details</span>
+				<span>{m.rating_form_add_visit_details()}</span>
 				<span class="text-muted-foreground transition-transform {showVisitDetails ? 'rotate-90' : ''}">›</span>
 			</button>
 			{#if showVisitDetails}
@@ -195,7 +196,7 @@
 					<!-- Visit date + Would visit again -->
 					<div class="grid grid-cols-2 gap-3">
 						<div>
-							<label for="visited-at" class="mb-1 block text-xs font-medium text-muted-foreground">Visit date</label>
+							<label for="visited-at" class="mb-1 block text-xs font-medium text-muted-foreground">{m.rating_form_visit_date()}</label>
 							<input
 								id="visited-at"
 								type="date"
@@ -204,12 +205,12 @@
 							/>
 						</div>
 						<div>
-							<p class="mb-1 text-xs font-medium text-muted-foreground">Visit again?</p>
+							<p class="mb-1 text-xs font-medium text-muted-foreground">{m.rating_form_visit_again()}</p>
 							<div class="flex gap-1">
 								{#each [
-									{ value: WouldVisitAgain.YES, label: 'Yes' },
-									{ value: WouldVisitAgain.MAYBE, label: 'Maybe' },
-									{ value: WouldVisitAgain.NO, label: 'No' }
+									{ value: WouldVisitAgain.YES, label: m.rating_form_visit_again_yes() },
+									{ value: WouldVisitAgain.MAYBE, label: m.rating_form_visit_again_maybe() },
+									{ value: WouldVisitAgain.NO, label: m.rating_form_visit_again_no() }
 								] as opt}
 									<button
 										type="button"
@@ -227,12 +228,12 @@
 
 					<!-- Dish highlights -->
 					<div>
-						<label for="dish-highlights" class="mb-1 block text-xs font-medium text-muted-foreground">Dish highlights</label>
+						<label for="dish-highlights" class="mb-1 block text-xs font-medium text-muted-foreground">{m.rating_form_dish_highlights()}</label>
 						<textarea
 							id="dish-highlights"
 							bind:value={dishHighlights}
 							rows="2"
-							placeholder="Dishes you'd recommend…"
+							placeholder={m.rating_form_dish_placeholder()}
 							class="w-full resize-none rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
 						></textarea>
 					</div>
@@ -246,6 +247,6 @@
 	{/if}
 
 	<Button onclick={handleSubmit} disabled={loading || rating < 1} class="w-full">
-		{loading ? 'Saving…' : isEdit ? 'Update rating' : 'Save rating'}
+		{loading ? m.common_saving() : isEdit ? m.rating_form_update() : m.rating_form_save()}
 	</Button>
 </div>

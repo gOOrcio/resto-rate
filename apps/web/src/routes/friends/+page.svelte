@@ -5,6 +5,7 @@
 	import type { FriendRequestProto, FriendProto } from '$lib/client/generated/friendship/v1/friendship_pb';
 	import { Button } from '$lib/components/ui/button/index.js';
 	import { Input } from '$lib/components/ui/input/index.js';
+	import * as m from '$lib/paraglide/messages';
 
 	let friends = $state<FriendProto[]>([]);
 	let pendingRequests = $state<FriendRequestProto[]>([]);
@@ -49,10 +50,10 @@
 					? { case: 'receiverEmail', value: val }
 					: { case: 'receiverUsername', value: username }
 			});
-			addSuccess = `Friend request sent to ${val}`;
+			addSuccess = m.friends_request_sent({ name: val });
 			addInput = '';
 		} catch (e: unknown) {
-			addError = (e as Error).message || 'Failed to send request';
+			addError = (e as Error).message || m.friends_request_failed();
 		} finally {
 			addLoading = false;
 		}
@@ -117,17 +118,17 @@
 </script>
 
 <div class="mx-auto max-w-3xl space-y-8 px-4 py-8 sm:px-6">
-	<h2 class="font-display text-3xl font-semibold text-foreground">Friends</h2>
+	<h2 class="font-display text-3xl font-semibold text-foreground">{m.friends_page_title()}</h2>
 
 	{#if loading}
 		<div class="flex items-center gap-2 py-8 text-sm text-muted-foreground">
 			<div class="h-4 w-4 animate-spin rounded-full border-2 border-border border-t-primary"></div>
-			Loading…
+			{m.common_loading()}
 		</div>
 	{:else}
 		<!-- Add Friend -->
 		<section>
-			<h3 class="mb-3 text-lg font-medium text-foreground">Add a friend</h3>
+			<h3 class="mb-3 text-lg font-medium text-foreground">{m.friends_add_label()}</h3>
 			<form
 				class="flex flex-col gap-2 sm:flex-row"
 				onsubmit={(e) => {
@@ -137,13 +138,13 @@
 			>
 				<Input
 					type="text"
-					placeholder="Email address or @username"
+					placeholder={m.friends_add_placeholder()}
 					bind:value={addInput}
 					class="min-w-0 flex-1"
 					disabled={addLoading}
 				/>
 				<Button type="submit" disabled={addLoading || !addInput.trim()}>
-					{addLoading ? 'Sending…' : 'Send Request'}
+					{addLoading ? m.friends_sending() : m.friends_send_request()}
 				</Button>
 			</form>
 			{#if addError}
@@ -158,7 +159,7 @@
 		{#if pendingRequests.length > 0}
 			<section>
 				<h3 class="mb-3 text-lg font-medium text-foreground">
-					Pending requests <span class="ml-1 rounded-full bg-primary/10 px-2 py-0.5 text-xs font-semibold text-primary">{pendingRequests.length}</span>
+					{m.friends_pending()} <span class="ml-1 rounded-full bg-primary/10 px-2 py-0.5 text-xs font-semibold text-primary">{pendingRequests.length}</span>
 				</h3>
 				<ul class="space-y-2">
 					{#each pendingRequests as req (req.id)}
@@ -173,7 +174,7 @@
 									disabled={accepting.has(req.id)}
 									onclick={() => accept(req.id)}
 								>
-									{accepting.has(req.id) ? 'Accepting…' : 'Accept'}
+									{accepting.has(req.id) ? m.friends_accepting() : m.friends_accept()}
 								</Button>
 								<Button
 									variant="outline"
@@ -182,7 +183,7 @@
 									onclick={() => decline(req.id)}
 									class="text-destructive hover:border-destructive/50 hover:text-destructive"
 								>
-									{declining.has(req.id) ? 'Declining…' : 'Decline'}
+									{declining.has(req.id) ? m.friends_declining() : m.friends_decline()}
 								</Button>
 							</div>
 						</li>
@@ -193,9 +194,9 @@
 
 		<!-- Friends List -->
 		<section>
-			<h3 class="mb-3 text-lg font-medium text-foreground">My Friends ({friends.length})</h3>
+			<h3 class="mb-3 text-lg font-medium text-foreground">{m.friends_my_friends({ count: String(friends.length) })}</h3>
 			{#if friends.length === 0}
-				<p class="text-sm text-muted-foreground">No friends yet. Send a request above to get started.</p>
+				<p class="text-sm text-muted-foreground">{m.friends_empty()}</p>
 			{:else}
 				<ul class="space-y-2">
 					{#each friends as friend (friend.userId)}
@@ -210,7 +211,7 @@
 									size="sm"
 									href="/friends/{friend.userId}"
 								>
-									View Profile
+									{m.friends_view_profile()}
 								</Button>
 								<Button
 									variant="outline"
@@ -219,7 +220,7 @@
 									onclick={() => removeFriend(friend.userId)}
 									class="text-destructive hover:border-destructive/50 hover:text-destructive"
 								>
-									{removing.has(friend.userId) ? 'Removing…' : 'Remove'}
+									{removing.has(friend.userId) ? m.common_removing() : m.common_remove()}
 								</Button>
 							</div>
 						</li>

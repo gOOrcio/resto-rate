@@ -13,6 +13,7 @@
 	import { Button } from '$lib/components/ui/button/index.js';
 	import ExpandableRestaurantInfo from '$lib/ui/components/ExpandableRestaurantInfo.svelte';
 	import TagPicker from '$lib/ui/components/TagPicker.svelte';
+	import * as m from '$lib/paraglide/messages';
 
 	const targetUserId = page.params.userId;
 
@@ -45,10 +46,8 @@
 		return () => clearTimeout(id);
 	});
 
-	let ratingRangeError = $derived(
+	let hasRatingRangeError = $derived(
 		minRating > 0 && maxRating > 0 && minRating > maxRating
-			? 'Min rating cannot exceed max rating'
-			: null
 	);
 
 	let activeReviewFilterCount = $derived(
@@ -113,7 +112,7 @@
 
 	$effect(() => {
 		if (!mounted || activeTab !== 'reviews' || notFriends) return;
-		if (ratingRangeError) return;
+		if (hasRatingRangeError) return;
 		void [tagSlugs, tagMode, minRating, maxRating, commentSearch, reviewCity, reviewCountry, reviewSortBy];
 		loadReviews();
 	});
@@ -210,16 +209,16 @@
 			{:else if !mounted}
 				<div class="h-7 w-48 animate-pulse rounded bg-muted"></div>
 			{:else}
-				<h2 class="font-display text-3xl font-semibold text-foreground">Friend's Profile</h2>
+				<h2 class="font-display text-3xl font-semibold text-foreground">{m.friend_profile_title()}</h2>
 			{/if}
 		</div>
-		<Button variant="outline" size="sm" href="/friends">← Back to friends</Button>
+		<Button variant="outline" size="sm" href="/friends">{m.friend_profile_back()}</Button>
 	</div>
 
 	{#if notFriends}
 		<div class="rounded-lg border border-border bg-muted p-6 text-center">
-			<p class="font-medium text-foreground">You need to be friends to view this profile.</p>
-			<Button class="mt-4" href="/friends">Go to Friends</Button>
+			<p class="font-medium text-foreground">{m.friend_profile_not_friends()}</p>
+			<Button class="mt-4" href="/friends">{m.friend_profile_go_friends()}</Button>
 		</div>
 	{:else}
 		<!-- Tabs -->
@@ -236,7 +235,7 @@
 						? 'border-primary text-primary'
 						: 'border-transparent text-muted-foreground hover:border-border hover:text-foreground'}"
 				>
-					Reviews
+					{m.friend_profile_tab_reviews()}
 				</button>
 				<button
 					type="button"
@@ -249,7 +248,7 @@
 						? 'border-primary text-primary'
 						: 'border-transparent text-muted-foreground hover:border-border hover:text-foreground'}"
 				>
-					Wishlist
+					{m.friend_profile_tab_wishlist()}
 				</button>
 			</nav>
 		</div>
@@ -267,19 +266,19 @@
 						Filters{activeReviewFilterCount > 0 ? ` (${activeReviewFilterCount})` : ''}
 					</Button>
 					{#if activeReviewFilterCount > 0}
-						<Button variant="ghost" size="sm" onclick={clearReviewFilters}>Clear all</Button>
+						<Button variant="ghost" size="sm" onclick={clearReviewFilters}>{m.common_clear_all()}</Button>
 					{/if}
 					<div class="ml-auto flex items-center gap-2">
-						<label for="review-sort" class="text-sm text-muted-foreground">Sort</label>
+						<label for="review-sort" class="text-sm text-muted-foreground">{m.common_sort()}</label>
 						<select
 							id="review-sort"
 							bind:value={reviewSortBy}
 							class="rounded-md border border-border bg-card px-2 py-1 text-sm text-foreground focus:ring-1 focus:ring-ring focus:outline-none"
 						>
-							<option value="date-desc">Newest first</option>
-							<option value="date-asc">Oldest first</option>
-							<option value="rating-desc">Highest rated</option>
-							<option value="rating-asc">Lowest rated</option>
+							<option value="date-desc">{m.common_sort_newest()}</option>
+							<option value="date-asc">{m.common_sort_oldest()}</option>
+							<option value="rating-desc">{m.common_sort_rating_high()}</option>
+							<option value="rating-asc">{m.common_sort_rating_low()}</option>
 						</select>
 					</div>
 				</div>
@@ -289,7 +288,7 @@
 						<!-- Tags + AND/OR toggle -->
 						<div>
 							<div class="mb-1 flex items-center gap-3">
-								<span class="text-sm font-medium text-foreground">Tags</span>
+								<span class="text-sm font-medium text-foreground">{m.common_filter_tags()}</span>
 								<div class="flex items-center gap-0.5 rounded-full border border-border bg-card p-0.5">
 									<button
 										type="button"
@@ -298,7 +297,7 @@
 											? 'bg-primary text-primary-foreground'
 											: 'text-muted-foreground hover:text-foreground'}"
 									>
-										Any (OR)
+										{m.friend_profile_sort_any_or()}
 									</button>
 									<button
 										type="button"
@@ -307,7 +306,7 @@
 											? 'bg-primary text-primary-foreground'
 											: 'text-muted-foreground hover:text-foreground'}"
 									>
-										All (AND)
+										{m.friend_profile_sort_all_and()}
 									</button>
 								</div>
 							</div>
@@ -316,41 +315,41 @@
 
 						<!-- Rating range -->
 						<div class="flex flex-wrap items-center gap-2">
-							<span class="text-sm font-medium text-foreground">Rating</span>
+							<span class="text-sm font-medium text-foreground">{m.common_filter_rating()}</span>
 							<select
 								bind:value={minRating}
 								class="rounded-md border border-border bg-card px-2 py-1 text-sm text-foreground focus:ring-1 focus:ring-ring focus:outline-none"
 							>
-								<option value={0}>Min ★</option>
+								<option value={0}>{m.common_filter_min_rating()}</option>
 								{#each [1, 2, 3, 4, 5] as n}
 									<option value={n}>{n} ★</option>
 								{/each}
 							</select>
-							<span class="text-sm text-muted-foreground">to</span>
+							<span class="text-sm text-muted-foreground">{m.common_filter_rating_to()}</span>
 							<select
 								bind:value={maxRating}
 								class="rounded-md border border-border bg-card px-2 py-1 text-sm text-foreground focus:ring-1 focus:ring-ring focus:outline-none"
 							>
-								<option value={0}>Max ★</option>
+								<option value={0}>{m.common_filter_max_rating()}</option>
 								{#each [1, 2, 3, 4, 5] as n}
 									<option value={n}>{n} ★</option>
 								{/each}
 							</select>
-							{#if ratingRangeError}
-								<p class="w-full text-xs text-destructive">{ratingRangeError}</p>
+							{#if hasRatingRangeError}
+								<p class="w-full text-xs text-destructive">{m.common_filter_rating_error()}</p>
 							{/if}
 						</div>
 
 						<!-- Comment search -->
 						<div>
 							<label for="review-comment-search" class="mb-1 block text-sm font-medium text-foreground">
-								Comment contains
+								{m.common_filter_comment()}
 							</label>
 							<input
 								id="review-comment-search"
 								type="text"
 								bind:value={commentRaw}
-								placeholder="Search in comments…"
+								placeholder={m.common_filter_comment_placeholder()}
 								class="w-full rounded-md border border-border bg-card px-3 py-1.5 text-sm text-foreground placeholder:text-muted-foreground focus:ring-1 focus:ring-ring focus:outline-none"
 							/>
 						</div>
@@ -358,22 +357,22 @@
 						<!-- City + Country -->
 						<div class="grid grid-cols-2 gap-3">
 							<div>
-								<label for="review-city" class="mb-1 block text-sm font-medium text-foreground">City</label>
+								<label for="review-city" class="mb-1 block text-sm font-medium text-foreground">{m.common_filter_city()}</label>
 								<input
 									id="review-city"
 									type="text"
 									bind:value={reviewCity}
-									placeholder="e.g. Paris"
+									placeholder={m.friend_profile_city_placeholder()}
 									class="w-full rounded-md border border-border bg-card px-3 py-1.5 text-sm text-foreground placeholder:text-muted-foreground focus:ring-1 focus:ring-ring focus:outline-none"
 								/>
 							</div>
 							<div>
-								<label for="review-country" class="mb-1 block text-sm font-medium text-foreground">Country</label>
+								<label for="review-country" class="mb-1 block text-sm font-medium text-foreground">{m.common_filter_country()}</label>
 								<input
 									id="review-country"
 									type="text"
 									bind:value={reviewCountry}
-									placeholder="e.g. France"
+									placeholder={m.friend_profile_country_placeholder()}
 									class="w-full rounded-md border border-border bg-card px-3 py-1.5 text-sm text-foreground placeholder:text-muted-foreground focus:ring-1 focus:ring-ring focus:outline-none"
 								/>
 							</div>
@@ -385,17 +384,17 @@
 			{#if reviewsLoading}
 				<div class="flex items-center gap-2 py-8 text-sm text-muted-foreground">
 					<div class="h-4 w-4 animate-spin rounded-full border-2 border-border border-t-primary"></div>
-					Loading…
+					{m.common_loading()}
 				</div>
 			{:else if reviews.length === 0}
 				<p class="text-sm text-muted-foreground">
 					{#if activeReviewFilterCount > 0}
-						No reviews match the current filters.
+						{m.friend_profile_no_match_reviews()}
 						<button type="button" onclick={clearReviewFilters} class="underline hover:no-underline">
-							Clear filters
+							{m.common_clear_filters()}
 						</button>
 					{:else}
-						No reviews yet.
+						{m.friend_profile_no_reviews()}
 					{/if}
 				</p>
 			{:else}
@@ -443,7 +442,7 @@
 										href="/restaurants/{encodeURIComponent(review.googlePlacesId)}"
 										class="text-xs text-muted-foreground hover:text-foreground hover:underline"
 									>
-										See all reviews →
+										{m.friend_profile_see_all_reviews()}
 									</a>
 								{/if}
 							</div>
@@ -460,33 +459,33 @@
 			<div class="flex flex-wrap items-center gap-2">
 				{#if activeWishlistFilterCount > 0}
 					<Button variant="ghost" size="sm" onclick={clearWishlistFilters}>
-						Clear filters ({activeWishlistFilterCount})
+						{m.common_clear_filters()} ({activeWishlistFilterCount})
 					</Button>
 				{/if}
 				<div class="ml-auto flex items-center gap-2">
-					<label for="wishlist-sort" class="text-sm text-muted-foreground">Sort</label>
+					<label for="wishlist-sort" class="text-sm text-muted-foreground">{m.common_sort()}</label>
 					<select
 						id="wishlist-sort"
 						bind:value={wishlistSortBy}
 						class="rounded-md border border-border bg-card px-2 py-1 text-sm text-foreground focus:ring-1 focus:ring-ring focus:outline-none"
 					>
-						<option value="date-desc">Newest first</option>
-						<option value="date-asc">Oldest first</option>
-						<option value="name-asc">Name A–Z</option>
-						<option value="name-desc">Name Z–A</option>
+						<option value="date-desc">{m.common_sort_newest()}</option>
+						<option value="date-asc">{m.common_sort_oldest()}</option>
+						<option value="name-asc">{m.common_sort_name_az()}</option>
+						<option value="name-desc">{m.common_sort_name_za()}</option>
 					</select>
 				</div>
 				<div class="flex w-full gap-3">
 					<input
 						type="text"
 						bind:value={wishlistCity}
-						placeholder="Filter by city…"
+						placeholder={m.friend_profile_city_placeholder()}
 						class="flex-1 rounded-md border border-border bg-card px-3 py-1.5 text-sm text-foreground placeholder:text-muted-foreground focus:ring-1 focus:ring-ring focus:outline-none"
 					/>
 					<input
 						type="text"
 						bind:value={wishlistCountry}
-						placeholder="Filter by country…"
+						placeholder={m.friend_profile_country_placeholder()}
 						class="flex-1 rounded-md border border-border bg-card px-3 py-1.5 text-sm text-foreground placeholder:text-muted-foreground focus:ring-1 focus:ring-ring focus:outline-none"
 					/>
 				</div>
@@ -495,17 +494,17 @@
 			{#if wishlistLoading}
 				<div class="flex items-center gap-2 py-8 text-sm text-muted-foreground">
 					<div class="h-4 w-4 animate-spin rounded-full border-2 border-border border-t-primary"></div>
-					Loading…
+					{m.common_loading()}
 				</div>
 			{:else if wishlistItems.length === 0}
 				<p class="text-sm text-muted-foreground">
 					{#if activeWishlistFilterCount > 0}
-						No wishlist items match the current filters.
+						{m.friend_profile_no_match_wishlist()}
 						<button type="button" onclick={clearWishlistFilters} class="underline hover:no-underline">
-							Clear filters
+							{m.common_clear_filters()}
 						</button>
 					{:else}
-						Empty wishlist.
+						{m.friend_profile_no_wishlist()}
 					{/if}
 				</p>
 			{:else}

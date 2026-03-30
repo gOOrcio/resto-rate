@@ -131,6 +131,14 @@ func (s *AuthService) UpdateMyProfile(
 	ctx context.Context,
 	req *connect.Request[authv1.UpdateMyProfileRequest],
 ) (*connect.Response[authv1.UpdateMyProfileResponse], error) {
+	// Cheap input validation before session lookup.
+	if req.Msg.DefaultLanguage != "" &&
+		req.Msg.DefaultLanguage != "en" &&
+		req.Msg.DefaultLanguage != "pl" {
+		return nil, connect.NewError(connect.CodeInvalidArgument,
+			errors.New("unsupported locale; supported values: en, pl"))
+	}
+
 	userID, err := getUserIDFromSession(ctx, req.Header(), s.Valkey)
 	if err != nil {
 		return nil, err
@@ -141,7 +149,7 @@ func (s *AuthService) UpdateMyProfile(
 		return nil, connect.NewError(connect.CodeNotFound, errors.New("user not found"))
 	}
 
-	updates := map[string]interface{}{}
+	updates := map[string]any{}
 
 	if req.Msg.Username != "" {
 		// Validate username format: 3–30 chars, lowercase letters/digits/underscores
@@ -166,6 +174,10 @@ func (s *AuthService) UpdateMyProfile(
 
 	if req.Msg.SetIsDarkModeEnabled {
 		updates["IsDarkModeEnabled"] = req.Msg.IsDarkModeEnabled
+	}
+
+	if req.Msg.DefaultLanguage != "" {
+		updates["DefaultLanguage"] = req.Msg.DefaultLanguage
 	}
 
 	if len(updates) == 0 {
@@ -374,7 +386,7 @@ func (s *AuthService) upsertUser(ctx context.Context, provider authv1.AuthProvid
 			}
 		} else {
 			// Existing user — update email and name in case they changed in Google
-			if err := s.DB.WithContext(ctx).Model(&user).Updates(map[string]interface{}{
+			if err := s.DB.WithContext(ctx).Model(&user).Updates(map[string]any{
 				"Email": models.StringPtr(claims.Email),
 				"Name":  claims.Name,
 			}).Error; err != nil {
