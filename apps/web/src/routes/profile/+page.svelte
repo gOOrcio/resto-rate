@@ -83,14 +83,14 @@
 	// ── Locale switch ─────────────────────────────────────────────────────────
 	async function switchLocale(l: 'en' | 'pl') {
 		if (l === locale.current) return;
+		const previous = locale.current;
 		localeSaving = true;
 		locale.set(l);
 		try {
 			const res = await client.auth.updateMyProfile({ defaultLanguage: l });
 			auth.setUser(res.user!);
 		} catch {
-			// revert on failure
-			locale.set(locale.current === 'en' ? 'pl' : 'en');
+			locale.set(previous);
 		} finally {
 			localeSaving = false;
 		}
