@@ -15,6 +15,9 @@ node_modules
 # Testing
 coverage
 
+# MCP tool artifacts
+.playwright-mcp/
+
 # Turbo
 .turbo
 

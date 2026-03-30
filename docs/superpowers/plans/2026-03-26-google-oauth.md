@@ -1035,7 +1035,7 @@ Expected: zero errors.
 
 - [ ] **Step 8.3: Manual smoke test (requires running stack)**
 
-1. Start infrastructure: `docker-compose up -d`
+1. Start infrastructure: `docker compose up -d`
 2. Set real `GOOGLE_CLIENT_ID` in `.env` and `apps/web/.env`
 3. Start dev: `bun run dev`
 4. Open http://localhost:5173

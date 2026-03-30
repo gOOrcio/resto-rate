@@ -40,8 +40,8 @@ message CreateReviewRequest {
   string city = 7;
   string country = 8;
   int64 visited_at = 9;
-  PartySize party_size = 10;
-  Occasion occasion = 11;
+  reserved 10, 11;
+  reserved "party_size", "occasion";
   int32 price_paid_per_person = 12;
   WouldVisitAgain would_visit_again = 13;
   string dish_highlights = 14;
@@ -68,8 +68,8 @@ message UpdateReviewRequest {
   repeated string tags = 4;
   // Optional: omitting a field leaves the stored value unchanged.
   optional int64 visited_at = 5;
-  optional PartySize party_size = 6;
-  optional Occasion occasion = 7;
+  reserved 6, 7;
+  reserved "party_size", "occasion";
   optional int32 price_paid_per_person = 8;
   optional WouldVisitAgain would_visit_again = 9;
   optional string dish_highlights = 10;
