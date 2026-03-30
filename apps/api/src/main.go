@@ -340,7 +340,12 @@ func placePhotoHandler() http.Handler {
 		defer resp.Body.Close()
 
 		if resp.StatusCode != http.StatusOK {
-			slog.Error("place-photo: upstream error", slog.String("name", name), slog.Int("status", resp.StatusCode))
+			body, _ := io.ReadAll(resp.Body)
+			slog.Error("place-photo: upstream error",
+				slog.String("name", name),
+				slog.Int("status", resp.StatusCode),
+				slog.String("body", string(body)),
+			)
 			http.Error(w, "upstream error", http.StatusBadGateway)
 			return
 		}
